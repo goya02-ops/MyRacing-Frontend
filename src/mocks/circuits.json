@@ -1,0 +1,34 @@
+{
+  "circuits": [
+    {
+      "id": 1,
+      "name": "Circuito del Sol",
+      "description": "Un trazado urbano con curvas cerradas y rectas cortas, ideal para pruebas técnicas.",
+      "abbreviation": "CDS"
+    },
+    {
+      "id": 2,
+      "name": "Autódromo Laguna Verde",
+      "description": "Circuito rodeado de vegetación, con desniveles suaves y buena visibilidad.",
+      "abbreviation": "ALV"
+    },
+    {
+      "id": 3,
+      "name": "Pista Centenario",
+      "description": "Diseño clásico con largas rectas y curvas amplias, pensado para alta velocidad.",
+      "abbreviation": "PCEN"
+    },
+    {
+      "id": 4,
+      "name": "Circuito Sierra Azul",
+      "description": "Trazado montañoso con pendientes pronunciadas y curvas técnicas.",
+      "abbreviation": "CSA"
+    },
+    {
+      "id": 5,
+      "name": "Ruta del Viento",
+      "description": "Circuito costero con tramos abiertos y exposición al viento, ideal para pruebas aerodinámicas.",
+      "abbreviation": "RDV"
+    }
+  ]
+}
