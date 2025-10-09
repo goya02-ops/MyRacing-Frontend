@@ -1,14 +1,14 @@
 import { useState } from 'react';
-import { type Circuit } from '../type';
+import { Category } from '../types/entities.ts';
 
 interface Props {
-  initial: Circuit;
-  onSave: (circuit: Circuit) => void;
+  initial: Category;
+  onSave: (category: Category) => void;
   onCancel: () => void;
 }
 
-export default function CircuitForm({ initial, onSave, onCancel }: Props) {
-  const [form, setForm] = useState<Circuit>(initial);
+export default function CategoryForm({ initial, onSave, onCancel }: Props) {
+  const [form, setForm] = useState<Category>(initial);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

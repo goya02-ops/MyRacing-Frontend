@@ -32,6 +32,7 @@ export default defineConfig([
     rules: {
       "@eslint-react/no-missing-key": "warn",
       "@eslint-react/dom/no-missing-button-type": "off",
+      "@typescript-eslint/no-explicit-any": "off",
     },
   },
 ]);
