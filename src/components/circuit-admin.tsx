@@ -1,20 +1,21 @@
-import { useState } from 'react';
+import { useEffect } from 'react';
 import CircuitForm from './circuit-forms.tsx';
-import { circuits as mockCircuits } from '../mocks/circuits.json';
+import { useUpdateList } from '../hooks/useUpdateList.ts';
+import { fetchCircuits, saveCircuit } from '../services/circuit-service.ts';
 import { type Circuit } from '../type';
 
 export default function CircuitAdmin() {
-  const [circuits, setCircuits] = useState<Circuit[]>(mockCircuits);
-  const [editing, setEditing] = useState<Circuit | null>(null);
+  const {
+    list: circuits,
+    setList: setCircuit,
+    editing,
+    setEditing,
+    save,
+  } = useUpdateList<Circuit>(saveCircuit);
 
-  const handleSave = (updated: Circuit) => {
-    setCircuits((prev) =>
-      prev.some((c) => c.id === updated.id)
-        ? prev.map((c) => (c.id === updated.id ? updated : c))
-        : [...prev, { ...updated, id: Date.now() }]
-    );
-    setEditing(null);
-  };
+  useEffect(() => {
+    fetchCircuits().then(setCircuit).catch(console.error);
+  }, []);
 
   return (
     <section>
@@ -28,19 +29,23 @@ export default function CircuitAdmin() {
       </button>
 
       <ul>
-        {circuits.map((c) => (
-          <li key={c.id}>
-            <strong>{c.name}</strong> ({c.abbreviation}) — {c.description}
-            <button onClick={() => setEditing(c)}>Editar</button>
-          </li>
-        ))}
+        {Array.isArray(circuits) ? (
+          circuits.map((c) => (
+            <li key={c.id}>
+              <strong>{c.name}</strong> ({c.abbreviation}) — {c.description}
+              <button onClick={() => setEditing(c)}>Editar</button>
+            </li>
+          ))
+        ) : (
+          <li>Error: los datos no son una lista</li>
+        )}
       </ul>
 
       {editing && (
         <CircuitForm
           initial={editing}
           onCancel={() => setEditing(null)}
-          onSave={handleSave}
+          onSave={save}
         />
       )}
     </section>

@@ -31,6 +31,7 @@ export default defineConfig([
     // Custom rule overrides (modify rule levels or disable rules)
     rules: {
       "@eslint-react/no-missing-key": "warn",
+      "@eslint-react/dom/no-missing-button-type": "off",
     },
   },
 ]);
