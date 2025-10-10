@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { type Simulator } from '../type'; 
+import { type Simulator } from '../types/entities.ts';
 
 interface Props {
   initial: Simulator;

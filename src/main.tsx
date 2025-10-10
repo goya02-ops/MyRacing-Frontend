@@ -1,11 +1,20 @@
 import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
+import ReactDOM from 'react-dom/client';
+import { BrowserRouter, Routes, Route } from 'react-router';
 import App from './App.tsx';
-import SimulatorAdmin from './components/SimuladorAdmin.tsx';
+import SimulatorAdmin from './components/SimulatorAdmin.tsx';
+import CircuitAdmin from './components/CircuitAdmin.tsx';
+import CategoryAdmin from './components/CategoryAdmin.tsx';
 
-createRoot(document.getElementById('root')!).render(
+ReactDOM.createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
-    <SimulatorAdmin />
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<App />} />
+        <Route path="/circuit-admin" element={<CircuitAdmin />} />
+        <Route path="/category-admin" element={<CategoryAdmin />} />
+        <Route path="/simulator-admin" element={<SimulatorAdmin />} />
+      </Routes>
+    </BrowserRouter>
   </StrictMode>
 );
