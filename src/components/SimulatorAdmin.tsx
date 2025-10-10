@@ -40,11 +40,11 @@ export default function SimulatorAdmin() {
           {list.length > 0 ? (
             list.map((s) => (
               <tr key={s.id}>
-                <th>{s.name}</th>
-                <th>{s.status}</th>
-                <th>
+                <td>{s.name}</td>
+                <td>{s.status}</td>
+                <td>
                   <button onClick={() => setEditing(s)}>Editar</button>
-                </th>
+                </td>
               </tr>
             ))
           ) : (

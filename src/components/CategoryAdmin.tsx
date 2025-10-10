@@ -36,15 +36,28 @@ export default function CategoryAdmin() {
         + Nuevo Circuito
       </button>
 
-      <ul>
-        {list.map((c) => (
-          <li key={c.id}>
-            <strong>{c.denomination}</strong> ({c.abbreviation}) —{' '}
-            {c.description}
-            <button onClick={() => setEditing(c)}>Editar</button>
-          </li>
-        ))}
-      </ul>
+      <table>
+        <thead>
+          <tr>
+            <th>Denominación</th>
+            <th>Abreviatura</th>
+            <th>Descripción</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {list.map((c) => (
+            <tr key={c.id}>
+              <td>{c.denomination}</td>
+              <td>{c.abbreviation}</td>
+              <td>{c.description}</td>
+              <td>
+                <button onClick={() => setEditing(c)}>Editar</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
       {editing && (
         <CategoryForm
