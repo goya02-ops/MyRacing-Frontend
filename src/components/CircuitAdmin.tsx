@@ -28,15 +28,28 @@ export default function CircuitAdmin() {
         + Nuevo Circuito
       </button>
 
-      <ul>
-        {list.map((circuit) => (
-          <li key={circuit.id}>
-            <strong>{circuit.denomination}</strong> ({circuit.abbreviation}) —{' '}
-            {circuit.description}
-            <button onClick={() => setEditing(circuit)}>Editar</button>
-          </li>
-        ))}
-      </ul>
+      <table>
+        <thead>
+          <tr>
+            <th>Denominación</th>
+            <th>Abreviatura</th>
+            <th>Descripción</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {list.map((circuit) => (
+            <tr key={circuit.id}>
+              <td>{circuit.denomination}</td>
+              <td>{circuit.abbreviation}</td>
+              <td>{circuit.description}</td>
+              <td>
+                <button onClick={() => setEditing(circuit)}>Editar</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
       {editing && (
         <CircuitForm

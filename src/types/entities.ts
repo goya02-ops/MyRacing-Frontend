@@ -11,3 +11,9 @@ export class Category {
   abbreviation: string = '';
   description: string = '';
 }
+
+export class Simulator {
+  id?: number;
+  name: string = '';
+  status: string = '';
+}

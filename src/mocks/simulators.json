@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "name": "Simulador de Vuelo Avanzado",
+    "status": "Activo"
+  },
+  {
+    "id": 2,
+    "name": "Simulador de Conducción",
+    "status": "Inactivo"
+  },
+  {
+    "id": 3,
+    "name": "Simulador de Batalla Naval",
+    "status": "Inactivo"
+  }
+]
