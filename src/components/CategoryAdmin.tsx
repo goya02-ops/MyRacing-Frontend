@@ -25,7 +25,12 @@ export default function CategoryAdmin() {
       <h2>Administrar Categorías</h2>
       <button
         onClick={() =>
-          setEditing({ id: 0, name: '', description: '', abbreviation: '' })
+          setEditing({
+            id: 0,
+            denomination: '',
+            description: '',
+            abbreviation: '',
+          })
         }
       >
         + Nuevo Circuito
@@ -34,7 +39,8 @@ export default function CategoryAdmin() {
       <ul>
         {list.map((c) => (
           <li key={c.id}>
-            <strong>{c.name}</strong> ({c.abbreviation}) — {c.description}
+            <strong>{c.denomination}</strong> ({c.abbreviation}) —{' '}
+            {c.description}
             <button onClick={() => setEditing(c)}>Editar</button>
           </li>
         ))}

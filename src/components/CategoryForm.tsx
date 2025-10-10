@@ -23,10 +23,10 @@ export default function CategoryForm({ initial, onSave, onCancel }: Props) {
       }}
     >
       <input
-        name="name"
-        value={form.name}
+        name="denomination"
+        value={form.denomination}
         onChange={handleChange}
-        placeholder="Nombre"
+        placeholder="Denominación"
         required
       />
       <input

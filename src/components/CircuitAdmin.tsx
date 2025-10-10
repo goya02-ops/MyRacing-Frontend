@@ -31,7 +31,7 @@ export default function CircuitAdmin() {
       <ul>
         {list.map((circuit) => (
           <li key={circuit.id}>
-            <strong>{circuit.name}</strong> ({circuit.abbreviation}) —{' '}
+            <strong>{circuit.denomination}</strong> ({circuit.abbreviation}) —{' '}
             {circuit.description}
             <button onClick={() => setEditing(circuit)}>Editar</button>
           </li>
