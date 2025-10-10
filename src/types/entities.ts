@@ -11,3 +11,12 @@ export class Category {
   abbreviation: string = '';
   description: string = '';
 }
+
+export interface User {
+  id: number;
+  userName: string;
+  realName: string; 
+  email: string;
+  password: string;
+  type: string;
+  }

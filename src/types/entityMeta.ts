@@ -1,4 +1,4 @@
-import { Circuit, Category } from './entities';
+import { Circuit, Category, User } from './entities';
 
 export type Constructor<T> = new (...args: any[]) => T;
 
@@ -9,4 +9,5 @@ export interface EntityMetadata {
 export const entityMetaByClass = new Map<Constructor<unknown>, EntityMetadata>([
   [Circuit, { endpoint: '/circuits' }],
   [Category, { endpoint: '/categories' }],
+  [User, { endpoint: '/users' }],
 ]);
