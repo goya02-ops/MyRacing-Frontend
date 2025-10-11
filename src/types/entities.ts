@@ -17,3 +17,11 @@ export class Simulator {
   name: string = '';
   status: string = '';
 }
+
+
+export class CategoryVersion {
+  id?: number;
+  status: string = '';
+  category?: number | { id: number; denomination: string; abbreviation: string }; // Puede ser ID o objeto
+  simulator?: number | { id: number; name: string }; // Puede ser ID o objeto
+}
