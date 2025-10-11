@@ -23,5 +23,4 @@ export class Membership{
   id?: number;
   denomination: string = '';
   price: number = 0;
-
 }
