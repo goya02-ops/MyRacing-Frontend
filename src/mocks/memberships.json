@@ -1,0 +1,10 @@
+
+{
+  "memberships": [
+    {
+      "id": 1,
+      "name": "Premium",
+      "price": 14.99
+    }
+  ]
+}

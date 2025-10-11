@@ -12,8 +12,16 @@ export class Category {
   description: string = '';
 }
 
+
 export class Simulator {
   id?: number;
   name: string = '';
   status: string = '';
+}
+
+export class Membership{
+  id?: number;
+  denomination: string = '';
+  price: number = 0;
+
 }
