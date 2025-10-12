@@ -32,10 +32,10 @@ export default function CircuitVersionAdmin() {
     if (editing && !circuits && !simulators) {
       const fetchData = async () => {
         try {
-          await fetchEntities(Circuit).then(setCircuits).catch(console.error);
-          await fetchEntities(Simulator)
-            .then(setSimulators)
-            .catch(console.error);
+          await fetchEntities(Circuit).then(setCircuits);
+          const sims = await fetchEntities(Simulator);
+          //Mostrar solo aquellos que estén activos
+          setSimulators(sims.filter((s) => s.status === 'Activo'));
         } catch (error) {
           console.error('Error fetching data:', error);
         } finally {

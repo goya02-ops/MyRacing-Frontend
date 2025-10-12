@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { CircuitVersion, Circuit, Simulator } from '../types/entities';
 
 interface Props {
@@ -18,13 +18,8 @@ export default function CircuitVersionForm({
 }: Props) {
   const [form, setForm] = useState<CircuitVersion>(initial);
 
-  useEffect(() => {
-    console.log('Estado actualizado:', form);
-  }, [form]);
-
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
-    console.log('Modificando:', name, '→', value);
     setForm((prev) => ({
       ...prev,
       [name]: name === 'status' ? value : value ? Number(value) : undefined,
@@ -41,7 +36,7 @@ export default function CircuitVersionForm({
       <label>
         Circuito:
         <select
-          name="circuito"
+          name="circuit"
           value={
             typeof form.circuit === 'object'
               ? form.circuit.id
