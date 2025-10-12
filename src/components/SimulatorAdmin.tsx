@@ -24,7 +24,7 @@ export default function SimulatorAdmin() {
   return (
     <section>
       <h2>Administrar Simuladores</h2>
-      <button onClick={() => setEditing({ id: 0, name: '', status: '' })}>
+      <button onClick={() => setEditing(new Simulator())}>
         + Nuevo Simulador
       </button>
 
@@ -48,7 +48,11 @@ export default function SimulatorAdmin() {
               </tr>
             ))
           ) : (
-            <li>No hay simuladores para mostrar.</li>
+            <tr>
+              <td>
+                <strong>No hay simuladores para mostrar.</strong>
+              </td>
+            </tr>
           )}
         </tbody>
       </table>

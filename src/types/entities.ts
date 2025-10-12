@@ -12,15 +12,21 @@ export class Category {
   description: string = '';
 }
 
-
 export class Simulator {
   id?: number;
   name: string = '';
   status: string = '';
 }
 
-export class Membership{
+export class Membership {
   id?: number;
   denomination: string = '';
   price: number = 0;
+}
+
+export class CircuitVersion {
+  id?: number;
+  status: string = '';
+  simulator!: Simulator | number;
+  circuit!: Circuit | number;
 }

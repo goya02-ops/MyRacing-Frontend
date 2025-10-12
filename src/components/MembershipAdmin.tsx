@@ -23,22 +23,14 @@ export default function MembershipAdmin() {
   return (
     <section>
       <h2>Administrar Membresias</h2>
-      <button
-        onClick={() =>
-          setEditing({
-            id: 0,
-            denomination: '',
-            price: 14.99,           
-          })
-        }
-      >
+      <button onClick={() => setEditing(new Membership())}>
         + Nueva Membresia
       </button>
 
       <ul>
         {list.map((m) => (
           <li key={m.id}>
-            <strong>{m.denomination}</strong> 
+            <strong>{m.denomination}</strong>
             {m.price}
             <button onClick={() => setEditing(m)}>Editar</button>
           </li>
