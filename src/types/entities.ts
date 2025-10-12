@@ -17,3 +17,10 @@ export class Simulator {
   name: string = '';
   status: string = '';
 }
+
+export class CircuitVersion {
+  id?: number;
+  status: string = '';
+  simulator!: Simulator | number;
+  circuit!: Circuit | number;
+}
