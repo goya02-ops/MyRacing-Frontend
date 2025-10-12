@@ -3,7 +3,7 @@
   "memberships": [
     {
       "id": 1,
-      "name": "Premium",
+      "denomination": "Premium",
       "price": 14.99
     }
   ]
