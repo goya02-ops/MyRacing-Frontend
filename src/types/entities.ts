@@ -18,10 +18,22 @@ export class Simulator {
   status: string = '';
 }
 
-
 export class CategoryVersion {
   id?: number;
   status: string = '';
-  category?: number | { id: number; denomination: string; abbreviation: string }; // Puede ser ID o objeto
-  simulator?: number | { id: number; name: string }; // Puede ser ID o objeto
+  category?: number | Category;
+  simulator?: number | Simulator;
+}
+
+export class Membership {
+  id?: number;
+  denomination: string = '';
+  price!: number;
+}
+
+export class CircuitVersion {
+  id?: number;
+  status: string = '';
+  simulator!: Simulator | number;
+  circuit!: Circuit | number;
 }

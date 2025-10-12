@@ -1,32 +1,25 @@
-// src/components/CategoryVersionForm.tsx
+import { useState } from 'react';
+import { CircuitVersion, Circuit, Simulator } from '../types/entities';
 
-import { useEffect, useState } from 'react';
-import { CategoryVersion, Category, Simulator } from '../types/entities';
-
-interface CategoryVersionFormProps {
-  initial: CategoryVersion;
-  categories: Category[];
+interface Props {
+  initial: CircuitVersion;
+  circuits: Circuit[];
   simulators: Simulator[];
-  onSave: (categoryVersion: CategoryVersion) => void;
+  onSave: (circuitVersion: CircuitVersion) => void;
   onCancel: () => void;
 }
 
-export default function CategoryVersionForm({
+export default function CircuitVersionForm({
   initial,
-  categories,
+  circuits,
   simulators,
   onSave,
   onCancel,
-}: CategoryVersionFormProps) {
-  const [form, setForm] = useState<CategoryVersion>(initial);
-
-  useEffect(() => {
-    console.log('Estado actualizado:', form);
-  }, [form]);
+}: Props) {
+  const [form, setForm] = useState<CircuitVersion>(initial);
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
-    console.log('Modificando:', name, '→', value);
     setForm((prev) => ({
       ...prev,
       [name]: name === 'status' ? value : value ? Number(value) : undefined,
@@ -41,21 +34,21 @@ export default function CategoryVersionForm({
       }}
     >
       <label>
-        Categoría:
+        Circuito:
         <select
-          name="category"
+          name="circuit"
           value={
-            typeof form.category === 'object'
-              ? form.category.id
-              : form.category || ''
+            typeof form.circuit === 'object'
+              ? form.circuit.id
+              : form.circuit || ''
           }
           onChange={handleSelectChange}
           required
         >
-          <option value="">Seleccione una categoría</option>
-          {categories.map((cat) => (
-            <option key={cat.id} value={cat.id}>
-              {cat.denomination} ({cat.abbreviation})
+          <option value="">Seleccione un circuito</option>
+          {circuits.map((cir) => (
+            <option key={cir.id} value={cir.id}>
+              {cir.denomination} ({cir.abbreviation})
             </option>
           ))}
         </select>

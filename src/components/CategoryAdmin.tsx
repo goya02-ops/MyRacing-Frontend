@@ -23,16 +23,7 @@ export default function CategoryAdmin() {
   return (
     <section>
       <h2>Administrar Categorías</h2>
-      <button
-        onClick={() =>
-          setEditing({
-            id: 0,
-            denomination: '',
-            description: '',
-            abbreviation: '',
-          })
-        }
-      >
+      <button onClick={() => setEditing(new Category())}>
         + Nuevo Circuito
       </button>
 
