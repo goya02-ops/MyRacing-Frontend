@@ -1,9 +1,9 @@
 // src/components/CategoryVersionAdmin.tsx
 
-import { useEffect, useState } from 'react';
+import { lazy, useEffect, useState } from 'react';
 import { CategoryVersion, Category, Simulator } from '../types/entities';
 import { fetchEntities, saveEntity } from '../services/service';
-import CategoryVersionForm from './CategoryVersionForm';
+const CategoryVersionForm = lazy(() => import('./CategoryVersionForm'));
 
 export default function CategoryVersionAdmin() {
   const [list, setList] = useState<CategoryVersion[]>([]);

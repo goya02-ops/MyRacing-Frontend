@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { lazy, useEffect, useState } from 'react';
 import { Circuit } from '../types/entities.ts';
 import { fetchEntities, saveEntity } from '../services/service.ts';
-import CircuitForm from './CircuitForm.tsx';
+const CircuitForm = lazy(() => import('./CircuitForm'));
 
 export default function CircuitAdmin() {
   const [list, setList] = useState<Circuit[]>([]);
