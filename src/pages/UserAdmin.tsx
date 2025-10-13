@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { lazy, useState, useEffect } from 'react';
 import { User } from '../types/entities';
 import { fetchEntities, saveEntity } from '../services/service';
-import UserForm from '../components/UserForm';
+const UserForm = lazy(() => import('../components/UserForm'));
 
 export default function UserAdmin() {
   const [list, setList] = useState<User[]>([]);
