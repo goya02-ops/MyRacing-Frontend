@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User } from '../types/entities.ts';
+import { User } from '../types/entities';
 
 interface Props {
   initial: User;
@@ -15,7 +15,7 @@ export default function UserForm({ initial, onSave, onCancel }: Props) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
 
-    // Validación de email en tiempo real
+    // Validación de email 
     if (name === 'email') {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       setEmailError(emailRegex.test(value) ? '' : 'Email inválido');

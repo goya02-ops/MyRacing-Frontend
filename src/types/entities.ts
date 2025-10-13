@@ -12,11 +12,11 @@ export class Category {
   description: string = '';
 }
 
-export interface User {
-  id: number;
-  userName: string;
-  realName: string; 
-  email: string;
-  password: string;
-  type: string;
-  }
+export class User {
+  id?: number;
+  userName: string = '';
+  realName: string = '';
+  email: string = '';
+  password: string = '';
+  type: string = '';
+}
