@@ -12,7 +12,6 @@ export class Category {
   description: string = '';
 }
 
-<<<<<<< HEAD
 export class User {
   id?: number;
   userName: string = '';
@@ -21,7 +20,6 @@ export class User {
   password: string = '';
   type: string = '';
 }
-=======
 export class Simulator {
   id?: number;
   name: string = '';
@@ -47,4 +45,3 @@ export class CircuitVersion {
   simulator!: Simulator | number;
   circuit!: Circuit | number;
 }
->>>>>>> develop

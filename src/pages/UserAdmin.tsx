@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { User } from '../types/entities';
 import { fetchEntities, saveEntity } from '../services/service';
-import UserForm from './UserForm';
+import UserForm from '../components/UserForm';
 
 export default function UserAdmin() {
   const [list, setList] = useState<User[]>([]);
@@ -24,25 +24,12 @@ export default function UserAdmin() {
   return (
     <section>
       <h2>Administrar Usuarios</h2>
-      <button
-        onClick={() =>
-          setEditing({
-            id: 0,
-            userName: '',
-            realName: '',
-            email: '',
-            password: '',
-            type: 'comun',
-          })
-        }
-      >
-        + Nuevo Usuario
-      </button>
-
+      <button onClick={() => setEditing(new User())}>+ Nuevo Usuario</button>
       <ul>
         {list.map((user) => (
           <li key={user.id}>
-            <strong>{user.userName}</strong> ({user.realName}) — {user.email} — {user.type}
+            <strong>{user.userName}</strong> ({user.realName}) — {user.email} —{' '}
+            {user.type}
             <button onClick={() => setEditing(user)}>Editar</button>
           </li>
         ))}
