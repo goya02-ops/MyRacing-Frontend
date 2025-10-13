@@ -1,7 +1,7 @@
 import { lazy, useState, useEffect } from 'react';
 import { Membership } from '../types/entities.ts';
 import { fetchEntities, saveEntity } from '../services/service.ts';
-const MembershipForm = lazy(() => import('./MembershipForm'));
+const MembershipForm = lazy(() => import('../components/MembershipForm'));
 
 export default function MembershipAdmin() {
   const [list, setList] = useState<Membership[]>([]);

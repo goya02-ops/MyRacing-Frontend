@@ -1,7 +1,9 @@
 import { lazy, useState, useEffect } from 'react';
 import { CircuitVersion, Circuit, Simulator } from '../types/entities';
 import { fetchEntities, saveEntity } from '../services/service.ts';
-const CircuitVersionForm = lazy(() => import('./CircuitVersionForm'));
+const CircuitVersionForm = lazy(
+  () => import('../components/CircuitVersionForm')
+);
 
 export default function CircuitVersionAdmin() {
   const [list, setList] = useState<CircuitVersion[]>([]);

@@ -3,7 +3,9 @@
 import { lazy, useEffect, useState } from 'react';
 import { CategoryVersion, Category, Simulator } from '../types/entities';
 import { fetchEntities, saveEntity } from '../services/service';
-const CategoryVersionForm = lazy(() => import('./CategoryVersionForm'));
+const CategoryVersionForm = lazy(
+  () => import('../components/CategoryVersionForm')
+);
 
 export default function CategoryVersionAdmin() {
   const [list, setList] = useState<CategoryVersion[]>([]);
