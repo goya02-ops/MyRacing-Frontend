@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { lazy, useState, useEffect } from 'react';
 import { Category } from '../types/entities.ts';
 import { fetchEntities, saveEntity } from '../services/service.ts';
-import CategoryForm from './CategoryForm.tsx';
+const CategoryForm = lazy(() => import('../components/CategoryForm.tsx'));
 
 export default function CategoryAdmin() {
   const [list, setList] = useState<Category[]>([]);
@@ -23,28 +23,32 @@ export default function CategoryAdmin() {
   return (
     <section>
       <h2>Administrar Categorías</h2>
-      <button
-        onClick={() =>
-          setEditing({
-            id: 0,
-            denomination: '',
-            description: '',
-            abbreviation: '',
-          })
-        }
-      >
+      <button onClick={() => setEditing(new Category())}>
         + Nuevo Circuito
       </button>
 
-      <ul>
-        {list.map((c) => (
-          <li key={c.id}>
-            <strong>{c.denomination}</strong> ({c.abbreviation}) —{' '}
-            {c.description}
-            <button onClick={() => setEditing(c)}>Editar</button>
-          </li>
-        ))}
-      </ul>
+      <table>
+        <thead>
+          <tr>
+            <th>Denominación</th>
+            <th>Abreviatura</th>
+            <th>Descripción</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {list.map((c) => (
+            <tr key={c.id}>
+              <td>{c.denomination}</td>
+              <td>{c.abbreviation}</td>
+              <td>{c.description}</td>
+              <td>
+                <button onClick={() => setEditing(c)}>Editar</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
       {editing && (
         <CategoryForm
