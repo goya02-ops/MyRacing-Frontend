@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import SimulatorForm from './SimulatorForm.tsx';
+import { lazy, useState, useEffect } from 'react';
 import { Simulator } from '../types/entities.ts';
 import { fetchEntities, saveEntity } from '../services/service.ts';
+const SimulatorForm = lazy(() => import('../components/SimulatorForm'));
 
 export default function SimulatorAdmin() {
   const [list, setList] = useState<Simulator[]>([]);

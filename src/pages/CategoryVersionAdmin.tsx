@@ -1,22 +1,23 @@
-import { useState, useEffect } from 'react';
-import { CircuitVersion, Circuit, Simulator } from '../types/entities';
-import { fetchEntities, saveEntity } from '../services/service.ts';
-import CircuitVersionForm from './CircuitVersionForm.tsx';
+// src/components/CategoryVersionAdmin.tsx
 
-export default function CircuitVersionAdmin() {
-  const [list, setList] = useState<CircuitVersion[]>([]);
-  const [editing, setEditing] = useState<CircuitVersion | null>(null);
+import { lazy, useEffect, useState } from 'react';
+import { CategoryVersion, Category, Simulator } from '../types/entities';
+import { fetchEntities, saveEntity } from '../services/service';
+const CategoryVersionForm = lazy(
+  () => import('../components/CategoryVersionForm')
+);
 
-  const [circuits, setCircuits] = useState<Circuit[] | null>(null);
+export default function CategoryVersionAdmin() {
+  const [list, setList] = useState<CategoryVersion[]>([]);
+  const [categories, setCategories] = useState<Category[] | null>(null);
   const [simulators, setSimulators] = useState<Simulator[] | null>(null);
-
+  const [editing, setEditing] = useState<CategoryVersion | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Capturar versiones de los circuitos
   useEffect(() => {
     const fetchData = async () => {
       try {
-        await fetchEntities(CircuitVersion).then(setList).catch(console.error);
+        await fetchEntities(CategoryVersion).then(setList).catch(console.error);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -29,10 +30,10 @@ export default function CircuitVersionAdmin() {
   // Capturar circuitos y simuladores para el formulario
   useEffect(() => {
     //Solo cargar si se está editando y no se han cargado ya
-    if (editing && !circuits && !simulators) {
+    if (editing && !categories && !simulators) {
       const fetchData = async () => {
         try {
-          await fetchEntities(Circuit).then(setCircuits);
+          await fetchEntities(Category).then(setCategories);
           const sims = await fetchEntities(Simulator);
           //Mostrar solo aquellos que estén activos
           setSimulators(sims.filter((s) => s.status === 'Activo'));
@@ -44,49 +45,50 @@ export default function CircuitVersionAdmin() {
       };
       fetchData();
     }
-  }, [editing, circuits, simulators]);
+  }, [editing, categories, simulators]);
 
-  const isDuplicate = (cv: CircuitVersion): boolean => {
+  // Función para verificar duplicados (solo por categoría y simulador)
+  const isDuplicate = (cv: CategoryVersion): boolean => {
     return list.some((item) => {
       // Extraer IDs si son objetos
-      const itemCircuitId =
-        typeof item.circuit === 'object' ? item.circuit.id : item.circuit;
+      const itemCategoryId =
+        typeof item.category === 'object' ? item.category.id : item.category;
       const itemSimulatorId =
         typeof item.simulator === 'object' ? item.simulator.id : item.simulator;
-      const cvCircuitId =
-        typeof cv.circuit === 'object' ? cv.circuit.id : cv.circuit;
+      const cvCategoryId =
+        typeof cv.category === 'object' ? cv.category.id : cv.category;
       const cvSimulatorId =
         typeof cv.simulator === 'object' ? cv.simulator.id : cv.simulator;
 
       return (
-        itemCircuitId === cvCircuitId &&
+        itemCategoryId === cvCategoryId &&
         itemSimulatorId === cvSimulatorId &&
         item.id !== cv.id // Excluir el mismo registro si estamos editando
       );
     });
   };
 
-  function normalizeCircuitVersion(cv: CircuitVersion): CircuitVersion {
+  function normalizeCategoryVersion(cv: CategoryVersion): CategoryVersion {
     return {
       ...cv,
-      circuit: typeof cv.circuit === 'object' ? cv.circuit.id! : cv.circuit,
+      category: typeof cv.category === 'object' ? cv.category.id! : cv.category,
       simulator:
         typeof cv.simulator === 'object' ? cv.simulator.id! : cv.simulator,
     };
   }
 
-  const handleSave = async (circuitVersion: CircuitVersion) => {
+  const handleSave = async (categoryVersion: CategoryVersion) => {
     // Normalizar el objeto antes de guardar (asegurar que sean solo IDs)
-    const normalized = normalizeCircuitVersion(circuitVersion);
+    const normalized = normalizeCategoryVersion(categoryVersion);
 
     // Verificar duplicado
     if (isDuplicate(normalized)) {
-      alert('Esta combinación de Circuito y Simulador ya existe.');
+      alert('Esta combinación de Categoría y Simulador ya existe.');
       return;
     }
 
     try {
-      const saved = await saveEntity(CircuitVersion, normalized);
+      const saved = await saveEntity(CategoryVersion, normalized);
       setList((prev) =>
         prev.some((c) => c.id === saved.id)
           ? prev.map((c) => (c.id === saved.id ? saved : c))
@@ -95,7 +97,7 @@ export default function CircuitVersionAdmin() {
       setEditing(null);
     } catch (error) {
       console.error('Error guardando:', error);
-      alert('Error al guardar la versión de circuito');
+      alert('Error al guardar la versión de categoría');
     }
   };
 
@@ -105,25 +107,27 @@ export default function CircuitVersionAdmin() {
 
   return (
     <section>
-      <h2>Administrar Versiones de Circuitos</h2>
-      <button onClick={() => setEditing(new CircuitVersion())}>
-        + Nueva Versión de Circuito
+      <h2>Administrar Versiones de Categoría</h2>
+      <button onClick={() => setEditing(new CategoryVersion())}>
+        + Nueva Versión de Categoría
       </button>
+
       <table>
         <thead>
           <tr>
-            <th>Circuito</th>
+            <th>Categoría</th>
             <th>Simulador</th>
             <th>Estado</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
           {list.map((cv) => (
             <tr key={cv.id}>
               <td>
-                {typeof cv.circuit === 'object'
-                  ? cv.circuit.denomination
-                  : `ID ${cv.circuit}`}
+                {typeof cv.category === 'object'
+                  ? cv.category.denomination
+                  : `ID ${cv.category}`}
               </td>
               <td>
                 {typeof cv.simulator === 'object'
@@ -144,11 +148,12 @@ export default function CircuitVersionAdmin() {
           ))}
         </tbody>
       </table>
-      {editing && circuits && simulators && (
-        <CircuitVersionForm
+
+      {editing && categories && simulators && (
+        <CategoryVersionForm
           initial={editing}
-          circuits={circuits!}
-          simulators={simulators!}
+          categories={categories}
+          simulators={simulators}
           onSave={handleSave}
           onCancel={() => setEditing(null)}
         />

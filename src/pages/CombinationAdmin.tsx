@@ -1,9 +1,11 @@
 // src/components/CombinationAdmin.tsx
 
-import { useEffect, useState } from 'react';
+import { useEffect, lazy, useState } from 'react';
 import { Combination, Simulator} from '../types/entities';
 import { fetchEntities, saveEntity } from '../services/service';
-import CombinationForm from './CombinationForm';
+const CombinationForm = lazy(
+  () => import('../components/CombinationForm.tsx')
+);
 
 export default function CombinationAdmin() {
   const [list, setList] = useState<Combination[]>([]);
