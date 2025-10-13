@@ -1,5 +1,3 @@
-// src/components/CombinationForm.tsx
-
 import { useEffect, useState } from 'react';
 import { Combination, CategoryVersion, CircuitVersion, Simulator } from '../types/entities';
 import { fetchEntities } from '../services/service';
@@ -82,13 +80,13 @@ export default function CombinationForm({
   const handleSimulatorChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const simId = e.target.value ? Number(e.target.value) : undefined;
     setSelectedSimulator(simId);
-    // Resetear las selecciones cuando cambia el simulador
+    // Reseteamos las selecciones cuando cambia el simulador
     setForm(prev => ({
       ...prev,
       categoryVersion: undefined,
       circuitVersion: undefined,
     }));
-    // Limpiar las listas
+    // Limpiamos las listas
     setCategoryVersions([]);
     setCircuitVersions([]);
   };

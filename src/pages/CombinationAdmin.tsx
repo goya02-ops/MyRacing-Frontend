@@ -1,5 +1,3 @@
-// src/components/CombinationAdmin.tsx
-
 import { useEffect, lazy, useState } from 'react';
 import { Combination, Simulator} from '../types/entities';
 import { fetchEntities, saveEntity } from '../services/service';
@@ -13,7 +11,7 @@ export default function CombinationAdmin() {
   const [editing, setEditing] = useState<Combination | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Cargar solo la lista de combinaciones al inicio
+  // Cargamos solo la lista de combinaciones al inicio
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -43,7 +41,7 @@ export default function CombinationAdmin() {
     }
   }, [editing, simulators]);
 
-  // Función para verificar duplicados
+  // Acá validamos con una función, los duplicados
   const isDuplicate = (comb: Combination): boolean => {
     return list.some((item) => {
       const itemCategoryVersionId = typeof item.categoryVersion === 'object' ? item.categoryVersion.id : item.categoryVersion;
