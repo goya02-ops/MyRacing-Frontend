@@ -5,6 +5,7 @@ import {
   Membership,
   CircuitVersion,
   CategoryVersion,
+  Combination,
 } from './entities';
 
 export type Constructor<T> = new (...args: any[]) => T;
