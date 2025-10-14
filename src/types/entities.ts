@@ -27,7 +27,7 @@ export class CategoryVersion {
 
 export class Membership {
   id?: number;
-  denomination: string = '';
+  dateFrom!: Date;
   price!: number;
 }
 
