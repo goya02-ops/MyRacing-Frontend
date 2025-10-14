@@ -45,3 +45,4 @@ export class CircuitVersion {
   simulator!: Simulator | number;
   circuit!: Circuit | number;
 }
+
