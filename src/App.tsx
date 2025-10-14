@@ -1,14 +1,14 @@
 import { lazy } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 
-const SimulatorAdmin = lazy(() => import('./components/SimulatorAdmin.tsx'));
-const CircuitAdmin = lazy(() => import('./components/CircuitAdmin.tsx'));
-const CategoryAdmin = lazy(() => import('./components/CategoryAdmin.tsx'));
+const SimulatorAdmin = lazy(() => import('./pages/SimulatorAdmin.tsx'));
+const CircuitAdmin = lazy(() => import('./pages/CircuitAdmin.tsx'));
+const CategoryAdmin = lazy(() => import('./pages/CategoryAdmin.tsx'));
 const CircuitVersionAdmin = lazy(
-  () => import('./components/CircuitVersionAdmin.tsx')
+  () => import('./pages/CircuitVersionAdmin.tsx')
 );
 const CategoryVersionAdmin = lazy(
-  () => import('./components/CategoryVersionAdmin.tsx')
+  () => import('./pages/CategoryVersionAdmin.tsx')
 );
 
 function App() {
