@@ -18,8 +18,8 @@ export const entityMetaByClass = new Map<Constructor<unknown>, EntityMetadata>([
   [Circuit, { endpoint: '/circuits' }],
   [Category, { endpoint: '/categories' }],
   [Simulator, { endpoint: '/simulators' }],
-  [CategoryVersion, { endpoint: '/categories-version' }],
-  [Membership, { endpoint: '/memberships' }],
+  [CategoryVersion, { endpoint: '/categories-version' }], // Nuevo endpoint
+  [Membership, { endpoint: '/membership' }],
   [CircuitVersion, { endpoint: '/circuits-version' }],
   [Combination, { endpoint: '/combinations' }],
 ]);
