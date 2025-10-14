@@ -35,7 +35,7 @@ export class CategoryVersion {
 
 export class Membership {
   id?: number;
-  denomination: string = '';
+  dateFrom!: Date;
   price!: number;
 }
 
@@ -44,4 +44,23 @@ export class CircuitVersion {
   status: string = '';
   simulator!: Simulator | number;
   circuit!: Circuit | number;
+}
+
+export class Combination {
+  id?: number;
+  dateFrom: string = '';
+  dateTo: string = '';
+  lapsNumber: number = 0;
+  obligatoryStopsQuantity: number = 0;
+  userType: string = '';
+  raceIntervalMinutes: number = 30;
+  categoryVersion?: CategoryVersion | number;
+  circuitVersion?: CircuitVersion | number;
+  races?: Race;
+}
+
+export class Race {
+  id?: number;
+  raceDateTime: string = '';
+  registrationDeadline: string = '';
 }

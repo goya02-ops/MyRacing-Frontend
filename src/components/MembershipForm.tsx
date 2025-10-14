@@ -8,7 +8,10 @@ interface Props {
 }
 
 export default function MembershipForm({ initial, onSave, onCancel }: Props) {
-  const [form, setForm] = useState<Membership>(initial);
+  const [form, setForm] = useState<Membership>({
+    ...initial,
+    price: initial.price ?? '',
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -19,16 +22,10 @@ export default function MembershipForm({ initial, onSave, onCancel }: Props) {
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onSave(form);
+        const now = new Date();
+        onSave({ ...form, dateFrom: now });
       }}
     >
-      <input
-        name="denomination"
-        value={form.denomination}
-        onChange={handleChange}
-        placeholder="Denominación"
-        required
-      />
       <input
         name="price"
         value={form.price}

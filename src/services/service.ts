@@ -12,6 +12,18 @@ export async function fetchEntities<T>(cls: Constructor<T>): Promise<T[]> {
   return json.data;
 }
 
+export async function fetchOne<T extends { id?: number }>(
+  cls: Constructor<T>,
+  entity: T
+): Promise<T> {
+  const metadata = entityMetaByClass.get(cls);
+  if (!metadata) throw new Error('Clase no registrada');
+
+  const res = await fetch(`${API_BASE}${metadata.endpoint}/${entity.id}`);
+  const json = await res.json();
+  return json.data;
+}
+
 export async function saveEntity<T extends { id?: number }>(
   cls: Constructor<T>,
   entity: T

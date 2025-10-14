@@ -29,12 +29,12 @@ function App() {
         <Link to="/user-races-admin">Administrador de carreras por usuario</Link> |{' '}  
         <Link to="/category-version-admin">
           Administrador de versiones de categorías
-        </Link>{' '}
+        </Link>
         |{' '}
         <Link to="/circuit-version-admin">
           Administrador de versiones de circuitos
         </Link>
-        | <Link to="/membership-admin">Administración de membresía</Link>
+        | <Link to="/membership-managment">Administar valor de membresía</Link>
       </nav>
 
       <Routes>
@@ -51,7 +51,7 @@ function App() {
           path="/category-version-admin"
           element={<CategoryVersionAdmin />}
         />
-        <Route path="membership-admin" element={<MembershipAdmin />} />
+        <Route path="/membership-managment" element={<MembershipAdmin />} />
       </Routes>
     </BrowserRouter>
   );

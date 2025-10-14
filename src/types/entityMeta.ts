@@ -6,6 +6,7 @@ import {
   CircuitVersion,
   CategoryVersion,
   User,
+  Combination,
 } from './entities';
 
 export type Constructor<T> = new (...args: any[]) => T;
@@ -22,4 +23,5 @@ export const entityMetaByClass = new Map<Constructor<unknown>, EntityMetadata>([
   [CategoryVersion, { endpoint: '/categories-version' }], // Nuevo endpoint
   [Membership, { endpoint: '/membership' }],
   [CircuitVersion, { endpoint: '/circuits-version' }],
+  [Combination, { endpoint: '/combinations' }],
 ]);
