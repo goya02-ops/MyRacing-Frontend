@@ -24,6 +24,8 @@ export class Simulator {
   id?: number;
   name: string = '';
   status: string = '';
+  categories?: CategoryVersion | number;
+  circuits?: CircuitVersion | number;
 }
 
 export class CategoryVersion {
