@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { Combination, CategoryVersion, CircuitVersion, Simulator } from '../types/entities';
-import { fetchEntities } from '../services/service';
+import { Combination, Simulator } from '../types/entities';
+import { useCombinationForm } from '../hooks/useCombinationForm.ts';
+import createHandlers from '../handlers/combinationFormHandlers.ts';
 
 interface CombinationFormProps {
   initial: Combination;
@@ -9,118 +9,28 @@ interface CombinationFormProps {
   onCancel: () => void;
 }
 
-export default function CombinationForm({ 
-  initial, 
+export default function CombinationForm({
+  initial,
   simulators,
-  onSave, 
-  onCancel 
+  onSave,
+  onCancel,
 }: CombinationFormProps) {
-  const [form, setForm] = useState<Combination>({
-    ...initial,
-    raceIntervalMinutes: initial.raceIntervalMinutes || 30
-  });
-  const [selectedSimulator, setSelectedSimulator] = useState<number | undefined>(undefined);
-  const [categoryVersions, setCategoryVersions] = useState<CategoryVersion[]>([]);
-  const [circuitVersions, setCircuitVersions] = useState<CircuitVersion[]>([]);
-  const [loadingVersions, setLoadingVersions] = useState(false);
-  const [initialLoadDone, setInitialLoadDone] = useState(false);
+  const {
+    form,
+    setForm,
+    selectedSimulator,
+    setSelectedSimulator,
+    categoryVersions,
+    circuitVersions,
+    loading,
+  } = useCombinationForm(initial);
 
-  // Detectar el simulador automáticamente cuando se carga un registro existente
-  useEffect(() => {
-    if (initial.id && initial.categoryVersion && typeof initial.categoryVersion === 'object') {
-      const simulator = initial.categoryVersion.simulator;
-      const simId = typeof simulator === 'object' ? simulator.id : simulator;
-      setSelectedSimulator(simId);
-    } else {
-      setInitialLoadDone(true);
-    }
-  }, [initial]);
+  const { handleInputChange, handleSelectChange, handleSimulatorChange } =
+    createHandlers(setSelectedSimulator, setForm);
 
-  // Traer CategoryVersions y CircuitVersions cuando se selecciona un simulador
-  useEffect(() => {
-    if (selectedSimulator) {
-      setLoadingVersions(true);
-      Promise.all([
-        fetchEntities(CategoryVersion),
-        fetchEntities(CircuitVersion),
-      ])
-        .then(([catVersions, circVersions]) => {
-          // Filtrar por simulador seleccionado
-          const filteredCatVersions = catVersions.filter(cv => {
-            const simId = typeof cv.simulator === 'object' ? cv.simulator.id : cv.simulator;
-            return simId === selectedSimulator;
-          });
-          const filteredCircVersions = circVersions.filter(cv => {
-            const simId = typeof cv.simulator === 'object' ? cv.simulator.id : cv.simulator;
-            return simId === selectedSimulator;
-          });
-          
-          setCategoryVersions(filteredCatVersions);
-          setCircuitVersions(filteredCircVersions);
-          
-          // Si estamos editando, mantener los valores originales
-          if (initial.id && !initialLoadDone) {
-            setForm(prev => ({
-              ...prev,
-              categoryVersion: initial.categoryVersion,
-              circuitVersion: initial.circuitVersion,
-            }));
-            setInitialLoadDone(true);
-          }
-        })
-        .catch(error => {
-          console.error('Error fetching versions:', error);
-        })
-        .finally(() => {
-          setLoadingVersions(false);
-        });
-    }
-  }, [selectedSimulator, initial, initialLoadDone]);
-
-  const handleSimulatorChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const simId = e.target.value ? Number(e.target.value) : undefined;
-    setSelectedSimulator(simId);
-    // Reseteamos las selecciones cuando cambia el simulador
-    setForm(prev => ({
-      ...prev,
-      categoryVersion: undefined,
-      circuitVersion: undefined,
-    }));
-    // Limpiamos las listas
-    setCategoryVersions([]);
-    setCircuitVersions([]);
-  };
-
-  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ 
-      ...prev, 
-      [name]: name === 'userType' ? value : (value ? Number(value) : undefined)
-    }));
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type } = e.target;
-    setForm((prev) => ({ 
-      ...prev, 
-      [name]: type === 'number' ? (value ? Number(value) : 0) : value
-    }));
-  };
-
-  // Función auxiliar para obtener el valor actual de categoryVersion
-  const getCategoryVersionValue = () => {
-    if (typeof form.categoryVersion === 'object' && form.categoryVersion) {
-      return form.categoryVersion.id || '';
-    }
-    return form.categoryVersion || '';
-  };
-
-  // Función auxiliar para obtener el valor actual de circuitVersion
-  const getCircuitVersionValue = () => {
-    if (typeof form.circuitVersion === 'object' && form.circuitVersion) {
-      return form.circuitVersion.id || '';
-    }
-    return form.circuitVersion || '';
+  const getIdValue = (field: 'categoryVersion' | 'circuitVersion') => {
+    const val = form[field];
+    return typeof val === 'object' && val ? val.id || '' : val || '';
   };
 
   return (
@@ -147,32 +57,32 @@ export default function CombinationForm({
         </select>
       </label>
 
-      {loadingVersions && <p>Cargando versiones...</p>}
+      {loading && <p>Cargando versiones...</p>}
 
       <label>
-        2. Versión de Categoría:
+        2. Categoría:
         <select
           name="categoryVersion"
-          value={getCategoryVersionValue()}
+          value={getIdValue('categoryVersion')}
           onChange={handleSelectChange}
           required
-          disabled={!selectedSimulator || loadingVersions}
+          disabled={!selectedSimulator || loading}
         >
           <option value="">
-            {!selectedSimulator 
-              ? 'Primero seleccione un simulador' 
-              : loadingVersions
+            {!selectedSimulator
+              ? 'Primero seleccione un simulador'
+              : loading
               ? 'Cargando...'
               : 'Seleccione una categoría'}
           </option>
           {categoryVersions.map((cv) => {
-            const categoryInfo = typeof cv.category === 'object' 
-              ? `${cv.category.denomination} (${cv.category.abbreviation})` 
-              : `Cat ID: ${cv.category}`;
-            
+            const info =
+              typeof cv.category === 'object'
+                ? `${cv.category.denomination} (${cv.category.abbreviation})`
+                : `Cat ID: ${cv.category}`;
             return (
               <option key={cv.id} value={cv.id}>
-                {categoryInfo} - {cv.status}
+                {info} - {cv.status}
               </option>
             );
           })}
@@ -180,29 +90,29 @@ export default function CombinationForm({
       </label>
 
       <label>
-        3. Versión de Circuito:
+        3. Circuito:
         <select
           name="circuitVersion"
-          value={getCircuitVersionValue()}
+          value={getIdValue('circuitVersion')}
           onChange={handleSelectChange}
           required
-          disabled={!selectedSimulator || loadingVersions}
+          disabled={!selectedSimulator || loading}
         >
           <option value="">
-            {!selectedSimulator 
-              ? 'Primero seleccione un simulador' 
-              : loadingVersions
+            {!selectedSimulator
+              ? 'Primero seleccione un simulador'
+              : loading
               ? 'Cargando...'
               : 'Seleccione un circuito'}
           </option>
           {circuitVersions.map((cv) => {
-            const circuitInfo = typeof cv.circuit === 'object'
-              ? cv.circuit.denomination
-              : `Circ ID: ${cv.circuit}`;
-            
+            const info =
+              typeof cv.circuit === 'object'
+                ? cv.circuit.denomination
+                : `Circ ID: ${cv.circuit}`;
             return (
               <option key={cv.id} value={cv.id}>
-                {circuitInfo}
+                {info}
               </option>
             );
           })}

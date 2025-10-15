@@ -16,6 +16,8 @@ export class Simulator {
   id?: number;
   name: string = '';
   status: string = '';
+  categories?: CategoryVersion | number;
+  circuits?: CircuitVersion | number;
 }
 
 export class CategoryVersion {
@@ -46,6 +48,13 @@ export class Combination {
   obligatoryStopsQuantity: number = 0;
   userType: string = '';
   raceIntervalMinutes: number = 30;
-  categoryVersion?: CategoryVersion | number; 
-  circuitVersion?: CircuitVersion | number;   
+  categoryVersion?: CategoryVersion | number;
+  circuitVersion?: CircuitVersion | number;
+  races?: Race;
+}
+
+export class Race {
+  id?: number;
+  raceDateTime: string = '';
+  registrationDeadline: string = '';
 }

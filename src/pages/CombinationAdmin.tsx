@@ -1,135 +1,47 @@
-import { useEffect, lazy, useState } from 'react';
-import { Combination, Simulator} from '../types/entities';
-import { fetchEntities, saveEntity } from '../services/service';
-const CombinationForm = lazy(
-  () => import('../components/CombinationForm.tsx')
-);
+import { lazy, useCallback } from 'react';
+import { Combination } from '../types/entities';
+import { saveEntity } from '../services/service';
+import useCombinationAdmin from '../hooks/useCombinationAdmin';
+import { isDuplicateCombination } from '../utils/combination/duplicate';
+import { normalizeCombination } from '../utils/combination/normalize';
+import {
+  getCategoryName,
+  getCircuitName,
+  getSimulatorName,
+} from '../utils/combination/getters';
+
+const CombinationForm = lazy(() => import('../components/CombinationForm'));
 
 export default function CombinationAdmin() {
-  const [list, setList] = useState<Combination[]>([]);
-  const [simulators, setSimulators] = useState<Simulator[] | null>(null);
-  const [editing, setEditing] = useState<Combination | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { list, setList, editing, setEditing, simulators, loading } =
+    useCombinationAdmin();
 
-  // Cargamos solo la lista de combinaciones al inicio
-  useEffect(() => {
-    const fetchData = async () => {
+  const handleSave = useCallback(
+    async (combination: Combination) => {
+      const normalized = normalizeCombination(combination);
+
+      if (isDuplicateCombination(list, normalized)) {
+        alert('Esta combinación ya existe con las mismas fechas.');
+        return;
+      }
+
       try {
-        await fetchEntities(Combination).then(setList).catch(console.error);
+        const saved = await saveEntity(Combination, normalized);
+        setList((prev) =>
+          prev.some((c) => c.id === saved.id)
+            ? prev.map((c) => (c.id === saved.id ? saved : c))
+            : [...prev, saved]
+        );
+        setEditing(null);
       } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
+        console.error('Error guardando:', error);
+        alert('Error al guardar la combinación');
       }
-    };
-    fetchData();
-  }, []);
+    },
+    [list, setList, setEditing]
+  );
 
-  // Cargar SOLO simuladores cuando se va a editar/crear
-  useEffect(() => {
-    if (editing && !simulators) {
-      const fetchData = async () => {
-        try {
-          const sims = await fetchEntities(Simulator);
-          // Mostrar solo simuladores activos
-          setSimulators(sims.filter((s) => s.status === 'Activo'));
-        } catch (error) {
-          console.error('Error fetching simulators:', error);
-        }
-      };
-      fetchData();
-    }
-  }, [editing, simulators]);
-
-  // Acá validamos con una función, los duplicados
-  const isDuplicate = (comb: Combination): boolean => {
-    return list.some((item) => {
-      const itemCategoryVersionId = typeof item.categoryVersion === 'object' ? item.categoryVersion.id : item.categoryVersion;
-      const itemCircuitVersionId = typeof item.circuitVersion === 'object' ? item.circuitVersion.id : item.circuitVersion;
-      const combCategoryVersionId = typeof comb.categoryVersion === 'object' ? comb.categoryVersion.id : comb.categoryVersion;
-      const combCircuitVersionId = typeof comb.circuitVersion === 'object' ? comb.circuitVersion.id : comb.circuitVersion;
-
-      return (
-        itemCategoryVersionId === combCategoryVersionId &&
-        itemCircuitVersionId === combCircuitVersionId &&
-        item.dateFrom === comb.dateFrom &&
-        item.dateTo === comb.dateTo &&
-        item.id !== comb.id
-      );
-    });
-  };
-
-  function normalizeCombination(comb: Combination): Combination {
-    return {
-      ...comb,
-      categoryVersion: typeof comb.categoryVersion === 'object' && comb.categoryVersion !== null 
-        ? comb.categoryVersion.id! 
-        : comb.categoryVersion,
-      circuitVersion: typeof comb.circuitVersion === 'object' && comb.circuitVersion !== null 
-        ? comb.circuitVersion.id! 
-        : comb.circuitVersion,
-    };
-  }
-
-  const handleSave = async (combination: Combination) => {
-    const normalized = normalizeCombination(combination);
-
-    // Verificar duplicado
-    if (isDuplicate(normalized)) {
-      alert('Esta combinación ya existe con las mismas fechas.');
-      return;
-    }
-
-    try {
-      const saved = await saveEntity(Combination, normalized);
-      setList((prev) =>
-        prev.some((c) => c.id === saved.id)
-          ? prev.map((c) => (c.id === saved.id ? saved : c))
-          : [...prev, saved]
-      );
-      setEditing(null);
-    } catch (error) {
-      console.error('Error guardando:', error);
-      alert('Error al guardar la combinación');
-    }
-  };
-
-  // Función auxiliar para obtener el nombre de la categoría
-  const getCategoryName = (comb: Combination): string => {
-    if (typeof comb.categoryVersion === 'object' && comb.categoryVersion) {
-      const category = comb.categoryVersion.category;
-      if (typeof category === 'object' && category) {
-        return category.denomination || category.abbreviation || 'Sin nombre';
-      }
-    }
-    return 'N/A';
-  };
-
-  // Función auxiliar para obtener el nombre del circuito
-  const getCircuitName = (comb: Combination): string => {
-    if (typeof comb.circuitVersion === 'object' && comb.circuitVersion) {
-      const circuit = comb.circuitVersion.circuit;
-      if (typeof circuit === 'object' && circuit) {
-        return circuit.denomination || circuit.abbreviation || 'Sin nombre';
-      }
-    }
-    return 'N/A';
-  };
-
-  // Función auxiliar para obtener el nombre del simulador
-  const getSimulatorName = (comb: Combination): string => {
-    if (typeof comb.categoryVersion === 'object' && comb.categoryVersion) {
-      const simulator = comb.categoryVersion.simulator;
-      if (typeof simulator === 'object' && simulator) {
-        return simulator.name || 'Sin nombre';
-      }
-    }
-    return 'N/A';
-  };
-
-  if (loading) {
-    return <div>Cargando...</div>;
-  }
+  if (loading) return <div>Cargando...</div>;
 
   return (
     <section>
