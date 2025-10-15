@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { User } from '../types/entities';
-import { fetchEntities } from '../services/service';
+import { fetchEntities } from '../services/apiMyRacing';
 
 export default function UserAdmin() {
   const [list, setList] = useState<User[]>([]);
@@ -10,7 +10,9 @@ export default function UserAdmin() {
     fetchEntities(User)
       .then((users) => {
         // Filtrar solo usuarios que NO sean administradores
-        const nonAdminUsers = users.filter((u) => u.type !== 'Admin' && u.type !== 'admin');
+        const nonAdminUsers = users.filter(
+          (u) => u.type !== 'Admin' && u.type !== 'admin'
+        );
         setList(nonAdminUsers);
       })
       .catch(console.error)
@@ -27,7 +29,7 @@ export default function UserAdmin() {
   return (
     <section>
       <h2>Administrar Usuarios</h2>
-      
+
       <p style={{ color: '#666', marginBottom: '20px' }}>
         Total de usuarios: <strong>{list.length}</strong>
       </p>
@@ -60,7 +62,8 @@ export default function UserAdmin() {
                     style={{
                       padding: '4px 8px',
                       borderRadius: '4px',
-                      backgroundColor: user.type === 'Premium' ? '#e0e0e0' : '#e0e0e0',
+                      backgroundColor:
+                        user.type === 'Premium' ? '#e0e0e0' : '#e0e0e0',
                       color: user.type === 'Premium' ? '#000' : '#333',
                       fontWeight: 'bold',
                       fontSize: '0.9em',
@@ -70,19 +73,19 @@ export default function UserAdmin() {
                   </span>
                 </td>
                 <td>
-                    <button
-                      style={{
-                        padding: '6px 12px',
-                        backgroundColor: '#6c757d', 
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'not-allowed', 
-                      }}
-                      disabled // Deshabilita el botón
-                    >
-                      Funcionalidad futura
-                    </button>
+                  <button
+                    style={{
+                      padding: '6px 12px',
+                      backgroundColor: '#6c757d',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'not-allowed',
+                    }}
+                    disabled // Deshabilita el botón
+                  >
+                    Funcionalidad futura
+                  </button>
                 </td>
               </tr>
             ))

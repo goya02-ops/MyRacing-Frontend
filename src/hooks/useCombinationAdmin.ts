@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Combination, Simulator } from '../types/entities.ts';
-import { fetchEntities } from '../services/service.ts';
+import { fetchEntities } from '../services/apiMyRacing.ts';
 
 interface useCombinationAdmin {
   list: Combination[];

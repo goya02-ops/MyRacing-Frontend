@@ -1,6 +1,6 @@
 import { lazy, useCallback } from 'react';
 import { Combination } from '../types/entities';
-import { saveEntity } from '../services/service';
+import { saveEntity } from '../services/apiMyRacing';
 import useCombinationAdmin from '../hooks/useCombinationAdmin';
 import { isDuplicateCombination } from '../utils/combination/duplicate';
 import { normalizeCombination } from '../utils/combination/normalize';

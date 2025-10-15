@@ -2,7 +2,7 @@
 
 import { lazy, useEffect, useState } from 'react';
 import { CategoryVersion, Category, Simulator } from '../types/entities';
-import { fetchEntities, saveEntity } from '../services/service';
+import { fetchEntities, saveEntity } from '../services/apiMyRacing';
 const CategoryVersionForm = lazy(
   () => import('../components/CategoryVersionForm')
 );

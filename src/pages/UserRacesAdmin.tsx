@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { User } from '../types/entities';
-import { fetchEntities } from '../services/service';
+import { fetchEntities } from '../services/apiMyRacing';
 
 // Definimos la interfaz RaceUser según el backend
 interface RaceUser {
@@ -23,7 +23,9 @@ export default function UserRaces() {
   useEffect(() => {
     fetchEntities(User)
       .then((users) => {
-        const nonAdminUsers = users.filter((u) => u.type !== 'Admin' && u.type !== 'admin');
+        const nonAdminUsers = users.filter(
+          (u) => u.type !== 'Admin' && u.type !== 'admin'
+        );
         setUsers(nonAdminUsers);
       })
       .catch(console.error)
@@ -34,14 +36,16 @@ export default function UserRaces() {
   useEffect(() => {
     if (selectedUserId) {
       setLoadingRaces(true);
-      
+
       // Endpoint corregido: agregado /by-user
-      fetch(`http://localhost:3000/api/race-users/by-user?userId=${selectedUserId}`)
-        .then(res => res.json())
-        .then(data => {
+      fetch(
+        `http://localhost:3000/api/race-users/by-user?userId=${selectedUserId}`
+      )
+        .then((res) => res.json())
+        .then((data) => {
           setRaceUsers(data.data || data);
         })
-        .catch(error => {
+        .catch((error) => {
           console.error('Error cargando carreras:', error);
           setRaceUsers([]);
         })
@@ -55,7 +59,7 @@ export default function UserRaces() {
     setSelectedUserId(userId);
   };
 
-  const selectedUser = users.find(u => u.id === selectedUserId);
+  const selectedUser = users.find((u) => u.id === selectedUserId);
 
   if (loading) {
     return <div>Cargando usuarios...</div>;
@@ -67,7 +71,13 @@ export default function UserRaces() {
 
       <div style={{ display: 'flex', gap: '20px' }}>
         {/* Lista de usuarios (izquierda) */}
-        <div style={{ flex: '0 0 250px', borderRight: '1px solid #ccc', paddingRight: '20px' }}>
+        <div
+          style={{
+            flex: '0 0 250px',
+            borderRight: '1px solid #ccc',
+            paddingRight: '20px',
+          }}
+        >
           <h3>Usuarios</h3>
           <ul style={{ listStyle: 'none', padding: 0 }}>
             {users.map((user) => (
@@ -78,12 +88,13 @@ export default function UserRaces() {
                     width: '100%',
                     textAlign: 'left',
                     padding: '10px',
-                    backgroundColor: selectedUserId === user.id ? '#007bff' : '#f0f0f0',
+                    backgroundColor:
+                      selectedUserId === user.id ? '#007bff' : '#f0f0f0',
                     color: selectedUserId === user.id ? '#fff' : '#000',
                     border: 'none',
                     borderRadius: '4px',
                     cursor: 'pointer',
-                    fontWeight: selectedUserId === user.id ? 'bold' : 'normal'
+                    fontWeight: selectedUserId === user.id ? 'bold' : 'normal',
                   }}
                 >
                   {user.userName}
@@ -99,25 +110,36 @@ export default function UserRaces() {
         {/* Detalle de carreras (derecha) */}
         <div style={{ flex: 1 }}>
           {!selectedUser ? (
-            <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+            <div
+              style={{ textAlign: 'center', padding: '40px', color: '#666' }}
+            >
               ← Seleccione un usuario para ver sus carreras
             </div>
           ) : (
             <>
-              <h3>Carreras de: {selectedUser.realName} (@{selectedUser.userName})</h3>
-              
+              <h3>
+                Carreras de: {selectedUser.realName} (@{selectedUser.userName})
+              </h3>
+
               {loadingRaces ? (
                 <div>Cargando carreras...</div>
               ) : raceUsers.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
+                <div
+                  style={{
+                    textAlign: 'center',
+                    padding: '20px',
+                    color: '#666',
+                  }}
+                >
                   Este usuario no está inscripto en ninguna carrera
                 </div>
               ) : (
                 <>
                   <p>
-                    <strong>Total de carreras inscriptas:</strong> {raceUsers.length}
+                    <strong>Total de carreras inscriptas:</strong>{' '}
+                    {raceUsers.length}
                   </p>
-                  
+
                   <table>
                     <thead>
                       <tr>
@@ -131,23 +153,29 @@ export default function UserRaces() {
                       {raceUsers.map((ru) => (
                         <tr key={ru.id}>
                           <td>
-                            {new Date(ru.registrationDateTime).toLocaleString('es-AR', {
-                              day: '2-digit',
-                              month: '2-digit',
-                              year: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
+                            {new Date(ru.registrationDateTime).toLocaleString(
+                              'es-AR',
+                              {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              }
+                            )}
                           </td>
                           <td>
-                            {ru.race?.raceDateTime 
-                              ? new Date(ru.race.raceDateTime).toLocaleString('es-AR', {
-                                  day: '2-digit',
-                                  month: '2-digit',
-                                  year: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })
+                            {ru.race?.raceDateTime
+                              ? new Date(ru.race.raceDateTime).toLocaleString(
+                                  'es-AR',
+                                  {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  }
+                                )
                               : 'N/A'}
                           </td>
                           <td>{ru.startPosition}</td>

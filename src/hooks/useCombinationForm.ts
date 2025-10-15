@@ -5,7 +5,7 @@ import {
   Simulator,
 } from '../types/entities.ts';
 import { useState, useEffect } from 'react';
-import { fetchOne } from '../services/service.ts';
+import { fetchOne } from '../services/apiMyRacing.ts';
 
 interface useCombinationForm {
   form: Combination;

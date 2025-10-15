@@ -1,6 +1,6 @@
 import { lazy, useState, useEffect } from 'react';
 import { Membership } from '../types/entities.ts';
-import { fetchEntities, saveEntity } from '../services/service.ts';
+import { fetchEntities, saveEntity } from '../services/apiMyRacing.ts';
 const MembershipForm = lazy(() => import('../components/MembershipForm'));
 const MembershipHistory = lazy(() => import('../components/MembershipHistory'));
 
