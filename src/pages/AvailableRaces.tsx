@@ -10,7 +10,7 @@ export default function AvailableRaces() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchCurrentRaces(Combination)
+    fetchCurrentRaces()
       .then(setCombinations)
       .catch(console.error)
       .finally(() => setLoading(false));

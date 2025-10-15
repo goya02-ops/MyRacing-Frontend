@@ -1,6 +1,6 @@
 import { lazy, useState, useEffect } from 'react';
 import { CircuitVersion, Circuit, Simulator } from '../types/entities';
-import { fetchEntities, saveEntity } from '../services/service.ts';
+import { fetchEntities, saveEntity } from '../services/apiMyRacing.ts';
 const CircuitVersionForm = lazy(
   () => import('../components/CircuitVersionForm')
 );

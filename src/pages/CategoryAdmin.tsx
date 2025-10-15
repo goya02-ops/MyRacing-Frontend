@@ -1,6 +1,6 @@
 import { lazy, useState, useEffect } from 'react';
 import { Category } from '../types/entities.ts';
-import { fetchEntities, saveEntity } from '../services/service.ts';
+import { fetchEntities, saveEntity } from '../services/apiMyRacing.ts';
 const CategoryForm = lazy(() => import('../components/CategoryForm.tsx'));
 
 export default function CategoryAdmin() {
