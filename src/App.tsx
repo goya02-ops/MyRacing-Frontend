@@ -9,6 +9,7 @@ const CircuitAdmin = lazy(() => import('./pages/CircuitAdmin.tsx'));
 const CategoryAdmin = lazy(() => import('./pages/CategoryAdmin.tsx'));
 const UserRacesAdmin = lazy(() => import('./pages/UserRacesAdmin.tsx'));
 const LoginRegister = lazy(() => import('./pages/LoginRegister.tsx'));
+
 const CircuitVersionAdmin = lazy(
   () => import('./pages/CircuitVersionAdmin.tsx')
 );
@@ -19,7 +20,7 @@ const CombinationAdmin = lazy(() => import('./pages/CombinationAdmin.tsx'));
 const UserAdmin = lazy(() => import('./pages/UserAdmin.tsx'));
 
 function App() {
-  const MOCK_USER_ID = 1; 
+  
 
   return (
     <BrowserRouter>
@@ -37,6 +38,7 @@ function App() {
         <Link to="/simulator-admin">Administrador de simuladores</Link> |{' '}
         <Link to="/combination-admin">Administrador de combinaciones</Link> |{' '}
         <Link to="/login-register">Iniciar Sesión / Registrarse</Link> |{' '}
+        
         <Link to="/user-races-admin">
           Administrador de carreras por usuario
         </Link>{' '}
@@ -53,11 +55,7 @@ function App() {
     
       <Routes>
         
-        <Route 
-          path="/my-profile" 
-          element={<UserProfile userId={MOCK_USER_ID} />} 
-        />
-        
+
         <Route path="/user-admin" element={<UserAdmin />} />
         <Route path="/circuit-admin" element={<CircuitAdmin />} />
         <Route path="/category-admin" element={<CategoryAdmin />} />
@@ -65,6 +63,7 @@ function App() {
         <Route path="/combination-admin" element={<CombinationAdmin />} />
         <Route path="/user-races-admin" element={<UserRacesAdmin />} />
         <Route path="/login-register" element={<LoginRegister />} />
+        <Route path="/my-profile" element={<UserProfile />} />
         <Route
           path="/circuit-version-admin"
           element={<CircuitVersionAdmin />}

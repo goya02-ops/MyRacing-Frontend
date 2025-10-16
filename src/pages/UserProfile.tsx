@@ -1,34 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '../types/entities'; 
-import type { RaceUser } from '../pages/UserRacesAdmin';
-import { MOCK_USER_PROFILE, MOCK_RACE_RESULTS } from '../mocks/user.mock'; 
+import { fetchWithAuth, getStoredUser } from '../services/apiMyRacing';
 
-interface UserProfileProps {
-  userId: number;
+interface RaceUser {
+  id?: number;
+  registrationDateTime: string | Date;
+  startPosition: number;
+  finishPosition: number;
+  race: any;
+  user: any;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const simulateFetchData = (_: number): Promise<{user: User, results: RaceUser[]}> => {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve({
-                user: new User(MOCK_USER_PROFILE),
-                results: MOCK_RACE_RESULTS,
-            });
-        }, 500);
-    });
-};
-
-const simulateSaveUser = (data: User): Promise<User> => {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve(data); 
-        }, 500);
-    });
-};
-
-
-export default function UserProfile({ userId }: UserProfileProps) {
+export default function UserProfile(){
   const [user, setUser] = useState<User | null>(null);
   const [results, setResults] = useState<RaceUser[]>([]); 
   const [formData, setFormData] = useState<User | null>(null);
@@ -36,41 +19,52 @@ export default function UserProfile({ userId }: UserProfileProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
+
+
+useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const data = await simulateFetchData(userId); 
+        const currentUser = getStoredUser();
         
-        setUser(data.user);
-        setResults(data.results); 
-        setFormData(new User(data.user)); 
+        if (!currentUser || !currentUser.id) {
+          throw new Error('Usuario no autenticado');
+        }
+
+        const userResponse = await fetchWithAuth(`/users/${currentUser.id}`);
+        const userData = await userResponse.json();
+        
+        const racesResponse = await fetchWithAuth(`/race-users/by-user?userId=${currentUser.id}`);
+        const racesData = await racesResponse.json();
+        
+        setUser(userData.data);
+        setResults(racesData.data || []);
+        setFormData(userData.data);
         
       } catch (error) {
-        console.error('Error al cargar datos del perfil (Mock):', error);
+        console.error('Error al cargar datos del perfil:', error);
+        alert('Error al cargar el perfil');
       } finally {
         setLoading(false);
       }
     };
     
-    if (userId) {
-      fetchData();
-    }
-  }, [userId]);
+    fetchData();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     if (formData) {
       setFormData({ 
         ...formData, 
-        [name]: value as any 
+        [name]: value 
       });
     }
   };
+  
+  const handleSave = async () => {
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData) return;
+    if (!formData || !formData.id) return;
 
     setSaving(true);
     
@@ -81,11 +75,37 @@ export default function UserProfile({ userId }: UserProfileProps) {
     }
 
     try {
-      const savedUser = await simulateSaveUser(formData);
+      const response = await fetchWithAuth(`/users/${formData.id}`,  {
+        method: 'PATCH',
+        headers: {
+        'Content-Type': 'application/json',
+                  },
+        body: JSON.stringify({
+          realName: formData.realName,
+          email: formData.email,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al actualizar perfil');
+      }
+
+      const updatedData = await response.json();
       
-      setUser(savedUser); 
-      setIsEditing(false); 
-      alert('Perfil actualizado con éxito (MOCK).');
+      setUser(updatedData.data); 
+      setFormData(updatedData.data);
+      setIsEditing(false);
+      
+      alert('Perfil actualizado con éxito.');
+      
+      const storedUser = getStoredUser();
+      if (storedUser) {
+        localStorage.setItem('user', JSON.stringify({
+          ...storedUser,
+          realName: updatedData.data.realName,
+          email: updatedData.data.email,
+        }));
+      }
       
     } catch (error) {
       console.error('Error al guardar el perfil:', error);
@@ -98,7 +118,7 @@ export default function UserProfile({ userId }: UserProfileProps) {
   const handleCancel = () => {
       setIsEditing(false);
       if (user) {
-          setFormData(new User(user));
+          setFormData({ ...user }); 
       }
   };
 
@@ -108,23 +128,18 @@ export default function UserProfile({ userId }: UserProfileProps) {
   return (
     <div className="user-profile-container">
       <h2>Mi Perfil de Carreras</h2>
-      <p>Modo: **MOCK DE DATOS**</p> 
       
-      {/* ========================================================= */}
-      {/* SECCIÓN 1: DATOS PERSONALES (Formulario y Edición) */}
-      {/* ========================================================= */}
       <section className="profile-details-card">
         <h3>Datos Personales</h3>
         
-        <form onSubmit={handleSave}>
+        
+        <form id="profile-form" onSubmit={handleSave}>
           
-          {/* USERNAME (Solo lectura) */}
           <div className="profile-field">
             <label>Usuario (Login):</label>
             <input type="text" value={user.userName} disabled />
           </div>
 
-          {/* REALNAME (Editable) */}
           <div className="profile-field">
             <label>Nombre Completo:</label>
             <input
@@ -137,7 +152,6 @@ export default function UserProfile({ userId }: UserProfileProps) {
             />
           </div>
           
-          {/* EMAIL (Editable) */}
           <div className="profile-field">
             <label>Email:</label>
             <input
@@ -150,61 +164,94 @@ export default function UserProfile({ userId }: UserProfileProps) {
             />
           </div>
 
-          {/* TIPO DE PLAN (Solo lectura) */}
           <div className="profile-field">
             <label>Plan:</label>
-            <span className={`profile-status ${user.type}`}>{user.type.toUpperCase()}</span>
-          </div>
-
-          {/* Botones de Acción */}
-          <div className="profile-actions">
-            {!isEditing ? (
-              <button type="button" onClick={() => setIsEditing(true)}>
-                Editar Perfil
-              </button>
-            ) : (
-              <>
-                <button type="submit" disabled={saving}>
-                  {saving ? 'Guardando...' : 'Guardar Cambios'}
-                </button>
-                <button type="button" onClick={handleCancel} disabled={saving}>
-                  Cancelar
-                </button>
-              </>
-            )}
+            <span className={`profile-status ${user.type}`}>
+              {user.type.toUpperCase()}
+            </span>
           </div>
         </form>
+        
+
+       
+        <div className="profile-actions">
+          {!isEditing ? (
+            <button type="button" onClick={() => setIsEditing(true)}>
+              Editar Perfil
+            </button>
+          ) : (
+            <>
+              
+              <button type="button" onClick={handleSave} disabled={saving}>
+                {saving ? 'Guardando...' : 'Guardar Cambios'}
+              </button>
+              <button type="button" onClick={handleCancel} disabled={saving}>
+                Cancelar
+              </button>
+            </>
+          )}
+        </div>
       </section>
 
-      {/* ========================================================= */}
-      {/* SECCIÓN 2: RESULTADOS DE CARRERAS */}
-      {/* ========================================================= */}
+     
+    
+      
       <section className="race-results-card mt-4">
         <h3>Historial de Carreras ({results.length}) 🏆</h3>
         
         {results.length === 0 ? (
-            <p>Aún no tienes resultados de carreras registrados.</p>
+          <p>Aún no tienes resultados de carreras registrados.</p>
         ) : (
-            <table className="results-table">
-                <thead>
-                    <tr>
-                        <th>Fecha Registro</th>
-                        <th>Carrera</th>
-                        <th>Pos. Salida</th>
-                        <th>Pos. Final</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {results.map((ru) => (
-                        <tr key={ru.id} className={ru.finishPosition === 1 ? 'winner-row' : ''}> 
-                            <td>{new Date(ru.registrationDateTime).toLocaleDateString()}</td>
-                            <td>{ru.race}</td> 
-                            <td>{ru.startPosition}</td>
-                            <td><strong>{ru.finishPosition}</strong></td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+          <table className="results-table">
+            <thead>
+              <tr>
+                <th>Fecha Registro</th>
+                <th>Fecha Carrera</th>
+                <th>Pos. Salida</th>
+                <th>Pos. Final</th>
+              </tr>
+            </thead>
+            <tbody>
+              {results.map((ru) => (
+                <tr key={ru.id} className={ru.finishPosition === 1 ? 'winner-row' : ''}> 
+                  
+                  <td>
+                    {new Date(ru.registrationDateTime).toLocaleDateString('es-AR', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                    })}
+                  </td>
+                  
+                  <td>
+                    {ru.race?.raceDateTime 
+                      ? new Date(ru.race.raceDateTime).toLocaleString('es-AR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
+                      : 'N/A'}
+                  </td>
+                  
+                  <td>{ru.startPosition}</td>
+                  
+                  <td>
+                    <strong style={{ 
+                      color: ru.finishPosition === 1 ? '#ffd700' : 'inherit',
+                      fontWeight: ru.finishPosition <= 3 ? 'bold' : 'normal'
+                    }}>
+                      {ru.finishPosition}
+                      {ru.finishPosition === 1 && ' 🥇'}
+                      {ru.finishPosition === 2 && ' 🥈'}
+                      {ru.finishPosition === 3 && ' 🥉'}
+                    </strong>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </section>
     </div>
