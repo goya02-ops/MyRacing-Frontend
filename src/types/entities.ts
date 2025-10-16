@@ -17,9 +17,22 @@ export class User {
   userName: string = '';
   realName: string = '';
   email: string = '';
-  password: string = '';
+  password?: string = '';
   type: string = '';
+
+constructor(data: Partial<User> = {}) {
+    Object.assign(this, {
+        userName: '',
+        realName: '',
+        email: '',
+        password: '',
+        type: 'comun',
+    });
+
+     Object.assign(this, data);
+  }
 }
+
 export class Simulator {
   id?: number;
   name: string = '';

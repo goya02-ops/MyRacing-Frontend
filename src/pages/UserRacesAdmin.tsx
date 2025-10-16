@@ -3,7 +3,7 @@ import { User } from '../types/entities';
 import { fetchEntities } from '../services/apiMyRacing';
 
 // Definimos la interfaz RaceUser según el backend
-interface RaceUser {
+export interface RaceUser {
   id?: number;
   registrationDateTime: string | Date;
   startPosition: number;
