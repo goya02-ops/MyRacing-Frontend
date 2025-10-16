@@ -3,4 +3,5 @@ ignoredBuiltDependencies:
   - esbuild
 
 onlyBuiltDependencies:
+  - '@tailwindcss/oxide'
   - bcrypt

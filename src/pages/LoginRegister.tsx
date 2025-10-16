@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; 
-import styles from '../styles/LoginRegister.module.css'; 
+import { useNavigate } from 'react-router-dom';
+import styles from '../styles/LoginRegister.module.css';
 
 type Mode = 'login' | 'register';
 
 export default function LoginRegister() {
-  const [mode, setMode] = useState<Mode>('login'); 
+  const [mode, setMode] = useState<Mode>('login');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [agreeTerms, setAgreeTerms] = useState(false); 
+  const [agreeTerms, setAgreeTerms] = useState(false);
   const navigate = useNavigate();
 
   // Formulario de Login
@@ -59,8 +59,8 @@ export default function LoginRegister() {
 
       // Guarda usuario y TOKENS en localStorage
       localStorage.setItem('user', JSON.stringify(data.data));
-      localStorage.setItem('accessToken', data.accessToken); 
-      localStorage.setItem('refreshToken', data.refreshToken); 
+      localStorage.setItem('accessToken', data.accessToken);
+      localStorage.setItem('refreshToken', data.refreshToken);
 
       // Redirige según tipo de usuario
       if (data.data.type === 'Admin' || data.data.type === 'admin') {
@@ -69,6 +69,7 @@ export default function LoginRegister() {
         navigate('/'); // O la página principal del usuario
       }
     } catch (error) {
+      console.log(error);
       setError('Error de conexión. Intente nuevamente.');
       setLoading(false);
     }
@@ -143,6 +144,7 @@ export default function LoginRegister() {
 
       // Esperamos a que el usuario inicie sesión
     } catch (error) {
+      console.log(error);
       setError('Error de conexión. Intente nuevamente.');
       setLoading(false);
     }
@@ -214,12 +216,16 @@ export default function LoginRegister() {
                 onClick={() => setShowPassword(!showPassword)}
                 className={styles.togglePasswordButton}
               >
-                {showPassword ? '🙈' : '👁️'}
+                {showPassword ? '👁️' : '🙈'}
               </button>
             </div>
           </label>
 
-          <button type="submit" disabled={loading} className={styles.submitButton}>
+          <button
+            type="submit"
+            disabled={loading}
+            className={styles.submitButton}
+          >
             {loading ? 'Iniciando...' : 'Iniciar Sesión'}
           </button>
         </form>
@@ -312,7 +318,11 @@ export default function LoginRegister() {
             </label>
           </div>
 
-          <button type="submit" disabled={loading} className={styles.submitButton}>
+          <button
+            type="submit"
+            disabled={loading}
+            className={styles.submitButton}
+          >
             {loading ? 'Registrando...' : 'Crear Cuenta'}
           </button>
         </form>
