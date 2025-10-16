@@ -113,9 +113,6 @@ export async function logout() {
   window.location.href = '/login';
 }
 
-// ============================================
-// ENTITY FUNCTIONS (usando fetchWithAuth)
-// ============================================
 
 export async function fetchEntities<T>(cls: Constructor<T>): Promise<T[]> {
   const metadata = entityMetaByClass.get(cls);
@@ -136,9 +133,10 @@ export async function fetchOne<T extends { id?: number }>(
   return json.data;
 }
 
+
 export async function fetchCurrentRaces(): Promise<Combination[]> {
   const metadata = entityMetaByClass.get(Combination);
-  const res = await fetch(`${API_BASE}${metadata!.endpoint}/races/`);
+  const res = await fetchWithAuth(`${metadata!.endpoint}/races/`);
   const json = await res.json();
   return json.data;
 }
@@ -161,8 +159,6 @@ export async function saveEntity<T extends { id?: number }>(
   const json = await res.json();
   return json.data;
 }
-<<<<<<< HEAD
-=======
 
 export async function deleteEntity<T>(
   cls: Constructor<T>,
@@ -175,4 +171,3 @@ export async function deleteEntity<T>(
   });
   if (!res.ok) throw new Error('Error eliminando entidad');
 }
->>>>>>> feature/my-profile
