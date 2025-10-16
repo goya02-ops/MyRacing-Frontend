@@ -10,12 +10,7 @@ const CategoryAdmin = lazy(() => import('./pages/CategoryAdmin.tsx'));
 const UserRacesAdmin = lazy(() => import('./pages/UserRacesAdmin.tsx'));
 const LoginRegister = lazy(() => import('./pages/LoginRegister.tsx'));
 
-const CircuitVersionAdmin = lazy(
-  () => import('./pages/CircuitVersionAdmin.tsx')
-);
-const CategoryVersionAdmin = lazy(
-  () => import('./pages/CategoryVersionAdmin.tsx')
-);
+
 const AvailableRaces = lazy(() => import('./pages/AvailableRaces.tsx'));
 const CombinationAdmin = lazy(() => import('./pages/CombinationAdmin.tsx'));
 const UserAdmin = lazy(() => import('./pages/UserAdmin.tsx'));
@@ -44,13 +39,7 @@ function App() {
           Administrador de carreras por usuario
         </Link>{' '}
         |{' '}
-        <Link to="/category-version-admin">
-          Administrador de versiones de categorías
-        </Link>
-        |{' '}
-        <Link to="/circuit-version-admin">
-          Administrador de versiones de circuitos
-        </Link>
+
         | <Link to="/membership-managment">Administar valor de membresía</Link>|{' '}
         <Link to="/available-races">Carreras Disponibles</Link>
       </nav>
@@ -66,14 +55,7 @@ function App() {
         <Route path="/user-races-admin" element={<UserRacesAdmin />} />
         <Route path="/login-register" element={<LoginRegister />} />
         <Route path="/my-profile" element={<UserProfile />} />
-        <Route
-          path="/circuit-version-admin"
-          element={<CircuitVersionAdmin />}
-        />
-        <Route
-          path="/category-version-admin"
-          element={<CategoryVersionAdmin />}
-        />
+
         <Route path="/membership-managment" element={<MembershipAdmin />} />
         <Route path="/available-races" element={<AvailableRaces />} />
       </Routes>
