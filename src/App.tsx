@@ -13,6 +13,7 @@ const CircuitVersionAdmin = lazy(
 const CategoryVersionAdmin = lazy(
   () => import('./pages/CategoryVersionAdmin.tsx')
 );
+const AvailableRaces = lazy(() => import('./pages/AvailableRaces.tsx'));
 const CombinationAdmin = lazy(() => import('./pages/CombinationAdmin.tsx'));
 const UserAdmin = lazy(() => import('./pages/UserAdmin.tsx'));
 
@@ -41,7 +42,8 @@ function App() {
         <Link to="/circuit-version-admin">
           Administrador de versiones de circuitos
         </Link>
-        | <Link to="/membership-managment">Administar valor de membresía</Link>
+        | <Link to="/membership-managment">Administar valor de membresía</Link>|{' '}
+        <Link to="/available-races">Carreras Disponibles</Link>
       </nav>
 
       <Routes>
@@ -61,6 +63,7 @@ function App() {
           element={<CategoryVersionAdmin />}
         />
         <Route path="/membership-managment" element={<MembershipAdmin />} />
+        <Route path="/available-races" element={<AvailableRaces />} />
       </Routes>
     </BrowserRouter>
   );

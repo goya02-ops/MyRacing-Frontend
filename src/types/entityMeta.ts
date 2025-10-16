@@ -5,6 +5,7 @@ import {
   Membership,
   CircuitVersion,
   CategoryVersion,
+  Race,
   User,
   Combination,
 } from './entities';
@@ -20,8 +21,9 @@ export const entityMetaByClass = new Map<Constructor<unknown>, EntityMetadata>([
   [Category, { endpoint: '/categories' }],
   [User, { endpoint: '/users' }],
   [Simulator, { endpoint: '/simulators' }],
-  [CategoryVersion, { endpoint: '/categories-version' }], // Nuevo endpoint
+  [CategoryVersion, { endpoint: '/categories-version' }],
   [Membership, { endpoint: '/membership' }],
   [CircuitVersion, { endpoint: '/circuits-version' }],
   [Combination, { endpoint: '/combinations' }],
+  [Race, { endpoint: '/races' }],
 ]);
