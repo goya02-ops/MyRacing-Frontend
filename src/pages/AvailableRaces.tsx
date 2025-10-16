@@ -1,75 +1,83 @@
 import { useState, useEffect, lazy } from 'react';
 import { Combination, Simulator } from '../types/entities';
-import { fetchCurrentRaces, fetchEntities } from '../services/apiMyRacing.ts';
+import { fetchCurrentRaces } from '../services/apiMyRacing.ts';
 const ListRaces = lazy(() => import('../components/ListRaces.tsx'));
 
 export default function AvailableRaces() {
-  const [combinations, setCombinations] = useState<Combination[]>([]);
-  const [simulators, setSimulators] = useState<Simulator[]>([]);
+  const [allCombinations, setAllCombinations] = useState<Combination[]>([]);
+  const [simulatorsWithRaces, setSimulatorsWithRaces] = useState<Simulator[]>(
+    []
+  );
   const [selectedSimulator, setSelectedSimulator] = useState<Simulator | null>(
     null
   );
   const [selectedCombination, setSelectedCombination] =
     useState<Combination | null>(null);
-  const [loadingSimulators, setLoadingSimulators] = useState(true);
-  const [loadingCombinations, setLoadingCombinations] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchEntities(Simulator)
-      .then(setSimulators)
+    fetchCurrentRaces()
+      .then((combs) => {
+        setAllCombinations(combs);
+
+        // Derivar simuladores únicos con combinaciones vigentes
+        const simsMap = new Map<number, Simulator>();
+        combs.forEach((c) => {
+          if (c.categoryVersion?.simulator) {
+            simsMap.set(
+              c.categoryVersion.simulator.id!,
+              c.categoryVersion.simulator
+            );
+          }
+          if (c.circuitVersion?.simulator) {
+            simsMap.set(
+              c.circuitVersion.simulator.id!,
+              c.circuitVersion.simulator
+            );
+          }
+        });
+        setSimulatorsWithRaces(Array.from(simsMap.values()));
+      })
       .catch(console.error)
-      .finally(() => setLoadingSimulators(false));
+      .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => {
-    if (selectedSimulator) {
-      setLoadingCombinations(true);
-      fetchCurrentRaces()
-        .then((allCombinations) => {
-          const filtered = allCombinations.filter(
-            (c) =>
-              c.categoryVersion?.simulator?.id === selectedSimulator.id ||
-              c.circuitVersion?.simulator?.id === selectedSimulator.id
-          );
-          setCombinations(filtered);
-        })
-        .catch(console.error)
-        .finally(() => setLoadingCombinations(false));
-    } else {
-      setCombinations([]);
-      setSelectedCombination(null);
-    }
-  }, [selectedSimulator]);
+  // Filtrar combinaciones según simulador seleccionado
+  const combinations = selectedSimulator
+    ? allCombinations.filter(
+        (c) =>
+          c.categoryVersion?.simulator?.id === selectedSimulator.id ||
+          c.circuitVersion?.simulator?.id === selectedSimulator.id
+      )
+    : [];
 
   return (
     <section>
       <h2>Carreras</h2>
 
-      {loadingSimulators ? (
+      {loading ? (
         <p>Cargando simuladores...</p>
+      ) : simulatorsWithRaces.length === 0 ? (
+        <p>No hay simuladores con combinaciones vigentes.</p>
       ) : (
-        <select
-          value={selectedSimulator?.id ?? ''}
-          onChange={(e) => {
-            const sim = simulators.find((s) => s.id === Number(e.target.value));
-            setSelectedSimulator(sim ?? null);
-            setSelectedCombination(null);
-          }}
-        >
-          <option value="">Seleccionar simulador</option>
-          {simulators.map((sim) => (
-            <option key={sim.id} value={sim.id}>
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+          {simulatorsWithRaces.map((sim) => (
+            <button
+              key={sim.id}
+              onClick={() => {
+                setSelectedSimulator(sim);
+                setSelectedCombination(null);
+              }}
+            >
               {sim.name}
-            </option>
+            </button>
           ))}
-        </select>
+        </div>
       )}
 
       {selectedSimulator && (
         <>
-          {loadingCombinations ? (
-            <p>Cargando combinaciones...</p>
-          ) : combinations.length === 0 ? (
+          {combinations.length === 0 ? (
             <p>No hay combinaciones disponibles para este simulador.</p>
           ) : (
             combinations.map((combination) => (
