@@ -8,6 +8,7 @@ const SimulatorAdmin = lazy(() => import('./pages/SimulatorAdmin.tsx'));
 const CircuitAdmin = lazy(() => import('./pages/CircuitAdmin.tsx'));
 const CategoryAdmin = lazy(() => import('./pages/CategoryAdmin.tsx'));
 const UserRacesAdmin = lazy(() => import('./pages/UserRacesAdmin.tsx'));
+const LoginRegister = lazy(() => import('./pages/LoginRegister.tsx'));
 const CircuitVersionAdmin = lazy(
   () => import('./pages/CircuitVersionAdmin.tsx')
 );
@@ -35,6 +36,7 @@ function App() {
         <Link to="/category-admin">Administrador de categorías</Link> |{' '}
         <Link to="/simulator-admin">Administrador de simuladores</Link> |{' '}
         <Link to="/combination-admin">Administrador de combinaciones</Link> |{' '}
+        <Link to="/login-register">Iniciar Sesión / Registrarse</Link> |{' '}
         <Link to="/user-races-admin">
           Administrador de carreras por usuario
         </Link>{' '}
@@ -62,6 +64,7 @@ function App() {
         <Route path="/simulator-admin" element={<SimulatorAdmin />} />
         <Route path="/combination-admin" element={<CombinationAdmin />} />
         <Route path="/user-races-admin" element={<UserRacesAdmin />} />
+        <Route path="/login-register" element={<LoginRegister />} />
         <Route
           path="/circuit-version-admin"
           element={<CircuitVersionAdmin />}
