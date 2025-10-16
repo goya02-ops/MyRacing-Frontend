@@ -24,15 +24,15 @@ export class Simulator {
   id?: number;
   name: string = '';
   status: string = '';
-  categories?: CategoryVersion | number;
-  circuits?: CircuitVersion | number;
+  categories?: CategoryVersion;
+  circuits?: CircuitVersion;
 }
 
 export class CategoryVersion {
   id?: number;
   status: string = '';
-  category?: number | Category;
-  simulator?: number | Simulator;
+  category?: Category;
+  simulator?: Simulator;
 }
 
 export class Membership {
@@ -44,8 +44,8 @@ export class Membership {
 export class CircuitVersion {
   id?: number;
   status: string = '';
-  simulator!: Simulator | number;
-  circuit!: Circuit | number;
+  simulator!: Simulator;
+  circuit!: Circuit;
 }
 
 export class Combination {
@@ -56,9 +56,9 @@ export class Combination {
   obligatoryStopsQuantity: number = 0;
   userType: string = '';
   raceIntervalMinutes: number = 30;
-  categoryVersion?: CategoryVersion | number;
-  circuitVersion?: CircuitVersion | number;
-  races?: Race;
+  categoryVersion?: CategoryVersion;
+  circuitVersion?: CircuitVersion;
+  races?: Race[];
 }
 
 export class Race {

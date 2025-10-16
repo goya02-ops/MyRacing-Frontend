@@ -68,27 +68,17 @@ export default function CategoryVersionAdmin() {
     });
   };
 
-  function normalizeCategoryVersion(cv: CategoryVersion): CategoryVersion {
-    return {
-      ...cv,
-      category: typeof cv.category === 'object' ? cv.category.id! : cv.category,
-      simulator:
-        typeof cv.simulator === 'object' ? cv.simulator.id! : cv.simulator,
-    };
-  }
-
   const handleSave = async (categoryVersion: CategoryVersion) => {
     // Normalizar el objeto antes de guardar (asegurar que sean solo IDs)
-    const normalized = normalizeCategoryVersion(categoryVersion);
 
     // Verificar duplicado
-    if (isDuplicate(normalized)) {
+    if (isDuplicate(categoryVersion)) {
       alert('Esta combinación de Categoría y Simulador ya existe.');
       return;
     }
 
     try {
-      const saved = await saveEntity(CategoryVersion, normalized);
+      const saved = await saveEntity(CategoryVersion, categoryVersion);
       setList((prev) =>
         prev.some((c) => c.id === saved.id)
           ? prev.map((c) => (c.id === saved.id ? saved : c))

@@ -27,7 +27,7 @@ export async function fetchOne<T extends { id?: number }>(
 
 export async function fetchCurrentRaces(): Promise<Combination[]> {
   const metadata = entityMetaByClass.get(Combination);
-  const res = await fetch(`${API_BASE}${metadata!.endpoint}/races`);
+  const res = await fetch(`${API_BASE}${metadata!.endpoint}/races/`);
   const json = await res.json();
   return json.data;
 }
@@ -52,18 +52,4 @@ export async function saveEntity<T extends { id?: number }>(
 
   const json = await res.json();
   return json.data;
-}
-
-export async function deleteEntity<T>(
-  cls: Constructor<T>,
-  id: number
-): Promise<void> {
-  const metadata = entityMetaByClass.get(cls);
-  if (!metadata) throw new Error('Clase no registrada');
-
-  const res = await fetch(`${API_BASE}${metadata.endpoint}/${id}`, {
-    method: 'DELETE',
-  });
-  
-  if (!res.ok) throw new Error('Error eliminando entidad');
 }

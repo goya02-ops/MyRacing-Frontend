@@ -68,27 +68,17 @@ export default function CircuitVersionAdmin() {
     });
   };
 
-  function normalizeCircuitVersion(cv: CircuitVersion): CircuitVersion {
-    return {
-      ...cv,
-      circuit: typeof cv.circuit === 'object' ? cv.circuit.id! : cv.circuit,
-      simulator:
-        typeof cv.simulator === 'object' ? cv.simulator.id! : cv.simulator,
-    };
-  }
-
   const handleSave = async (circuitVersion: CircuitVersion) => {
     // Normalizar el objeto antes de guardar (asegurar que sean solo IDs)
-    const normalized = normalizeCircuitVersion(circuitVersion);
 
     // Verificar duplicado
-    if (isDuplicate(normalized)) {
+    if (isDuplicate(circuitVersion)) {
       alert('Esta combinación de Circuito y Simulador ya existe.');
       return;
     }
 
     try {
-      const saved = await saveEntity(CircuitVersion, normalized);
+      const saved = await saveEntity(CircuitVersion, circuitVersion);
       setList((prev) =>
         prev.some((c) => c.id === saved.id)
           ? prev.map((c) => (c.id === saved.id ? saved : c))
