@@ -24,7 +24,6 @@
     "@radix-ui/react-slot": "^1.2.3",
     "@remixicon/react": "^4.7.0",
     "@tailwindcss/forms": "^0.5.10",
-    "@tailwindcss/vite": "^4.1.14",
     "@types/bcrypt": "^6.0.0",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
