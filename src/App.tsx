@@ -1,6 +1,7 @@
 import './index.css';
 import { lazy } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+const SignIn = lazy(() => import('./pages/SignIn.tsx'));
 
 const UserProfile = lazy(() => import('./pages/UserProfile.tsx'));
 
@@ -9,7 +10,7 @@ const SimulatorAdmin = lazy(() => import('./pages/SimulatorAdmin.tsx'));
 const CircuitAdmin = lazy(() => import('./pages/CircuitAdmin.tsx'));
 const CategoryAdmin = lazy(() => import('./pages/CategoryAdmin.tsx'));
 const UserRacesAdmin = lazy(() => import('./pages/UserRacesAdmin.tsx'));
-const LoginRegister = lazy(() => import('./pages/LoginRegister.tsx'));
+const LogIn = lazy(() => import('./pages/LogIn.tsx'));
 
 const CircuitVersionAdmin = lazy(
   () => import('./pages/CircuitVersionAdmin.tsx')
@@ -58,7 +59,7 @@ function App() {
         <Route path="/simulator-admin" element={<SimulatorAdmin />} />
         <Route path="/combination-admin" element={<CombinationAdmin />} />
         <Route path="/user-races-admin" element={<UserRacesAdmin />} />
-        <Route path="/login-register" element={<LoginRegister />} />
+        <Route path="/login-register" element={<LogIn />} />
         <Route path="/my-profile" element={<UserProfile />} />
         <Route
           path="/circuit-version-admin"
@@ -70,6 +71,8 @@ function App() {
         />
         <Route path="/membership-managment" element={<MembershipAdmin />} />
         <Route path="/available-races" element={<AvailableRaces />} />
+        <Route path="/login" element={<LogIn />} />
+        <Route path="/signin" element={<SignIn />} />
       </Routes>
     </BrowserRouter>
   );
