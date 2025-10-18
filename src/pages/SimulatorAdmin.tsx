@@ -59,7 +59,7 @@ export default function SimulatorAdmin() {
     return typeof relation === 'object' ? relation.id : relation;
   };
 
-  const handleSaveEntity = async <T extends { id?: number }>(
+    const handleSaveEntity = async <T extends { id?: number }>(
     entityClass: new () => T,
     entity: T,
     setter: React.Dispatch<React.SetStateAction<T[]>>,
@@ -70,12 +70,45 @@ export default function SimulatorAdmin() {
       alert('Esta combinación ya existe.');
       return;
     }
+
+    const entityToSave = { ...entity };
+
+    for (const key in entityToSave) {
+        const value = entityToSave[key as keyof T];
+        if (typeof value === 'object' && value !== null && 'id' in value) {
+            (entityToSave as any)[key] = (value as any).id;
+        }
+    }
+
     try {
-      const saved = await saveEntity(entityClass, entity);
-      setter(prev => prev.some(item => item.id === saved.id)
-          ? prev.map(item => (item.id === saved.id ? saved : item))
-          : [...prev, saved]
-      );
+      const saved = await saveEntity(entityClass, entityToSave as T);
+
+
+      const hydratedSaved: any = { ...saved };
+
+
+      if ('category' in saved) {
+          hydratedSaved.category = categories.find(c => c.id === getRelationId(saved, 'category')) || (saved as any).category;
+      }
+      if ('circuit' in saved) {
+        hydratedSaved.circuit = circuits.find(c => c.id === getRelationId(saved, 'circuit')) || (saved as any).circuit;
+      }
+      if ('simulator' in saved) {
+        hydratedSaved.simulator = simulators.find(s => s.id === getRelationId(saved, 'simulator')) || (saved as any).simulator;
+      }
+
+     
+      setter(prev => {
+        const existingIndex = prev.findIndex(item => item.id === saved.id);
+        if (existingIndex > -1) {
+          const newArray = [...prev];
+          newArray[existingIndex] = hydratedSaved as T;
+          return newArray;
+        } else {
+          return [...prev, hydratedSaved as T];
+        }
+      });
+
       onSuccess();
     } catch (error) {
       console.error('Error guardando:', error);
