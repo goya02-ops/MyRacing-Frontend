@@ -12,25 +12,15 @@ export class Category {
   description: string = '';
 }
 
+export type UserType = 'admin' | 'common' | 'premium';
+
 export class User {
   id?: number;
   userName: string = '';
   realName: string = '';
   email: string = '';
   password?: string = '';
-  type: string = '';
-
-constructor(data: Partial<User> = {}) {
-    Object.assign(this, {
-        userName: '',
-        realName: '',
-        email: '',
-        password: '',
-        type: 'comun',
-    });
-
-     Object.assign(this, data);
-  }
+  type: UserType = 'common';
 }
 
 export class Simulator {

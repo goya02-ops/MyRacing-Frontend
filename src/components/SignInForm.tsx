@@ -21,6 +21,7 @@ export function SignInForm({
   onChange,
   onSubmit,
 }: Props) {
+  if (error) console.log(error);
   return (
     <form onSubmit={onSubmit} className="mt-6 space-y-4">
       {error && <div className="text-red-600">{error}</div>}

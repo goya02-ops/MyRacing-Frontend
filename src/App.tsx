@@ -55,7 +55,7 @@ function App() {
         <Route
           path="/user-admin"
           element={
-            <ProtectedRoute requiredRole="Admin">
+            <ProtectedRoute requiredRole="admin">
               <UserAdmin />
             </ProtectedRoute>
           }
@@ -63,7 +63,7 @@ function App() {
         <Route
           path="/circuit-admin"
           element={
-            <ProtectedRoute requiredRole="Admin">
+            <ProtectedRoute requiredRole="admin">
               <CircuitAdmin />
             </ProtectedRoute>
           }
@@ -71,7 +71,7 @@ function App() {
         <Route
           path="/category-admin"
           element={
-            <ProtectedRoute requiredRole="Admin">
+            <ProtectedRoute requiredRole="admin">
               <CategoryAdmin />
             </ProtectedRoute>
           }
@@ -79,7 +79,7 @@ function App() {
         <Route
           path="/simulator-admin"
           element={
-            <ProtectedRoute requiredRole="Admin">
+            <ProtectedRoute requiredRole="admin">
               <SimulatorAdmin />
             </ProtectedRoute>
           }
@@ -87,7 +87,7 @@ function App() {
         <Route
           path="/circuit-version-admin"
           element={
-            <ProtectedRoute requiredRole="Admin">
+            <ProtectedRoute requiredRole="admin">
               <CircuitVersionAdmin />
             </ProtectedRoute>
           }
@@ -95,7 +95,7 @@ function App() {
         <Route
           path="/category-version-admin"
           element={
-            <ProtectedRoute requiredRole="Admin">
+            <ProtectedRoute requiredRole="admin">
               <CategoryVersionAdmin />
             </ProtectedRoute>
           }
@@ -103,7 +103,7 @@ function App() {
         <Route
           path="/combination-admin"
           element={
-            <ProtectedRoute requiredRole="Admin">
+            <ProtectedRoute requiredRole="admin">
               <CombinationAdmin />
             </ProtectedRoute>
           }
@@ -111,7 +111,7 @@ function App() {
         <Route
           path="/user-races-admin"
           element={
-            <ProtectedRoute requiredRole="Admin">
+            <ProtectedRoute requiredRole="admin">
               <UserRacesAdmin />
             </ProtectedRoute>
           }
@@ -119,7 +119,7 @@ function App() {
         <Route
           path="/membership-managment"
           element={
-            <ProtectedRoute requiredRole="Admin">
+            <ProtectedRoute requiredRole="admin">
               <MembershipAdmin />
             </ProtectedRoute>
           }

@@ -4,7 +4,7 @@ import { useUser } from '../context/UserContext';
 
 type Props = {
   children: React.ReactNode;
-  requiredRole?: 'Admin' | 'User'; // podés extender con más roles
+  requiredRole?: 'admin' | 'common'; // podés extender con más roles
 };
 
 export function ProtectedRoute({ children, requiredRole }: Props) {
