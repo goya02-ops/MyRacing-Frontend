@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { useState } from 'react';
 import { useLoginForm } from '../hooks/useLoginForm.ts';
@@ -6,10 +6,14 @@ import { useLoginForm } from '../hooks/useLoginForm.ts';
 import { LoginForm } from '../components/LoginForm.tsx';
 import { Button, Card } from '../components/tremor/TremorComponents.tsx';
 import { RiCarLine } from '@remixicon/react';
+import { useUser } from '../context/UserContext.tsx';
 
 export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const { setUser } = useUser();
+  const navigate = useNavigate();
 
   const login = useLoginForm({
     setLoading,
@@ -18,6 +22,8 @@ export default function AuthPage() {
       localStorage.setItem('user', JSON.stringify(data.data));
       localStorage.setItem('accessToken', data.accessToken);
       localStorage.setItem('refreshToken', data.refreshToken);
+      setUser(data.data);
+      navigate('/');
     },
   });
 

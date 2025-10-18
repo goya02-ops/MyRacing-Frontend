@@ -11,20 +11,16 @@ import { User } from '../types/entities';
 interface UserContextType {
   user: User | null;
   setUser: (u: User | null) => void;
+  logout: () => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-
-  // 🔹 Persistencia en localStorage
-  useEffect(() => {
+  const [user, setUser] = useState<User | null>(() => {
     const stored = localStorage.getItem('user');
-    if (stored) {
-      setUser(Object.assign(new User(), JSON.parse(stored)));
-    }
-  }, []);
+    return stored ? Object.assign(new User(), JSON.parse(stored)) : null;
+  });
 
   useEffect(() => {
     if (user) {
@@ -34,9 +30,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
-  const logout = () => setUser(null);
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+  };
 
-  // Memoizamos el objeto para evitar recrearlo en cada render
   const value = useMemo(() => ({ user, setUser, logout }), [user]);
 
   return <UserContext value={value}>{children}</UserContext>;
