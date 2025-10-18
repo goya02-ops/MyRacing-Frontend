@@ -1,16 +1,16 @@
 import './index.css';
 import { lazy } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { ProtectedRoute } from './components/ProtectedRoute.tsx';
 
+const SignIn = lazy(() => import('./pages/SignIn.tsx'));
 const UserProfile = lazy(() => import('./pages/UserProfile.tsx'));
-
 const MembershipAdmin = lazy(() => import('./pages/MembershipAdmin.tsx'));
 const SimulatorAdmin = lazy(() => import('./pages/SimulatorAdmin.tsx'));
 const CircuitAdmin = lazy(() => import('./pages/CircuitAdmin.tsx'));
 const CategoryAdmin = lazy(() => import('./pages/CategoryAdmin.tsx'));
 const UserRacesAdmin = lazy(() => import('./pages/UserRacesAdmin.tsx'));
-const LoginRegister = lazy(() => import('./pages/LoginRegister.tsx'));
-
+const LogIn = lazy(() => import('./pages/LogIn.tsx'));
 const CircuitVersionAdmin = lazy(
   () => import('./pages/CircuitVersionAdmin.tsx')
 );
@@ -52,24 +52,83 @@ function App() {
       </nav>
 
       <Routes>
-        <Route path="/user-admin" element={<UserAdmin />} />
-        <Route path="/circuit-admin" element={<CircuitAdmin />} />
-        <Route path="/category-admin" element={<CategoryAdmin />} />
-        <Route path="/simulator-admin" element={<SimulatorAdmin />} />
-        <Route path="/combination-admin" element={<CombinationAdmin />} />
-        <Route path="/user-races-admin" element={<UserRacesAdmin />} />
-        <Route path="/login-register" element={<LoginRegister />} />
-        <Route path="/my-profile" element={<UserProfile />} />
+        <Route
+          path="/user-admin"
+          element={
+            <ProtectedRoute requiredRole="Admin">
+              <UserAdmin />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/circuit-admin"
+          element={
+            <ProtectedRoute requiredRole="Admin">
+              <CircuitAdmin />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/category-admin"
+          element={
+            <ProtectedRoute requiredRole="Admin">
+              <CategoryAdmin />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/simulator-admin"
+          element={
+            <ProtectedRoute requiredRole="Admin">
+              <SimulatorAdmin />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/circuit-version-admin"
-          element={<CircuitVersionAdmin />}
+          element={
+            <ProtectedRoute requiredRole="Admin">
+              <CircuitVersionAdmin />
+            </ProtectedRoute>
+          }
         />
         <Route
           path="/category-version-admin"
-          element={<CategoryVersionAdmin />}
+          element={
+            <ProtectedRoute requiredRole="Admin">
+              <CategoryVersionAdmin />
+            </ProtectedRoute>
+          }
         />
-        <Route path="/membership-managment" element={<MembershipAdmin />} />
+        <Route
+          path="/combination-admin"
+          element={
+            <ProtectedRoute requiredRole="Admin">
+              <CombinationAdmin />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/user-races-admin"
+          element={
+            <ProtectedRoute requiredRole="Admin">
+              <UserRacesAdmin />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/membership-managment"
+          element={
+            <ProtectedRoute requiredRole="Admin">
+              <MembershipAdmin />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/login-register" element={<LogIn />} />
+        <Route path="/my-profile" element={<UserProfile />} />
         <Route path="/available-races" element={<AvailableRaces />} />
+        <Route path="/login" element={<LogIn />} />
+        <Route path="/signin" element={<SignIn />} />
       </Routes>
     </BrowserRouter>
   );

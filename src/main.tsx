@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import ReactDOM from 'react-dom/client';
-import { UserProvider } from './context/user.tsx';
+import { UserProvider } from './context/UserContext.tsx';
 import App from './App.tsx';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
