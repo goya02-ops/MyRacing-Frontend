@@ -12,7 +12,6 @@ interface Props {
 export default function CircuitVersionForm({
   initial,
   circuits,
-  simulators,
   onSave,
   onCancel,
 }: Props) {
@@ -56,23 +55,16 @@ export default function CircuitVersionForm({
 
       <label>
         Simulador:
-        <select
-          name="simulator"
+        <input
+          type="text"
           value={
-            typeof form.simulator === 'object'
-              ? form.simulator.id
-              : form.simulator || ''
+            typeof form.simulator === 'object' && form.simulator !== null
+              ? form.simulator.name
+              : ''
           }
-          onChange={handleSelectChange}
-          required
-        >
-          <option value="">Seleccione un simulador</option>
-          {simulators.map((sim) => (
-            <option key={sim.id} value={sim.id}>
-              {sim.name}
-            </option>
-          ))}
-        </select>
+          disabled
+          
+        />
       </label>
 
       <label>
