@@ -110,7 +110,8 @@ export async function logout() {
   localStorage.removeItem('accessToken');
   localStorage.removeItem('refreshToken');
   localStorage.removeItem('user');
-  window.location.href = '/login';
+  //window.location.href = '/login';
+  //Comento esto así no me redirige al login automáticamente
 }
 
 

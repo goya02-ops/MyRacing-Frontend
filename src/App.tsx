@@ -2,6 +2,8 @@ import './index.css';
 import { lazy } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { ProtectedRoute } from './components/ProtectedRoute.tsx';
+import { AuthButtons } from './components/AuthButtons.tsx';
+import { useUser } from './context/UserContext.tsx';
 
 const SignIn = lazy(() => import('./pages/SignIn.tsx'));
 const UserProfile = lazy(() => import('./pages/UserProfile.tsx'));
@@ -15,12 +17,13 @@ const AvailableRaces = lazy(() => import('./pages/AvailableRaces.tsx'));
 const CombinationAdmin = lazy(() => import('./pages/CombinationAdmin.tsx'));
 const UserAdmin = lazy(() => import('./pages/UserAdmin.tsx'));
 
-function App() {
+function AppContent() {
+  const { user } = useUser();
+
   return (
-    <BrowserRouter>
+    <>
       <nav>
         <Link to="/">
-          {' '}
           <h1>My Racing</h1>
         </Link>
         <Link to="/my-profile">Mi Perfil</Link> |{' '}
@@ -29,16 +32,24 @@ function App() {
         <Link to="/category-admin">Administrador de categorías</Link> |{' '}
         <Link to="/simulator-admin">Administrador de simuladores</Link> |{' '}
         <Link to="/combination-admin">Administrador de combinaciones</Link> |{' '}
-        <Link to="/login-register">Iniciar Sesión / Registrarse</Link> |{' '}
         <Link to="/user-races-admin">
           Administrador de carreras por usuario
         </Link>{' '}
         |{' '}
-
-        | <Link to="/membership-managment">Administar valor de membresía</Link>|{' '}
+        <Link to="/membership-managment">Administar valor de membresía</Link> |{' '}
         <Link to="/available-races">Carreras Disponibles</Link>
+        
+        {!user ? (
+          <>
+            {' '} | <Link to="/login-register">Iniciar Sesión / Registrarse</Link>
+          </>
+        ) : (
+          <>
+            {' '} | <AuthButtons />
+          </>
+        )}
       </nav>
-
+      
       <Routes>
         <Route
           path="/user-admin"
@@ -72,7 +83,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/combination-admin"
           element={
@@ -103,6 +113,14 @@ function App() {
         <Route path="/login" element={<LogIn />} />
         <Route path="/signin" element={<SignIn />} />
       </Routes>
+    </>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
     </BrowserRouter>
   );
 }
