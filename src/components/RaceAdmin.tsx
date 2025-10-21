@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Race, Combination } from '../types/entities'; 
-import { fetchEntities, saveEntity } from '../services/service';
-import RaceForm from './RaceForm'; 
+import { Race, Combination } from '../types/entities';
+import { fetchEntities, saveEntity } from '../services/apiMyRacing.ts';
+import RaceForm from './RaceForm';
 
 interface RaceWithId extends Race {
-    id?: number;
+  id?: number;
 }
 
 export default function RaceAdmin() {
@@ -15,13 +15,10 @@ export default function RaceAdmin() {
 
   useEffect(() => {
     setLoading(true);
- 
-    Promise.all([
-      fetchEntities(Race as any), 
-      fetchEntities(Combination), 
-    ])
+
+    Promise.all([fetchEntities(Race as any), fetchEntities(Combination)])
       .then(([raceList, combList]) => {
-        setList(raceList as RaceWithId[] || []); 
+        setList((raceList as RaceWithId[]) || []);
         setCombinations(combList || []);
         setLoading(false);
       })
@@ -32,32 +29,33 @@ export default function RaceAdmin() {
   }, []);
 
   const handleSave = async (race: RaceWithId) => {
-    
     const normalized: RaceWithId = {
       ...race,
-      combination: typeof race.combination === 'object' ? race.combination.id : race.combination,
+      combination:
+        typeof race.combination === 'object'
+          ? race.combination.id
+          : race.combination,
     };
-    
-    try {
 
+    try {
       const saved = await saveEntity(Race as any, normalized);
-      
+
       setList((prev) => {
         const savedWithId = saved as RaceWithId;
         return prev.some((r) => r.id === savedWithId.id)
           ? prev.map((r) => (r.id === savedWithId.id ? savedWithId : r))
           : [...prev, savedWithId];
       });
-      setEditing(null); 
+      setEditing(null);
     } catch (error) {
       console.error('Error guardando carrera:', error);
       alert('Error al guardar la carrera');
     }
   };
 
-
   const getCombinationName = (combinationId?: number | any): string => {
-    const id = typeof combinationId === 'object' ? combinationId?.id : combinationId;
+    const id =
+      typeof combinationId === 'object' ? combinationId?.id : combinationId;
     const comb = combinations.find((c) => c.id === id);
     return comb ? `ID ${comb.id} (${comb.name || 'Reglas'}` : 'N/A';
   };
@@ -69,13 +67,15 @@ export default function RaceAdmin() {
   return (
     <section>
       <h2>Administrar Carreras (Races)</h2>
-      
-      <button 
-        onClick={() => setEditing({ 
-            raceDateTime: '', 
-            registrationDeadline: '', 
-            combination: undefined 
-        } as RaceWithId)} 
+
+      <button
+        onClick={() =>
+          setEditing({
+            raceDateTime: '',
+            registrationDeadline: '',
+            combination: undefined,
+          } as RaceWithId)
+        }
       >
         + Nueva Carrera
       </button>
@@ -92,18 +92,20 @@ export default function RaceAdmin() {
         </thead>
         <tbody>
           {list.map((race) => (
-            <tr key={race.id}> 
+            <tr key={race.id}>
               <td>{race.id}</td>
               <td>{race.raceDateTime}</td>
               <td>{race.registrationDeadline}</td>
               <td>{getCombinationName(race.combination)}</td>
               <td>
-                <button 
+                <button
                   onClick={() => {
-
                     const normalized: RaceWithId = {
                       ...race,
-                      combination: typeof race.combination === 'object' ? race.combination.id : race.combination,
+                      combination:
+                        typeof race.combination === 'object'
+                          ? race.combination.id
+                          : race.combination,
                     };
                     setEditing(normalized);
                   }}
@@ -118,9 +120,9 @@ export default function RaceAdmin() {
 
       {editing && (
         <RaceForm
-          initial={editing} 
-          combinations={combinations} 
-          onSave={handleSave} 
+          initial={editing}
+          combinations={combinations}
+          onSave={handleSave}
           onCancel={() => setEditing(null)}
         />
       )}
