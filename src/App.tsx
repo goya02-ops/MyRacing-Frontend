@@ -20,10 +20,9 @@ function AppContent() {
   return (
     <>
       <nav>
-        <Link to="/">
-          <h1>My Racing</h1>
-        </Link>
+        <Link to="/">MyRacing</Link>| <Link to="/">Carreras Disponibles</Link>|{' '}
         <Link to="/my-profile">Mi Perfil</Link> |{' '}
+<<<<<<< HEAD
         <Link to="/available-races">Carreras Disponibles</Link> |{' '}
        
         {user?.type === 'admin' && (
@@ -32,18 +31,32 @@ function AppContent() {
           </>
         )}
 
+=======
+        <Link to="/user-admin">Gestión de usuarios</Link> |{' '}
+        <Link to="/circuit-admin">Administrador de circuitos</Link> |{' '}
+        <Link to="/category-admin">Administrador de categorías</Link> |{' '}
+        <Link to="/simulator-admin">Administrador de simuladores</Link> |{' '}
+        <Link to="/combination-admin">Administrador de combinaciones</Link> |{' '}
+        <Link to="/user-races-admin">
+          Administrador de carreras por usuario
+        </Link>{' '}
+        | <Link to="/membership-managment">Administar valor de membresía</Link>{' '}
+>>>>>>> develop
         {!user ? (
           <>
-            {' '} | <Link to="/login-register">Iniciar Sesión / Registrarse</Link>
+            {' '}
+            | <Link to="/login-register">Iniciar Sesión / Registrarse</Link>
           </>
         ) : (
           <>
-            {' '} | <AuthButtons />
+            {' '}
+            | <AuthButtons />
           </>
         )}
       </nav>
-      
+
       <Routes>
+        <Route path="/" element={<AvailableRaces />} />
         <Route
           path="/user-admin"
           element={
@@ -54,7 +67,6 @@ function AppContent() {
         />
         <Route path="/login-register" element={<LogIn />} />
         <Route path="/my-profile" element={<UserProfile />} />
-        <Route path="/available-races" element={<AvailableRaces />} />
         <Route path="/login" element={<LogIn />} />
         <Route path="/signin" element={<SignIn />} />
         <Route
