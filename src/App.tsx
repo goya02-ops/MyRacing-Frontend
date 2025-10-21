@@ -22,7 +22,6 @@ function AppContent() {
       <nav>
         <Link to="/">MyRacing</Link>| <Link to="/">Carreras Disponibles</Link>|{' '}
         <Link to="/my-profile">Mi Perfil</Link> |{' '}
-<<<<<<< HEAD
         <Link to="/available-races">Carreras Disponibles</Link> |{' '}
        
         {user?.type === 'admin' && (
@@ -31,17 +30,6 @@ function AppContent() {
           </>
         )}
 
-=======
-        <Link to="/user-admin">Gestión de usuarios</Link> |{' '}
-        <Link to="/circuit-admin">Administrador de circuitos</Link> |{' '}
-        <Link to="/category-admin">Administrador de categorías</Link> |{' '}
-        <Link to="/simulator-admin">Administrador de simuladores</Link> |{' '}
-        <Link to="/combination-admin">Administrador de combinaciones</Link> |{' '}
-        <Link to="/user-races-admin">
-          Administrador de carreras por usuario
-        </Link>{' '}
-        | <Link to="/membership-managment">Administar valor de membresía</Link>{' '}
->>>>>>> develop
         {!user ? (
           <>
             {' '}
