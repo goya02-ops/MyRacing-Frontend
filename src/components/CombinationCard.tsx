@@ -9,45 +9,47 @@ import { Badge } from './tremor/Badge.tsx';
 
 type Props = {
   combination: Combination;
-  setSelectedCombination: (combination: Combination) => void;
 };
 
-export function CombinationCard({
-  combination,
-  setSelectedCombination,
-}: Props) {
+export function CombinationCard({ combination }: Props) {
   return (
     <Card
       key={combination.id}
-      className="bg-neutral-800 cursor-pointer hover:shadow-lg transition-shadow duration-200"
-      onClick={() => setSelectedCombination(combination)}
+      className="bg-neutral-800 cursor-pointer hover:shadow-lg transition-shadow duration-200 h-full flex flex-col justify-between p-4"
     >
+      {/* Header */}
       <div className="flex justify-between items-start mb-3">
         <Badge variant="success">{combination.userType.toUpperCase()}</Badge>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs md:text-sm text-gray-500">
           {new Date(combination.dateFrom).toLocaleDateString()} -{' '}
           {new Date(combination.dateTo).toLocaleDateString()}
         </p>
       </div>
 
-      <p className="text-xl font-semibold mt-1 mb-1 text-white">
-        {getCategoryName(combination)}
-      </p>
-      <p className="text-sm mb-4 text-white">
-        {getCircuitName(combination)} ({getSimulatorName(combination)})
-      </p>
+      {/* Body */}
+      <div className="flex-1 flex flex-col justify-center">
+        <p className="text-lg md:text-xl font-semibold mt-1 mb-1 text-white text-center">
+          {getCategoryName(combination)}
+        </p>
+        <p className="text-sm md:text-base mb-4 text-white text-center">
+          {getCircuitName(combination)} ({getSimulatorName(combination)})
+        </p>
+      </div>
 
-      <Divider>Detalles</Divider>
-      <div className="flex justify-center mt-4 gap-10 flex-wrap">
-        <div>
-          <p className="font-medium text-l text-white">
-            🏁 {combination.lapsNumber} VUELTAS
-          </p>
-        </div>
-        <div>
-          <p className="font-medium text-l text-white">
-            🛑 {combination.obligatoryStopsQuantity} PARADA(S)
-          </p>
+      {/* Footer */}
+      <div>
+        <Divider>Detalles</Divider>
+        <div className="flex justify-center mt-4 gap-10 flex-wrap">
+          <div>
+            <p className="font-medium text-sm md:text-lg text-white">
+              🏁 {combination.lapsNumber} VUELTAS
+            </p>
+          </div>
+          <div>
+            <p className="font-medium text-sm md:text-lg text-white">
+              🛑 {combination.obligatoryStopsQuantity} PARADA(S)
+            </p>
+          </div>
         </div>
       </div>
     </Card>

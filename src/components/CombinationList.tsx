@@ -13,20 +13,20 @@ export function CombinationList({
   setSelectedCombination,
 }: Props) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8 place-items-center">
-      {combinations.length === 0 && !loading ? (
-        <p className="col-span-full text-center text-gray-500">
-          No hay combinaciones disponibles para el filtro actual.
-        </p>
-      ) : (
-        combinations.map((c) => (
-          <CombinationCard
-            key={c.id}
-            combination={c}
-            setSelectedCombination={setSelectedCombination}
-          />
-        ))
-      )}
-    </div>
+    <>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 pb-8">
+        {combinations.length === 0 && !loading ? (
+          <p className="col-span-full text-center text-gray-500">
+            No hay combinaciones disponibles para el filtro actual.
+          </p>
+        ) : (
+          combinations.map((c) => (
+            <button key={c.id} onClick={() => setSelectedCombination(c)}>
+              <CombinationCard combination={c} />
+            </button>
+          ))
+        )}
+      </div>
+    </>
   );
 }
