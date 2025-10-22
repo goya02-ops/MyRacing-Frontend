@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+
+body {
+  @apply bg-gray-900;
+}
+
 @font-face {
   font-family: 'Geist Sans';
   src: url('./assets/fonts/Geist-Light.woff2') format('woff2');

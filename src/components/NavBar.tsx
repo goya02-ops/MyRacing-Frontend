@@ -11,7 +11,8 @@ export function Navbar() {
   const baseClass = 'text-white';
 
   return (
-    <div className="sticky top-0 z-50 w-full border-b border-gray-800 bg-gray-950">
+    // ✅ ÚNICO CAMBIO: Mantenemos 'sticky' pero quitamos el fondo y el borde.
+    <div className="sticky top-0 z-50 w-full">
       <div className="mx-auto max-w-7xl">
         <div className="grid grid-cols-3 items-center px-4 sm:px-6 lg:px-8">
          
