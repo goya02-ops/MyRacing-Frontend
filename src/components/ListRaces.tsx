@@ -13,7 +13,7 @@ export default function ListRaces({ combination }: Props) {
   });
 
   return upcomingRaces.map((race: any) => (
-    <div key={race.id}>
+    <div className="bg-slate-300" key={race.id}>
       <br />
       Fecha: {new Date(race.raceDateTime).toLocaleDateString()} | Hora:{' '}
       {new Date(race.raceDateTime).toLocaleTimeString()}

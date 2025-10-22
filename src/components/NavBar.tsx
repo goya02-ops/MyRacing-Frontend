@@ -1,6 +1,10 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
-import { TabNavigation, TabNavigationLink } from './tremor/TabNavigation';
+import {
+  Button,
+  TabNavigation,
+  TabNavigationLink,
+} from './tremor/TremorComponents.tsx';
 
 export function Navbar() {
   const { user, logout } = useUser();
@@ -15,19 +19,19 @@ export function Navbar() {
     <div className="sticky top-0 z-50 w-full">
       <div className="mx-auto max-w-7xl">
         <div className="grid grid-cols-3 items-center px-4 sm:px-6 lg:px-8">
-         
           <div className="flex items-center space-x-2 pb-2 text-xl font-bold text-white">
             <span>🏁</span>
             <span>MyRacing</span>
           </div>
 
-          
           <div className="flex justify-center">
             <TabNavigation>
               <TabNavigationLink
                 asChild
                 data-active={location.pathname === '/' ? '' : undefined}
-                className={`${baseClass} ${location.pathname === '/' ? activeClass : ''}`}
+                className={`${baseClass} ${
+                  location.pathname === '/' ? activeClass : ''
+                }`}
               >
                 <button onClick={() => navigate('/')}>
                   Carreras Disponibles
@@ -37,8 +41,12 @@ export function Navbar() {
               {user && (
                 <TabNavigationLink
                   asChild
-                  data-active={location.pathname === '/my-profile' ? '' : undefined}
-                  className={`${baseClass} ${location.pathname === '/my-profile' ? activeClass : ''}`}
+                  data-active={
+                    location.pathname === '/my-profile' ? '' : undefined
+                  }
+                  className={`${baseClass} ${
+                    location.pathname === '/my-profile' ? activeClass : ''
+                  }`}
                 >
                   <button onClick={() => navigate('/my-profile')}>
                     Mi Perfil
@@ -49,8 +57,12 @@ export function Navbar() {
               {user?.type === 'admin' && (
                 <TabNavigationLink
                   asChild
-                  data-active={location.pathname === '/admin-dashboard' ? '' : undefined}
-                  className={`${baseClass} ${location.pathname === '/admin-dashboard' ? activeClass : ''}`}
+                  data-active={
+                    location.pathname === '/admin-dashboard' ? '' : undefined
+                  }
+                  className={`${baseClass} ${
+                    location.pathname === '/admin-dashboard' ? activeClass : ''
+                  }`}
                 >
                   <button onClick={() => navigate('/admin-dashboard')}>
                     Panel de Administración
@@ -60,15 +72,11 @@ export function Navbar() {
             </TabNavigation>
           </div>
 
-          
           <div className="flex items-center justify-end py-4">
             {!user ? (
-              <button
-                onClick={() => navigate('/login-register')}
-                className="rounded-md bg-orange-500 px-4 py-2 text-sm font-medium text-white hover:bg-orange-600 transition-colors"
-              >
+              <Button onClick={() => navigate('/login-register')}>
                 Iniciar Sesión
-              </button>
+              </Button>
             ) : (
               <button
                 onClick={logout}

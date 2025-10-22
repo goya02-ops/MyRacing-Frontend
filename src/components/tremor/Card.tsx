@@ -23,9 +23,9 @@ const Card = ({
         // base
         'relative w-full rounded-lg border p-6 text-left shadow-xs',
         // background color
-        'bg-white dark:bg-[#090E1A]',
+        'bg-neutral-800 ',
         // border color
-        'border-gray-200 dark:border-gray-900',
+        'border-b-sky-950 dark:border-gray-900',
         className
       )}
       tremor-id="tremor-raw"

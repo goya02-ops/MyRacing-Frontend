@@ -5,5 +5,20 @@ import { Checkbox } from './Checkbox.tsx';
 import { Input } from './Input.tsx';
 import { Label } from './Label.tsx';
 import { Table } from './Table.tsx';
+import { Badge } from './Badge.tsx';
+import { Divider } from './Divider.tsx';
+import { TabNavigation, TabNavigationLink } from './TabNavigation.tsx';
 
-export { Accordion, Button, Card, Checkbox, Input, Label, Table };
+export {
+  Accordion,
+  Badge,
+  Button,
+  Card,
+  Checkbox,
+  Divider,
+  Input,
+  Label,
+  Table,
+  TabNavigation,
+  TabNavigationLink,
+};
