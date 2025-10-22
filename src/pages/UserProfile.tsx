@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '../types/entities'; 
 import { fetchWithAuth, getStoredUser } from '../services/apiMyRacing';
+import { Card } from '../components/tremor/Card';
+import { Button } from '../components/tremor/Button';
+import { Input } from '../components/tremor/Input';
+import { Table, TableHead, TableRow, TableHeaderCell, TableBody, TableCell } from '../components/tremor/Table';
+import { Badge } from '../components/tremor/Badge';
+import { Divider } from '../components/tremor/Divider';
+
 
 interface RaceUser {
   id?: number;
@@ -11,7 +18,7 @@ interface RaceUser {
   user: any;
 }
 
-export default function UserProfile(){
+export default function UserProfile() {
   const [user, setUser] = useState<User | null>(null);
   const [results, setResults] = useState<RaceUser[]>([]); 
   const [formData, setFormData] = useState<User | null>(null);
@@ -19,9 +26,7 @@ export default function UserProfile(){
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
 
-
-
-useEffect(() => {
+  useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
@@ -63,7 +68,6 @@ useEffect(() => {
   };
   
   const handleSave = async () => {
-
     if (!formData || !formData.id) return;
 
     setSaving(true);
@@ -75,11 +79,11 @@ useEffect(() => {
     }
 
     try {
-      const response = await fetchWithAuth(`/users/${formData.id}`,  {
+      const response = await fetchWithAuth(`/users/${formData.id}`, {
         method: 'PATCH',
         headers: {
-        'Content-Type': 'application/json',
-                  },
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           realName: formData.realName,
           email: formData.email,
@@ -116,114 +120,192 @@ useEffect(() => {
   };
   
   const handleCancel = () => {
-      setIsEditing(false);
-      if (user) {
-          setFormData({ ...user }); 
-      }
+    setIsEditing(false);
+    if (user) {
+      setFormData({ ...user }); 
+    }
   };
 
-  if (loading) return <div>Cargando perfil...</div>;
-  if (!user || !formData) return <div>No se pudo cargar el perfil de usuario.</div>;
+  // Calcular estadísticas
+  const totalRaces = results.length;
+  const victories = results.filter(r => r.finishPosition === 1).length;
+  const podiums = results.filter(r => r.finishPosition <= 3).length;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Card className="p-8">
+          <p className="text-lg text-gray-600 dark:text-gray-400">Cargando perfil...</p>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!user || !formData) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Card className="p-8">
+          <p className="text-lg text-red-600 dark:text-red-400">No se pudo cargar el perfil de usuario.</p>
+        </Card>
+      </div>
+    );
+  }
+
 
   return (
-    <div className="user-profile-container">
-      <h2>Mi Perfil de Carreras</h2>
+    <div className="mx-auto max-w-6xl space-y-6 p-6">
+
       
-      <section className="profile-details-card">
-        <h3>Datos Personales</h3>
-        
-        
-        <form id="profile-form" onSubmit={handleSave}>
+      {totalRaces > 0 && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Card className="border-t-4 border-t-blue-500">
+            <p className="text-sm text-gray-600 dark:text-gray-400">Total de Carreras</p>
+            <p className="text-3xl font-semibold text-gray-900 dark:text-gray-50">{totalRaces}</p>
+          </Card>
           
-          <div className="profile-field">
-            <label>Usuario (Login):</label>
-            <input type="text" value={user.userName} disabled />
-          </div>
-
-          <div className="profile-field">
-            <label>Nombre Completo:</label>
-            <input
-              type="text"
-              name="realName"
-              value={formData.realName}
-              onChange={handleChange}
-              disabled={!isEditing || saving}
-              required
-            />
-          </div>
+          <Card className="border-t-4 border-t-yellow-500">
+            <p className="text-sm text-gray-600 dark:text-gray-400">Victorias 🥇</p>
+            <p className="text-3xl font-semibold text-gray-900 dark:text-gray-50">{victories}</p>
+          </Card>
           
-          <div className="profile-field">
-            <label>Email:</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              disabled={!isEditing || saving}
-            />
-          </div>
-
-          <div className="profile-field">
-            <label>Plan:</label>
-            <span className={`profile-status ${user.type}`}>
-              {user.type.toUpperCase()}
-            </span>
-          </div>
-        </form>
-        
-
-       
-        <div className="profile-actions">
-          {!isEditing ? (
-            <button type="button" onClick={() => setIsEditing(true)}>
-              Editar Perfil
-            </button>
-          ) : (
-            <>
-              
-              <button type="button" onClick={handleSave} disabled={saving}>
-                {saving ? 'Guardando...' : 'Guardar Cambios'}
-              </button>
-              <button type="button" onClick={handleCancel} disabled={saving}>
-                Cancelar
-              </button>
-            </>
-          )}
+          <Card className="border-t-4 border-t-orange-500">
+            <p className="text-sm text-gray-600 dark:text-gray-400">Podios 🏆</p>
+            <p className="text-3xl font-semibold text-gray-900 dark:text-gray-50">{podiums}</p>
+          </Card>
+          
+          <Card className="border-t-4 border-t-green-500">
+            <p className="text-sm text-gray-600 dark:text-gray-400">Última Carrera</p>
+            <p className="text-lg font-semibold text-gray-900 dark:text-gray-50">
+              {results[0]?.race?.raceDateTime 
+                ? new Date(results[0].race.raceDateTime).toLocaleDateString('es-AR')
+                : 'N/A'}
+            </p>
+          </Card>
         </div>
-      </section>
+      )}
 
-     
-    
       
-      <section className="race-results-card mt-4">
-        <h3>Historial de Carreras ({results.length}) 🏆</h3>
+      <div className="max-w-lg mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50">Mi Perfil de Carreras</h1>
+          <Badge color={user.type === 'admin' ? 'orange' : 'blue'}>
+            {user.type.toUpperCase()}
+          </Badge>
+        </div>
+
+        
+        <Card>
+          
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50 mb-4">Datos Personales</h3>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Usuario (Login)
+              </label>
+              <Input 
+                type="text" 
+                value={user.userName} 
+                disabled 
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Nombre Completo *
+              </label>
+              <Input
+                type="text"
+                name="realName"
+                value={formData.realName}
+                onChange={handleChange}
+                disabled={!isEditing || saving}
+                required
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Email *
+              </label>
+              <Input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                disabled={!isEditing || saving}
+              />
+            </div>
+          </div>
+
+          <Divider />
+
+          <div className="flex gap-2 justify-end">
+            {!isEditing ? (
+              <Button onClick={() => setIsEditing(true)} variant="secondary">
+                Editar Perfil
+              </Button>
+            ) : (
+              <>
+                <Button 
+                  onClick={handleCancel} 
+                  disabled={saving}
+                  variant="secondary"
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={handleSave} 
+                  disabled={saving}
+                >
+                  {saving ? 'Guardando...' : 'Guardar Cambios'}
+                </Button>
+              </>
+            )}
+          </div>
+        </Card>
+      </div>
+
+      <Card>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
+            Historial de Carreras 🏁
+          </h3>
+          <Badge color="gray">{results.length} carreras</Badge>
+        </div>
         
         {results.length === 0 ? (
-          <p>Aún no tienes resultados de carreras registrados.</p>
+          <div className="text-center py-12">
+            <p className="text-gray-600 dark:text-gray-400 text-lg">
+              Aún no tienes resultados de carreras registrados.
+            </p>
+            <p className="text-gray-500 dark:text-gray-500 text-sm mt-2">
+              ¡Inscríbete en tu primera carrera!
+            </p>
+          </div>
         ) : (
-          <table className="results-table">
-            <thead>
-              <tr>
-                <th>Fecha Registro</th>
-                <th>Fecha Carrera</th>
-                <th>Pos. Salida</th>
-                <th>Pos. Final</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableHeaderCell>Fecha Registro</TableHeaderCell>
+                <TableHeaderCell>Fecha Carrera</TableHeaderCell>
+                <TableHeaderCell className="text-center">Pos. Salida</TableHeaderCell>
+                <TableHeaderCell className="text-center">Pos. Final</TableHeaderCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {results.map((ru) => (
-                <tr key={ru.id} className={ru.finishPosition === 1 ? 'winner-row' : ''}> 
-                  
-                  <td>
+                <TableRow key={ru.id}>
+                  <TableCell>
                     {new Date(ru.registrationDateTime).toLocaleDateString('es-AR', {
                       day: '2-digit',
                       month: '2-digit',
                       year: 'numeric',
                     })}
-                  </td>
+                  </TableCell>
                   
-                  <td>
+                  <TableCell>
                     {ru.race?.raceDateTime 
                       ? new Date(ru.race.raceDateTime).toLocaleString('es-AR', {
                           day: '2-digit',
@@ -233,27 +315,28 @@ useEffect(() => {
                           minute: '2-digit',
                         })
                       : 'N/A'}
-                  </td>
+                  </TableCell>
                   
-                  <td>{ru.startPosition}</td>
+                  <TableCell className="text-center">
+                    {ru.startPosition}
+                  </TableCell>
                   
-                  <td>
-                    <strong style={{ 
-                      color: ru.finishPosition === 1 ? '#ffd700' : 'inherit',
-                      fontWeight: ru.finishPosition <= 3 ? 'bold' : 'normal'
-                    }}>
-                      {ru.finishPosition}
-                      {ru.finishPosition === 1 && ' 🥇'}
-                      {ru.finishPosition === 2 && ' 🥈'}
-                      {ru.finishPosition === 3 && ' 🥉'}
-                    </strong>
-                  </td>
-                </tr>
+                  <TableCell className="text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="text-lg font-bold">
+                        {ru.finishPosition}
+                      </span>
+                      {ru.finishPosition === 1 && <span className="text-2xl">🥇</span>}
+                      {ru.finishPosition === 2 && <span className="text-2xl">🥈</span>}
+                      {ru.finishPosition === 3 && <span className="text-2xl">🥉</span>}
+                    </div>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         )}
-      </section>
+      </Card>
     </div>
   );
 }
