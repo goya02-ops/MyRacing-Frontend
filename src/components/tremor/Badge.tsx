@@ -1,15 +1,5 @@
 // Tremor Badge [v1.0.0]
 
-<<<<<<< HEAD
-import React from "react"
-import { tv, type VariantProps } from "tailwind-variants"
-
-import { cx } from "../../lib/utils"
-
-const badgeVariants = tv({
-  base: cx(
-    "inline-flex items-center gap-x-1 whitespace-nowrap rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset",
-=======
 import React from 'react';
 import { tv, type VariantProps } from 'tailwind-variants';
 
@@ -18,7 +8,6 @@ import { cx } from '../../lib/utils';
 const badgeVariants = tv({
   base: cx(
     'inline-flex items-center gap-x-1 whitespace-nowrap rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset'
->>>>>>> develop
   ),
   variants: {
     variant: {
