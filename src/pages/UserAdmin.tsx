@@ -2,6 +2,14 @@ import { useState, useEffect } from 'react';
 import { User } from '../types/entities';
 import { fetchEntities } from '../services/apiMyRacing';
 
+
+import { 
+  Card, 
+  Badge,
+  Button,
+  
+} from '../components/tremor/TremorComponents';
+
 export default function UserAdmin() {
   const [list, setList] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -9,89 +17,78 @@ export default function UserAdmin() {
   useEffect(() => {
     fetchEntities(User)
       .then((users) => {
-        // Filtrar solo usuarios que NO sean administradores
-        const nonAdminUsers = users.filter(
-          (u) => u.type !== 'Admin' && u.type !== 'admin'
-        );
+        const nonAdminUsers = users.filter((u) => u.type !== 'admin');
         setList(nonAdminUsers);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
 
-  // La función handleChangeType ya no es necesaria si el botón no la llama
-  // const handleChangeType = async (user: User, newType: string) => { ... };
-
   if (loading) {
-    return <div>Cargando usuarios...</div>;
+    return (
+      <div className="flex justify-center items-center py-20">
+        <p className="text-gray-400">Cargando usuarios...</p>
+      </div>
+    );
   }
 
   return (
-    <section>
-      <h2>Administrar Usuarios</h2>
+    <Card className="text-gray-200 p-0"> {/* p-0 para controlar el padding nosotros */}
+      
+      
+      <div className="flex justify-between items-center p-6">
+        <h2 className="text-xl font-semibold">Usuarios Registrados</h2>
+        <Badge color="gray">Total: {list.length}</Badge>
+      </div>
 
-      <p style={{ color: '#666', marginBottom: '20px' }}>
-        Total de usuarios: <strong>{list.length}</strong>
-      </p>
+     
+      <div className="px-6">
+       
+        <div className="hidden md:flex text-sm font-semibold text-gray-400 border-b border-gray-700/50 pb-2">
+          <div className="w-1/4">Nombre de Usuario</div>
+          <div className="w-1/4">Nombre Real</div>
+          <div className="w-1/4">Email</div>
+          <div className="w-1/6">Tipo</div>
+          <div className="w-1/6">Acciones</div>
+        </div>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Nombre de Usuario</th>
-            <th>Nombre Real</th>
-            <th>Email</th>
-            <th>Tipo</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
+       
+        <div className="divide-y divide-gray-700/50">
           {list.length === 0 ? (
-            <tr>
-              <td colSpan={5} style={{ textAlign: 'center' }}>
-                No hay usuarios registrados
-              </td>
-            </tr>
+            <div className="text-center py-12 text-gray-400">
+              No hay usuarios para mostrar
+            </div>
           ) : (
             list.map((user) => (
-              <tr key={user.id}>
-                <td>{user.userName}</td>
-                <td>{user.realName}</td>
-                <td>{user.email}</td>
-                <td>
-                  <span
-                    style={{
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      backgroundColor:
-                        user.type === 'Premium' ? '#e0e0e0' : '#e0e0e0',
-                      color: user.type === 'Premium' ? '#000' : '#333',
-                      fontWeight: 'bold',
-                      fontSize: '0.9em',
-                    }}
-                  >
-                    {user.type}
-                  </span>
-                </td>
-                <td>
-                  <button
-                    style={{
-                      padding: '6px 12px',
-                      backgroundColor: '#6c757d',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'not-allowed',
-                    }}
-                    disabled // Deshabilita el botón
+              <div key={user.id} className="flex flex-col md:flex-row items-start md:items-center py-4">
+                <div className="w-full md:w-1/4 mb-2 md:mb-0">
+                  <span className="font-semibold md:hidden">Usuario: </span>{user.userName}
+                </div>
+                <div className="w-full md:w-1/4 mb-2 md:mb-0">
+                  <span className="font-semibold md:hidden">Nombre: </span>{user.realName}
+                </div>
+                <div className="w-full md:w-1/4 mb-2 md:mb-0 truncate">
+                  <span className="font-semibold md:hidden">Email: </span>{user.email}
+                </div>
+                <div className="w-full md:w-1/6 mb-2 md:mb-0">
+                  <Badge color={user.type === 'premium' ? 'blue' : 'gray'}>
+                    {user.type.toUpperCase()}
+                  </Badge>
+                </div>
+                <div className="w-full md:w-1/6">
+                  <Button
+                    
+                    variant="secondary"
+                    disabled
                   >
                     Funcionalidad futura
-                  </button>
-                </td>
-              </tr>
+                  </Button>
+                </div>
+              </div>
             ))
           )}
-        </tbody>
-      </table>
-    </section>
+        </div>
+      </div>
+    </Card>
   );
 }

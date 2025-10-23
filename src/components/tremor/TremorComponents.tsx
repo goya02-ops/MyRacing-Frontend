@@ -7,6 +7,13 @@ import { Label } from './Label.tsx';
 import { Table } from './Table.tsx';
 import { Badge } from './Badge.tsx';
 import { Divider } from './Divider.tsx';
+import { 
+  Select, 
+  SelectItem, 
+  SelectValue, 
+  SelectTrigger, 
+  SelectContent 
+} from './Select.tsx';
 import { TabNavigation, TabNavigationLink } from './TabNavigation.tsx';
 
 export {
@@ -21,4 +28,11 @@ export {
   Table,
   TabNavigation,
   TabNavigationLink,
+  Select,
+  SelectItem, 
+  SelectValue, 
+  SelectTrigger, 
+  SelectContent 
+
+
 };
