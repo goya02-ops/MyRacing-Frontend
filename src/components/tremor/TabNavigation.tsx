@@ -46,7 +46,7 @@ const TabNavigation = ({
         // base
         'flex items-center justify-start whitespace-nowrap border-b [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
         // border color
-        'border-gray-200 dark:border-gray-800',
+        'border-orange-500 dark:border-orange-500',
         className
       )}
     >
@@ -88,9 +88,9 @@ const TabNavigationLink = ({
         <span
           className={cx(
             // base
-            '-mb-px flex items-center justify-center whitespace-nowrap border-b-2 px-3 pb-2 text-sm font-medium transition-all',
+            '-mb-px flex items-center justify-center whitespace-nowrap border-b-2 px-3 pb-2 font-medium transition-all',
             // text color por defecto
-            'text-gray-500 dark:text-gray-500',
+            'text-gray-50 dark:text-gray-50',
             // border por defecto
             'border-transparent',
             // hover solo para NO activos - usando has para verificar si el padre tiene data-active

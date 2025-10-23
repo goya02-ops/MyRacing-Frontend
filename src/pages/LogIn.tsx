@@ -45,7 +45,7 @@ export default function AuthPage() {
           error={error}
         />
         <Link to="/signin">
-          <Button className="w-full mt-4" variant="secondary">
+          <Button className="w-full mt-4" variant="ghost">
             Registrarse
           </Button>
         </Link>

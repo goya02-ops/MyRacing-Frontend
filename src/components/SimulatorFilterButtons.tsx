@@ -18,7 +18,7 @@ export function SimulatorFilterButtons({
   return (
     <>
       <Button
-        variant={selectedSimulator === null ? 'primary' : 'secondary'}
+        variant={selectedSimulator === null ? 'primary' : 'ghost'}
         onClick={() => {
           setSelectedSimulator(null);
           setSelectedCombination(null);
@@ -29,7 +29,7 @@ export function SimulatorFilterButtons({
       {simulatorsWithRaces.map((sim) => (
         <Button
           key={sim.id}
-          variant={selectedSimulator?.id === sim.id ? 'primary' : 'secondary'}
+          variant={selectedSimulator?.id === sim.id ? 'primary' : 'ghost'}
           onClick={() => {
             setSelectedCombination(null);
             setSelectedSimulator(sim);

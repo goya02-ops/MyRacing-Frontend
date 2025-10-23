@@ -15,13 +15,13 @@ export function CombinationCard({ combination }: Props) {
   return (
     <Card
       key={combination.id}
- className="cursor-pointer hover:shadow-lg transition-shadow duration-200 h-full flex flex-col justify-between p-4 text-gray-200"    >
+      className="cursor-pointer hover:shadow-lg transition-shadow duration-200 h-full flex flex-col justify-between p-4 text-gray-200"
+    >
       {/* Header */}
       <div className="flex justify-between items-start mb-3">
         <Badge variant="success">{combination.userType.toUpperCase()}</Badge>
         <p className="text-xs md:text-sm text-gray-500">
-          {new Date(combination.dateFrom).toLocaleDateString()} -{' '}
-          {new Date(combination.dateTo).toLocaleDateString()}
+          Hasta: {new Date(combination.dateTo).toLocaleDateString()}
         </p>
       </div>
 

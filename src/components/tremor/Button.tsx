@@ -26,7 +26,7 @@ const buttonVariants = tv({
         // background color
         'bg-orange-500 dark:bg-orange-500',
         // hover color
-        'hover:bg-orange-400 dark:hover:bg-orange-500',
+        'hover:bg-orange-400 dark:hover:bg-orange-400',
         // disabled
         'disabled:bg-orange-300 disabled:text-white',
         'dark:disabled:bg-orange-800 dark:disabled:text-orange-400',
@@ -50,7 +50,7 @@ const buttonVariants = tv({
         // border
         'border-transparent',
         // text color
-        'text-gray-900 dark:text-gray-50',
+        'text-gray-900 dark:text-gray-900',
         // background color
         'bg-gray-200 dark:bg-gray-900',
         // hover color
@@ -65,9 +65,9 @@ const buttonVariants = tv({
         // border
         'border-transparent',
         // text color
-        'text-gray-900 dark:text-gray-50',
+        'text-gray-50 dark:text-gray-50',
         // hover color
-        'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800/80',
+        'bg-transparent hover:bg-orange-500/80 dark:hover:bg-orange-500/80',
         // disabled
         'disabled:text-gray-400',
         'dark:disabled:text-gray-600',
