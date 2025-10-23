@@ -3,6 +3,8 @@ import { lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ProtectedRoute } from './components/ProtectedRoute.tsx';
 import { Navbar } from './components/NavBar.tsx';
+import { DecorativeBackground } from './components/DecorativeBackground.tsx';
+
 
 const SignIn = lazy(() => import('./pages/SignIn.tsx'));
 const UserProfile = lazy(() => import('./pages/UserProfile.tsx'));
@@ -13,7 +15,7 @@ const AdminDashboard = lazy(() => import('./pages/AdminDashboard.tsx'));
 
 function AppContent() {
   return (
-    <>
+    <div className="bg-gray-900 min-h-screen relative isolate">
       <Navbar />
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -48,7 +50,8 @@ function AppContent() {
           />
         </Routes>
       </main>
-    </>
+      <DecorativeBackground />
+    </div>
   );
 }
 

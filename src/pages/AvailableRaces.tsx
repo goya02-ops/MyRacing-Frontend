@@ -35,7 +35,7 @@ export default function AvailableRaces() {
   return (
     <>
       <section className="p-8 min-h-screen">
-        <h2 className="text-center text-3xl font-bold mb-8 text-gray-900">
+        <h2 className="font-heading text-center text-3xl font-bold mb-8 text-white">
           CARRERAS DISPONIBLES
         </h2>
 

@@ -10,18 +10,21 @@ const inputStyles = tv({
   base: [
     // base
     'relative block w-full appearance-none rounded-md border px-2.5 py-2 shadow-xs outline-hidden transition sm:text-sm',
-    // border color
-    'border-gray-300 dark:border-gray-800',
-    // text color
-    'text-gray-900 dark:text-gray-50',
-    // placeholder color
-    'placeholder-gray-400 dark:placeholder-gray-500',
-    // background color
-    'bg-white dark:bg-gray-950',
-    // disabled
-    'disabled:border-gray-300 disabled:bg-gray-100 disabled:text-gray-400',
-    'dark:disabled:border-gray-700 dark:disabled:bg-gray-800 dark:disabled:text-gray-500',
-    // file
+   
+    'bg-gray-950/20 backdrop-blur-lg',
+    
+    'border-gray-700/50',
+    
+    'text-gray-200',
+    
+    'placeholder:text-gray-500',
+    
+    
+    'disabled:opacity-50 disabled:cursor-not-allowed',
+    
+    
+    'focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none',
+    
     [
       'file:-my-2 file:-ml-2.5 file:cursor-pointer file:rounded-l-[5px] file:rounded-r-none file:border-0 file:px-3 file:py-2 file:outline-hidden focus:outline-hidden disabled:pointer-events-none file:disabled:pointer-events-none',
       'file:border-solid file:border-gray-300 file:bg-gray-50 file:text-gray-500 file:hover:bg-gray-100 dark:file:border-gray-800 dark:file:bg-gray-950 dark:file:hover:bg-gray-900/20 dark:file:disabled:border-gray-700',

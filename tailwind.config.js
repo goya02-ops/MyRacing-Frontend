@@ -11,6 +11,8 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Geist Sans', ...defaultTheme.fontFamily.sans],
+        heading: ['Oswald', 'sans-serif']
+
       },
       keyframes: {
         hide: {

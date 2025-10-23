@@ -15,8 +15,7 @@ export function CombinationCard({ combination }: Props) {
   return (
     <Card
       key={combination.id}
-      className="bg-neutral-800 cursor-pointer hover:shadow-lg transition-shadow duration-200 h-full flex flex-col justify-between p-4"
-    >
+ className="cursor-pointer hover:shadow-lg transition-shadow duration-200 h-full flex flex-col justify-between p-4 text-gray-200"    >
       {/* Header */}
       <div className="flex justify-between items-start mb-3">
         <Badge variant="success">{combination.userType.toUpperCase()}</Badge>
