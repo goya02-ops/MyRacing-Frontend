@@ -27,7 +27,11 @@ export function CombinationCard({ combination, nextRace }: Props) {
       className="cursor-pointer hover:shadow-lg transition-shadow duration-200 h-full flex flex-col justify-between p-4 text-gray-200"
     >
       <div className="flex justify-between items-start mb-3">
-        <Badge variant="success">{combination.userType.toUpperCase()}</Badge>
+        <Badge
+          variant={combination.userType === 'Común' ? 'success' : 'warning'}
+        >
+          {combination.userType.toUpperCase()}
+        </Badge>
         <p className="text-xs md:text-sm text-gray-500">
           Hasta: {new Date(combination.dateTo).toLocaleDateString()}
         </p>
