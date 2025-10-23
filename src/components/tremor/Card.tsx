@@ -20,12 +20,19 @@ const Card = ({
     <Component
       ref={ref}
       className={cx(
-        // base
+        // base (sin cambios)
         'relative w-full rounded-lg border p-6 text-left shadow-xs',
-        // background color
-        'bg-neutral-800 ',
-        // border color
-        'border-b-sky-950 dark:border-gray-900',
+        
+        // ✅ CAMBIO 1: Fondo con opacidad
+        // Usamos el mismo gris oscuro, pero con un 20% de opacidad.
+        'bg-gray-950/20',
+        
+        // ✅ CAMBIO 2: La magia del efecto vidrio (desenfoca lo que está detrás)
+        'backdrop-blur-lg',
+        
+        // ✅ CAMBIO 3: Borde sutil y semitransparente para definir los bordes
+        'border-gray-700/50',
+        
         className
       )}
       tremor-id="tremor-raw"

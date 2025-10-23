@@ -18,7 +18,9 @@ interface RaceUser {
   user: any;
 }
 
+
 export default function UserProfile() {
+  
   const [user, setUser] = useState<User | null>(null);
   const [results, setResults] = useState<RaceUser[]>([]); 
   const [formData, setFormData] = useState<User | null>(null);
@@ -126,56 +128,55 @@ export default function UserProfile() {
     }
   };
 
-  // Calcular estadísticas
   const totalRaces = results.length;
   const victories = results.filter(r => r.finishPosition === 1).length;
   const podiums = results.filter(r => r.finishPosition <= 3).length;
 
+
+  // Estados de Carga y Error (con colores ajustados para tema oscuro)
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Card className="p-8">
-          <p className="text-lg text-gray-600 dark:text-gray-400">Cargando perfil...</p>
-        </Card>
+      <div className="flex items-center justify-center min-h-screen text-gray-400">
+        <p className="text-lg">Cargando perfil...</p>
       </div>
     );
   }
 
   if (!user || !formData) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Card className="p-8">
-          <p className="text-lg text-red-600 dark:text-red-400">No se pudo cargar el perfil de usuario.</p>
-        </Card>
+      <div className="flex items-center justify-center min-h-screen text-red-400">
+        <p className="text-lg">No se pudo cargar el perfil de usuario.</p>
       </div>
     );
   }
 
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-6">
-
+    
+    <div className="mx-auto max-w-6xl space-y-6 p-6 text-gray-200">
+      
       
       {totalRaces > 0 && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card className="border-t-4 border-t-blue-500">
-            <p className="text-sm text-gray-600 dark:text-gray-400">Total de Carreras</p>
-            <p className="text-3xl font-semibold text-gray-900 dark:text-gray-50">{totalRaces}</p>
+           
+            <p className="text-sm">Total de Carreras</p>
+            <p className="text-3xl font-semibold">{totalRaces}</p>
           </Card>
           
           <Card className="border-t-4 border-t-yellow-500">
-            <p className="text-sm text-gray-600 dark:text-gray-400">Victorias 🥇</p>
-            <p className="text-3xl font-semibold text-gray-900 dark:text-gray-50">{victories}</p>
+            <p className="text-sm">Victorias 🥇</p>
+            <p className="text-3xl font-semibold">{victories}</p>
           </Card>
           
           <Card className="border-t-4 border-t-orange-500">
-            <p className="text-sm text-gray-600 dark:text-gray-400">Podios 🏆</p>
-            <p className="text-3xl font-semibold text-gray-900 dark:text-gray-50">{podiums}</p>
+            <p className="text-sm">Podios 🏆</p>
+            <p className="text-3xl font-semibold">{podiums}</p>
           </Card>
           
           <Card className="border-t-4 border-t-green-500">
-            <p className="text-sm text-gray-600 dark:text-gray-400">Última Carrera</p>
-            <p className="text-lg font-semibold text-gray-900 dark:text-gray-50">
+            <p className="text-sm">Última Carrera</p>
+            <p className="text-lg font-semibold">
               {results[0]?.race?.raceDateTime 
                 ? new Date(results[0].race.raceDateTime).toLocaleDateString('es-AR')
                 : 'N/A'}
@@ -187,102 +188,53 @@ export default function UserProfile() {
       
       <div className="max-w-lg mx-auto space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50">Mi Perfil de Carreras</h1>
+          <h1 className="text-3xl font-bold">Mi Perfil</h1>
           <Badge color={user.type === 'admin' ? 'orange' : 'blue'}>
             {user.type.toUpperCase()}
           </Badge>
         </div>
 
-        
         <Card>
-          
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50 mb-4">Datos Personales</h3>
-          
+          <h3 className="text-lg font-semibold mb-4">Datos Personales</h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Usuario (Login)
-              </label>
-              <Input 
-                type="text" 
-                value={user.userName} 
-                disabled 
-              />
+              <label className="block text-sm font-medium mb-1">Usuario (Login)</label>
+              <Input type="text" value={user.userName} disabled />
             </div>
-
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Nombre Completo *
-              </label>
-              <Input
-                type="text"
-                name="realName"
-                value={formData.realName}
-                onChange={handleChange}
-                disabled={!isEditing || saving}
-                required
-              />
+              <label className="block text-sm font-medium mb-1">Nombre Completo *</label>
+              <Input type="text" name="realName" value={formData.realName} onChange={handleChange} disabled={!isEditing || saving} required />
             </div>
-            
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Email *
-              </label>
-              <Input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                disabled={!isEditing || saving}
-              />
+              <label className="block text-sm font-medium mb-1">Email *</label>
+              <Input type="email" name="email" value={formData.email} onChange={handleChange} required disabled={!isEditing || saving} />
             </div>
           </div>
-
           <Divider />
-
           <div className="flex gap-2 justify-end">
             {!isEditing ? (
-              <Button onClick={() => setIsEditing(true)} variant="secondary">
-                Editar Perfil
-              </Button>
+              <Button onClick={() => setIsEditing(true)} variant="secondary">Editar Perfil</Button>
             ) : (
               <>
-                <Button 
-                  onClick={handleCancel} 
-                  disabled={saving}
-                  variant="secondary"
-                >
-                  Cancelar
-                </Button>
-                <Button 
-                  onClick={handleSave} 
-                  disabled={saving}
-                >
-                  {saving ? 'Guardando...' : 'Guardar Cambios'}
-                </Button>
+                <Button onClick={handleCancel} disabled={saving} variant="secondary">Cancelar</Button>
+                <Button onClick={handleSave} disabled={saving}>{saving ? 'Guardando...' : 'Guardar Cambios'}</Button>
               </>
             )}
           </div>
         </Card>
       </div>
 
+      
       <Card>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
-            Historial de Carreras 🏁
-          </h3>
+          <h3 className="text-lg font-semibold">Historial de Carreras 🏁</h3>
           <Badge color="gray">{results.length} carreras</Badge>
         </div>
         
         {results.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-600 dark:text-gray-400 text-lg">
-              Aún no tienes resultados de carreras registrados.
-            </p>
-            <p className="text-gray-500 dark:text-gray-500 text-sm mt-2">
-              ¡Inscríbete en tu primera carrera!
-            </p>
+            <p className="text-lg">Aún no tienes resultados de carreras registrados.</p>
+            <p className="text-sm mt-2 opacity-70">¡Inscríbete en tu primera carrera!</p>
           </div>
         ) : (
           <Table>
@@ -297,35 +249,12 @@ export default function UserProfile() {
             <TableBody>
               {results.map((ru) => (
                 <TableRow key={ru.id}>
-                  <TableCell>
-                    {new Date(ru.registrationDateTime).toLocaleDateString('es-AR', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                    })}
-                  </TableCell>
-                  
-                  <TableCell>
-                    {ru.race?.raceDateTime 
-                      ? new Date(ru.race.raceDateTime).toLocaleString('es-AR', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })
-                      : 'N/A'}
-                  </TableCell>
-                  
-                  <TableCell className="text-center">
-                    {ru.startPosition}
-                  </TableCell>
-                  
+                  <TableCell>{new Date(ru.registrationDateTime).toLocaleDateString('es-AR')}</TableCell>
+                  <TableCell>{ru.race?.raceDateTime ? new Date(ru.race.raceDateTime).toLocaleString('es-AR') : 'N/A'}</TableCell>
+                  <TableCell className="text-center">{ru.startPosition}</TableCell>
                   <TableCell className="text-center">
                     <div className="flex items-center justify-center gap-2">
-                      <span className="text-lg font-bold">
-                        {ru.finishPosition}
-                      </span>
+                      <span className="text-lg font-bold">{ru.finishPosition}</span>
                       {ru.finishPosition === 1 && <span className="text-2xl">🥇</span>}
                       {ru.finishPosition === 2 && <span className="text-2xl">🥈</span>}
                       {ru.finishPosition === 3 && <span className="text-2xl">🥉</span>}
