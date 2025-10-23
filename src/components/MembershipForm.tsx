@@ -1,5 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Membership } from '../types/entities.ts';
+import {
+  Button,
+  Divider,
+  Input,
+  Label,
+} from '../components/tremor/TremorComponents';
 
 interface Props {
   initial: Membership;
@@ -13,8 +19,16 @@ export default function MembershipForm({ initial, onSave, onCancel }: Props) {
     price: initial.price ?? '',
   });
 
+  useEffect(() => {
+    setForm({
+      ...initial,
+      price: initial.price ?? '',
+    });
+  }, [initial]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -23,20 +37,41 @@ export default function MembershipForm({ initial, onSave, onCancel }: Props) {
       onSubmit={(e) => {
         e.preventDefault();
         const now = new Date();
-        onSave({ ...form, dateFrom: now });
+        onSave({
+          ...form,
+          
+          price: Number(form.price) || 0,
+          dateFrom: now,
+        });
       }}
+      className="space-y-6"
     >
-      <input
-        name="price"
-        value={form.price}
-        onChange={handleChange}
-        placeholder="Precio"
-        required
-      />
-      <button type="submit">Guardar</button>
-      <button type="button" onClick={onCancel}>
-        Cancelar
-      </button>
+     
+      <div>
+        <Label htmlFor="price">Precio</Label>
+        <Input
+          id="price"
+          name="price"
+          type="number" // Tipo número para mejor UX
+          value={form.price}
+          onChange={handleChange}
+          placeholder="Precio"
+          required
+          min="0"
+        />
+      </div>
+
+      <Divider className="pt-2" />
+
+     
+      <div className="flex justify-end gap-3">
+        <Button type="button" variant="secondary" onClick={onCancel}>
+          Cancelar
+        </Button>
+        <Button type="submit" variant="primary">
+          Guardar
+        </Button>
+      </div>
     </form>
   );
 }

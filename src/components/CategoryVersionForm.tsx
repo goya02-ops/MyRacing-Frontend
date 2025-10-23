@@ -1,10 +1,22 @@
+// components/CategoryVersionForm.tsx
 import { useEffect, useState } from 'react';
 import { CategoryVersion, Category, Simulator } from '../types/entities';
+import {
+  Button,
+  Divider,
+  Input,
+  Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../components/tremor/TremorComponents';
 
 interface CategoryVersionFormProps {
   initial: CategoryVersion;
   categories: Category[];
-  simulators: Simulator[];
+  simulators: Simulator[]; 
   onSave: (categoryVersion: CategoryVersion) => void;
   onCancel: () => void;
 }
@@ -18,16 +30,36 @@ export default function CategoryVersionForm({
   const [form, setForm] = useState<CategoryVersion>(initial);
 
   useEffect(() => {
-    console.log('Estado actualizado:', form);
-  }, [form]);
+    setForm(initial);
+  }, [initial]);
 
-  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleSelectChange = (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
-    console.log('Modificando:', name, '→', value);
     setForm((prev) => ({
       ...prev,
+      // Si el name es 'status', guarda el string,
+      // si no (es 'category'), lo guarda como número
       [name]: name === 'status' ? value : value ? Number(value) : undefined,
     }));
+  };
+
+  // Adaptador para el 'onValueChange' de Tremor
+  const handleSelectValueChange = (name: string, value: string) => {
+    const event = {
+      target: { name, value },
+    } as React.ChangeEvent<HTMLSelectElement>;
+    handleSelectChange(event);
+  };
+
+
+  const getCategoryValue = () => {
+    const cat = form.category;
+    if (typeof cat === 'object' && cat !== null) {
+      return cat.id?.toString() || '';
+    }
+    return (cat || '').toString();
   };
 
   return (
@@ -36,60 +68,80 @@ export default function CategoryVersionForm({
         e.preventDefault();
         onSave(form);
       }}
+      className="space-y-6"
     >
-      <label>
-        Categoría:
-        <select
-          name="category"
-          value={
-            typeof form.category === 'object'
-              ? form.category.id
-              : form.category || ''
-          }
-          onChange={handleSelectChange}
-          required
-        >
-          <option value="">Seleccione una categoría</option>
-          {categories.map((cat) => (
-            <option key={cat.id} value={cat.id}>
-              {cat.denomination} ({cat.abbreviation})
-            </option>
-          ))}
-        </select>
-      </label>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+       
+        <div>
+          <Label htmlFor="category">Categoría</Label>
+          <Select
+            name="category"
+            value={getCategoryValue()}
+            onValueChange={(value) =>
+              handleSelectValueChange('category', value)
+            }
+            required
+          >
+            <SelectTrigger id="category">
+              <SelectValue placeholder="Seleccione una categoría" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((cat) => (
+                <SelectItem key={cat.id} value={cat.id!.toString()}>
+                  {cat.denomination} ({cat.abbreviation})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-      <label>
-        Simulador:
-        <input
-          type="text"
-          value={
-            typeof form.simulator === 'object' && form.simulator !== null
-              ? form.simulator.name
-              : ''
-          }
-          disabled
-          
-        />
-      </label>
+       
+        <div>
+          <Label htmlFor="simulator">Simulador</Label>
+          <Input
+            id="simulator"
+            name="simulator"
+            value={
+              typeof form.simulator === 'object' && form.simulator !== null
+                ? form.simulator.name
+                : ''
+            }
+            disabled
+            readOnly // Añadido para reforzar que es solo lectura
+          />
+        </div>
 
-      <label>
-        Estado:
-        <select
-          name="status"
-          value={form.status}
-          onChange={handleSelectChange}
-          required
-        >
-          <option value="">Seleccione un estado</option>
-          <option value="Activo">Activo</option>
-          <option value="Inactivo">Inactivo</option>
-        </select>
-      </label>
+       
+        <div>
+          <Label htmlFor="status">Estado</Label>
+          <Select
+            name="status"
+            value={form.status}
+            onValueChange={(value) => handleSelectValueChange('status', value)}
+            required
+          >
+            <SelectTrigger id="status">
+              <SelectValue placeholder="Seleccione un estado" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Activo">Activo</SelectItem>
+              <SelectItem value="Inactivo">Inactivo</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
 
-      <button type="submit">Guardar</button>
-      <button type="button" onClick={onCancel}>
-        Cancelar
-      </button>
+      <Divider className="pt-2" />
+
+     
+      <div className="flex justify-end gap-3">
+        <Button type="button" variant="secondary" onClick={onCancel}>
+          Cancelar
+        </Button>
+        <Button type="submit" variant="primary">
+          Guardar
+        </Button>
+      </div>
     </form>
   );
 }
