@@ -7,13 +7,23 @@ type Props = {
   error: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSubmit: (e: React.FormEvent) => void;
+  errorClassName?: string; 
 };
 
-export function LoginForm({ form, loading, error, onChange, onSubmit }: Props) {
+export function LoginForm({
+  form,
+  loading,
+  error,
+  onChange,
+  onSubmit,
+  errorClassName = 'text-red-600', 
+}: Props) {
   const visibleLoading = useMinimumLoading(loading, 300);
   return (
-    <form onSubmit={onSubmit} className="mt-6 space-y-4">
-      {error && <div className="text-red-600">{error}</div>}
+    
+    <form onSubmit={onSubmit} className="space-y-4 w-full">
+     
+      {error && <div className={errorClassName}>{error}</div>}
 
       <Input
         type="text"
