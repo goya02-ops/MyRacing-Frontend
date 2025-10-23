@@ -5,7 +5,6 @@ import { ProtectedRoute } from './components/ProtectedRoute.tsx';
 import { Navbar } from './components/NavBar.tsx';
 import { DecorativeBackground } from './components/DecorativeBackground.tsx';
 
-
 const SignIn = lazy(() => import('./pages/SignIn.tsx'));
 const UserProfile = lazy(() => import('./pages/UserProfile.tsx'));
 const LogIn = lazy(() => import('./pages/LogIn.tsx'));
@@ -15,42 +14,49 @@ const AdminDashboard = lazy(() => import('./pages/AdminDashboard.tsx'));
 
 function AppContent() {
   return (
-    <div className="bg-gray-900 min-h-screen relative isolate">
-      <Navbar />
-
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <Routes>
-          <Route path="/" element={<AvailableRaces />} />
-          <Route
-            path="/user-admin"
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <UserAdmin />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/login-register" element={<LogIn />} />
-          <Route
-            path="/my-profile"
-            element={
-              <ProtectedRoute>
-                <UserProfile />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/login" element={<LogIn />} />
-          <Route path="/signin" element={<SignIn />} />
-          <Route
-            path="/admin-dashboard"
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminDashboard />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-      </main>
+    <div className="bg-gray-900 min-h-screen relative isolate overflow-hidden">
+      {/* Fondo decorativo */}
       <DecorativeBackground />
+
+      {/* Contenido */}
+      <div className="relative z-10 flex flex-col min-h-screen">
+        <Navbar />
+
+        <main className="flex-1 mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          <Routes>
+            <Route path="/" element={<AvailableRaces />} />
+            <Route
+              path="/user-admin"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <UserAdmin />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/login-register" element={<LogIn />} />
+            <Route
+              path="/my-profile"
+              element={
+                <ProtectedRoute>
+                  <UserProfile />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/login" element={<LogIn />} />
+            <Route path="/signin" element={<SignIn />} />
+            <Route
+              path="/admin-dashboard"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </main>
+
+        <footer className="h-32 mt-96" />
+      </div>
     </div>
   );
 }

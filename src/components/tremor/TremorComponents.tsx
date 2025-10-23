@@ -8,6 +8,7 @@ import { Table } from './Table.tsx';
 import { Badge } from './Badge.tsx';
 import { Divider } from './Divider.tsx';
 import { TabNavigation, TabNavigationLink } from './TabNavigation.tsx';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from './Tabs.tsx';
 
 export {
   Accordion,
@@ -21,4 +22,8 @@ export {
   Table,
   TabNavigation,
   TabNavigationLink,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
 };

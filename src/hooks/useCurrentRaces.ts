@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Combination, Simulator } from '../types/entities.ts';
 import { fetchCurrentRaces } from '../services/apiMyRacing.ts';
 
-export function useCurrentRaces(setLoading: (loading: boolean) => void) {
+export function useCurrentRaces() {
   const [allCombinations, setAllCombinations] = useState<Combination[]>([]);
   const [simulatorsWithRaces, setSimulatorsWithRaces] = useState<Simulator[]>(
     []
@@ -30,8 +30,7 @@ export function useCurrentRaces(setLoading: (loading: boolean) => void) {
         });
         setSimulatorsWithRaces(Array.from(simsMap.values()));
       })
-      .catch(console.error)
-      .finally(() => setLoading(false));
+      .catch(console.error);
   }, []);
 
   return { allCombinations, simulatorsWithRaces };
