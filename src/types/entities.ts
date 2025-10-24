@@ -64,8 +64,16 @@ export class Combination {
   races?: Race[];
 }
 
+export class RaceUser {
+  id?: number;
+  race!: number;
+  user!: number;
+  registrationDate!: string;
+}
+
 export class Race {
   id?: number;
   raceDateTime: string = '';
   registrationDeadline: string = '';
+  raceUsers!: RaceUser[];
 }

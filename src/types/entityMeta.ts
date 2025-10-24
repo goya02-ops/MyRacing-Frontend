@@ -8,6 +8,7 @@ import {
   Race,
   User,
   Combination,
+  RaceUser,
 } from './entities';
 
 export type Constructor<T> = new (...args: any[]) => T;
@@ -26,4 +27,5 @@ export const entityMetaByClass = new Map<Constructor<unknown>, EntityMetadata>([
   [CircuitVersion, { endpoint: '/circuits-version' }],
   [Combination, { endpoint: '/combinations' }],
   [Race, { endpoint: '/races' }],
+  [RaceUser, { endpoint: '/race-users' }],
 ]);

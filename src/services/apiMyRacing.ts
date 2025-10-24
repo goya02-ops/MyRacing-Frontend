@@ -1,4 +1,4 @@
-import { Combination } from '../types/entities.ts';
+import { Combination, RaceUser } from '../types/entities.ts';
 import { entityMetaByClass } from '../types/entityMeta';
 import type { Constructor } from '../types/entityMeta';
 
@@ -38,11 +38,14 @@ export async function refreshToken() {
   return data.accessToken;
 }
 
-export async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
+export async function fetchWithAuth(
+  url: string,
+  options: RequestInit = {}
+): Promise<Response> {
   const token = localStorage.getItem('accessToken');
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...options.headers as Record<string, string>,
+    ...(options.headers as Record<string, string>),
   };
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -114,7 +117,6 @@ export async function logout() {
   //Comento esto así no me redirige al login automáticamente
 }
 
-
 export async function fetchEntities<T>(cls: Constructor<T>): Promise<T[]> {
   const metadata = entityMetaByClass.get(cls);
   if (!metadata) throw new Error('Clase no registrada');
@@ -134,7 +136,6 @@ export async function fetchOne<T extends { id?: number }>(
   return json.data;
 }
 
-
 export async function fetchCurrentRaces(): Promise<Combination[]> {
   const metadata = entityMetaByClass.get(Combination);
   const res = await fetchWithAuth(`${metadata!.endpoint}/races/`);
@@ -148,6 +149,22 @@ export async function saveEntity<T extends { id?: number }>(
 ): Promise<T> {
   const metadata = entityMetaByClass.get(cls);
   if (!metadata) throw new Error('Clase no registrada');
+
+  //  Normalizar relaciones: si hay objetos con solo id, convertirlos a { id }
+  const normalized = JSON.parse(
+    JSON.stringify(entity, (key, value) => {
+      if (
+        value &&
+        typeof value === 'object' &&
+        'id' in value &&
+        Object.keys(value).length === 1
+      ) {
+        return { id: value.id };
+      }
+      return value;
+    })
+  );
+
   const method = entity.id ? 'PUT' : 'POST';
   const url = entity.id
     ? `${metadata.endpoint}/${entity.id}`
@@ -155,8 +172,29 @@ export async function saveEntity<T extends { id?: number }>(
   const res = await fetchWithAuth(url, {
     method,
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(entity),
+    body: JSON.stringify(normalized),
   });
+  const json = await res.json();
+  return json.data;
+}
+
+export async function registerUserToRace(
+  userId: number,
+  raceId: number
+): Promise<RaceUser> {
+  const res = await fetchWithAuth(`/race-users`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      userId,
+      raceId,
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error('Error al inscribirse');
+  }
+
   const json = await res.json();
   return json.data;
 }
