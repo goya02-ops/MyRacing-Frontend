@@ -10,9 +10,9 @@ export function Navbar() {
   const { user, logout } = useUser();
   const navigate = useNavigate();
   const location = useLocation();
+  const isActive = location.pathname === '/login-register';
 
   return (
-    // ✅ ÚNICO CAMBIO: Mantenemos 'sticky' pero quitamos el fondo y el borde.
     <div className="top-0 z-50 w-full">
       <div className="mx-auto max-w-7xl">
         <div className="grid grid-cols-3 items-center px-4 sm:px-6 lg:px-8">
@@ -62,11 +62,14 @@ export function Navbar() {
 
           <div className="flex items-center justify-end py-4">
             {!user ? (
-              <Button onClick={() => navigate('/login-register')}>
+              <Button onClick={() => navigate('/login-register')} variant="ghost"
+              className={isActive ? 'bg-orange-700 hover:bg-orange-700' : ""}
+              
+              >
                 Iniciar Sesión
               </Button>
             ) : (
-              <Button onClick={logout}>Cerrar Sesión</Button>
+              <Button onClick={logout} variant="ghost">Cerrar Sesión</Button>
             )}
           </div>
         </div>

@@ -1,27 +1,69 @@
-import { lazy, useCallback, useState, Suspense } from 'react';
-import { Combination } from '../types/entities';
+import { lazy, useCallback, useState, Suspense, useMemo } from 'react';
+import { Combination } from '../types/entities'; 
 import { saveEntity } from '../services/apiMyRacing';
 import useCombinationAdmin from '../hooks/useCombinationAdmin';
 import { isDuplicateCombination } from '../utils/combination/duplicate';
 import { normalizeCombination } from '../utils/combination/normalize';
 import {
-  getCategoryName,
-  getCircuitName,
-  getSimulatorName,
-} from '../utils/combination/getters';
-
-import {
   Card,
   Button,
   Badge,
   Divider,
-} from '../components/tremor/TremorComponents';
+} from '../components/tremor/TremorComponents'; 
+import CombinationFilterPanel from '../components/Combination/CombinationFilterPanel';
+import CombinationList from '../components/Combination/CombinationList';
 
 const CombinationForm = lazy(() => import('../components/CombinationForm'));
 
+type UserTypeFilter = 'ALL' | 'PREMIUM' | 'COMÚN';
+type EntityFilter = number | 'ALL';
+
+const getSimulatorIdFromCombination = (comb: Combination): number | undefined => {
+  if (comb.categoryVersion?.simulator) {
+    return typeof comb.categoryVersion.simulator === 'object' 
+      ? comb.categoryVersion.simulator.id 
+      : comb.categoryVersion.simulator as number;
+  }
+  if (comb.circuitVersion?.simulator) {
+    return typeof comb.circuitVersion.simulator === 'object'
+      ? comb.circuitVersion.simulator.id
+      : comb.circuitVersion.simulator as number;
+  }
+  return undefined;
+};
+
+const getCategoryIdFromCombination = (comb: Combination): number | undefined => {
+  if (comb.categoryVersion?.category) {
+    return typeof comb.categoryVersion.category === 'object'
+      ? comb.categoryVersion.category.id
+      : comb.categoryVersion.category as number;
+  }
+  return undefined;
+};
+
+const getCircuitIdFromCombination = (comb: Combination): number | undefined => {
+  if (comb.circuitVersion?.circuit) {
+    return typeof comb.circuitVersion.circuit === 'object'
+      ? comb.circuitVersion.circuit.id
+      : comb.circuitVersion.circuit as number;
+  }
+  return undefined;
+};
+
 export default function CombinationAdmin() {
-  const { list, setList, editing, setEditing, simulators, loading } = useCombinationAdmin();
+  const { list, setList, editing, setEditing, simulators, categories, circuits, loading } = useCombinationAdmin();
   const [isCreating, setIsCreating] = useState(false);
+  const [filtersVisible, setFiltersVisible] = useState(false);
+
+  const [filterSimulatorId, setFilterSimulatorId] = useState<EntityFilter>('ALL');
+  const [filterCategoryId, setFilterCategoryId] = useState<EntityFilter>('ALL');
+  const [filterCircuitId, setFilterCircuitId] = useState<EntityFilter>('ALL');
+  const [filterUserType, setFilterUserType] = useState<UserTypeFilter>('ALL');
+  const [filterDateFrom, setFilterDateFrom] = useState('');
+  const [filterDateTo, setFilterDateTo] = useState('');
+
+  const uniqueCategoriesForSelect = useMemo(() => categories || [], [categories]);
+  const uniqueCircuitsForSelect = useMemo(() => circuits || [], [circuits]);
 
   const handleSave = useCallback(
     async (combination: Combination) => {
@@ -32,9 +74,9 @@ export default function CombinationAdmin() {
       }
       try {
         const saved = await saveEntity(Combination, normalized);
-        setList((prev) =>
-          prev.some((c) => c.id === saved.id)
-            ? prev.map((c) => (c.id === saved.id ? saved : c))
+        setList((prev: Combination[]) => 
+          prev.some((c: Combination) => c.id === saved.id)
+            ? prev.map((c: Combination) => (c.id === saved.id ? saved : c))
             : [...prev, saved]
         );
         setEditing(null);
@@ -62,10 +104,32 @@ export default function CombinationAdmin() {
     setIsCreating(false);
   };
 
-  if (loading) {
+  const filteredList = useMemo(() => {
+    return list.filter((comb: Combination) => {
+      const simId = getSimulatorIdFromCombination(comb);
+      const catId = getCategoryIdFromCombination(comb);
+      const circId = getCircuitIdFromCombination(comb);
+      const userType = comb.userType?.toUpperCase();
+
+      const combDateFrom = comb.dateFrom ? new Date(comb.dateFrom).getTime() : 0;
+      const combDateTo = comb.dateTo ? new Date(comb.dateTo).getTime() : Infinity;
+      const filterStartDate = filterDateFrom ? new Date(filterDateFrom).getTime() : 0;
+      const filterEndDate = filterDateTo ? new Date(filterDateTo).getTime() : Infinity;
+
+      const matchSimulator = filterSimulatorId === 'ALL' || (simId !== undefined && simId === filterSimulatorId);
+      const matchCategory = filterCategoryId === 'ALL' || (catId !== undefined && catId === filterCategoryId);
+      const matchCircuit = filterCircuitId === 'ALL' || (circId !== undefined && circId === filterCircuitId);
+      const matchUserType = filterUserType === 'ALL' || userType === filterUserType;
+      const matchDates = (combDateFrom <= filterEndDate) && (combDateTo >= filterStartDate);
+
+      return matchSimulator && matchCategory && matchCircuit && matchUserType && matchDates;
+    });
+  }, [list, filterSimulatorId, filterCategoryId, filterCircuitId, filterUserType, filterDateFrom, filterDateTo]);
+
+  if (loading || simulators === null || categories === null || circuits === null) {
     return (
       <div className="flex justify-center items-center py-20">
-        <p className="text-gray-400">Cargando combinaciones...</p>
+        <p className="text-gray-400">Cargando dependencias...</p>
       </div>
     );
   }
@@ -76,14 +140,46 @@ export default function CombinationAdmin() {
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-4">
             <h2 className="text-xl font-semibold">Administrar Combinaciones</h2>
-            <Badge variant="neutral">Total: {list.length}</Badge>
+            <Badge variant="neutral">Total: {filteredList.length} / {list.length}</Badge>
           </div>
-          <Button onClick={handleNewCombination}>
-            + Nueva Combinación
-          </Button>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setFiltersVisible(prev => !prev)}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors border border-orange-500/60
+                ${filtersVisible 
+                  ? 'bg-transparent text-orange-300 hover:text-orange-400 hover:border-orange-400'  
+                  : 'bg-transparent text-gray-300 hover:text-white hover:border-gray-500'}
+              `}
+            >
+              {filtersVisible ? 'Ocultar Filtros' : 'Mostrar Filtros'}
+            </button>
+            <Button onClick={handleNewCombination}>
+              + Nueva Combinación
+            </Button>
+          </div>
         </div>
 
-       
+        {filtersVisible && (
+          <CombinationFilterPanel
+            simulators={simulators}
+            categories={uniqueCategoriesForSelect}
+            circuits={uniqueCircuitsForSelect}
+            filterSimulatorId={filterSimulatorId}
+            setFilterSimulatorId={setFilterSimulatorId}
+            filterCategoryId={filterCategoryId}
+            setFilterCategoryId={setFilterCategoryId}
+            filterCircuitId={filterCircuitId}
+            setFilterCircuitId={setFilterCircuitId}
+            filterUserType={filterUserType}
+            setFilterUserType={setFilterUserType}
+            filterDateFrom={filterDateFrom}
+            setFilterDateFrom={setFilterDateFrom}
+            filterDateTo={filterDateTo}
+            setFilterDateTo={setFilterDateTo}
+          />
+        )}
+
         {isCreating && editing && simulators && (
           <div className="mb-6">
             <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
@@ -101,86 +197,16 @@ export default function CombinationAdmin() {
           </div>
         )}
 
-        {list.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">🎮</div>
-            <p className="text-xl text-gray-600 dark:text-gray-400">
-              No hay combinaciones registradas
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            
-           
-            <div className="hidden md:flex text-sm font-semibold text-gray-400 pb-2 px-4 border-b border-gray-700/50">
-              <div className="flex-[2]">Simulador</div>
-              <div className="flex-[2]">Categoría</div>
-              <div className="flex-[2]">Circuito</div>
-              <div className="flex-1">Desde</div>
-              <div className="flex-1">Hasta</div>
-            
-              <div className="flex-1 text-center">Config.</div>
-              <div className="flex-1 text-center">Usuario</div>
-              <div className="flex-1 text-right">Acciones</div>
-            </div>
-
-         
-            {list.map((comb) => (
-              <div key={comb.id} className="space-y-2">
-                
-                
-                <div className="flex flex-col md:flex-row items-start md:items-center py-4 px-4 hover:bg-gray-900/50 rounded-lg border-b border-gray-700/50">
-                  <div className="flex-[2] w-full md:w-auto mb-2 md:mb-0 font-medium">{getSimulatorName(comb)}</div>
-                  <div className="flex-[2] w-full md:w-auto mb-2 md:mb-0">{getCategoryName(comb)}</div>
-                  <div className="flex-[2] w-full md:w-auto mb-2 md:mb-0">{getCircuitName(comb)}</div>
-                  <div className="flex-1 w-full md:w-auto mb-2 md:mb-0">
-                    {comb.dateFrom ? new Date(comb.dateFrom).toLocaleDateString('es-AR') : 'N/A'}
-                  </div>
-                  <div className="flex-1 w-full md:w-auto mb-2 md:mb-0">
-                    {comb.dateTo ? new Date(comb.dateTo).toLocaleDateString('es-AR') : 'N/A'}
-                  </div>
-                  
-                 
-                  <div className="flex-1 w-full md:w-auto mb-2 md:mb-0 flex md:flex-col md:items-center gap-1">
-                    <Badge variant="neutral" title="Vueltas">{`V: ${comb.lapsNumber}`}</Badge>
-                    <Badge variant="neutral" title="Paradas">{`P: ${comb.obligatoryStopsQuantity}`}</Badge>
-                    
-                  </div>
-
-                  <div className="flex-1 w-full md:w-auto mb-2 md:mb-0 flex md:justify-center">
-                    <Badge variant={comb.userType === 'Premium' ? 'warning' : 'default'}>
-                      {comb.userType?.toUpperCase()}
-                    </Badge>
-                  </div>
-                  
-                  <div className="flex-1 w-full md:w-auto flex justify-end">
-                    <Button
-                      variant={editing?.id === comb.id && !isCreating ? 'primary' : 'ghost'}
-                      onClick={() => editing?.id === comb.id && !isCreating ? handleCancel() : handleEditCombination(comb)}
-                    >
-                      {editing?.id === comb.id && !isCreating ? 'Cancelar' : 'Editar'}
-                    </Button>
-                  </div>
-                </div>
-
-                
-                {editing?.id === comb.id && !isCreating && simulators && (
-                  <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700 mb-2">
-                    <h3 className="text-lg font-semibold mb-4 text-orange-400">Editar Combinación</h3>
-                    <Suspense fallback={<div className="text-center p-4">Cargando formulario...</div>}>
-                      <CombinationForm
-                        initial={editing as Combination}
-                        simulators={simulators}
-                        onSave={handleSave}
-                        onCancel={handleCancel}
-                      />
-                    </Suspense>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+        <CombinationList
+          list={list}
+          filteredList={filteredList}
+          editing={editing}
+          isCreating={isCreating}
+          simulators={simulators}
+          handleEditCombination={handleEditCombination}
+          handleCancel={handleCancel}
+          handleSave={handleSave}
+        />
       </Card>
     </div>
   );
