@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useUser } from '../context/UserContext';
 import { logout as apiLogout } from '../services/apiMyRacing';
 import { useMinimumLoading } from '../hooks/useMinimumLoading';
+import { Button } from './tremor/TremorComponents.tsx';
 
 export function AuthButtons() {
   const { user, logout: contextLogout } = useUser();
@@ -22,9 +23,14 @@ export function AuthButtons() {
 
   if (user) {
     return (
-      <button onClick={handleLogout} disabled={showLoading}>
+    
+      <Button
+        onClick={handleLogout}
+        isLoading={showLoading}
+        variant="secondary" 
+      >
         {showLoading ? 'Cerrando sesión...' : 'Cerrar Sesión'}
-      </button>
+      </Button>
     );
   }
 

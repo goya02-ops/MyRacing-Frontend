@@ -11,7 +11,10 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Geist Sans', ...defaultTheme.fontFamily.sans],
-        heading: ['Oswald', 'sans-serif']
+        heading: ['Oswald', 'sans-serif'],
+        poppins: ['Poppins', 'sans-serif'],
+        merriweather: ['Merriweather', 'serif'],
+
 
       },
       keyframes: {

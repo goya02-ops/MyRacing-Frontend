@@ -23,7 +23,7 @@ export function SignInForm({
 }: Props) {
   if (error) console.log(error);
   return (
-    <form onSubmit={onSubmit} className="mt-6 space-y-4">
+    <form onSubmit={onSubmit} className="space-y-4 w-full">
       {error && <div className="text-red-600">{error}</div>}
 
       <div>

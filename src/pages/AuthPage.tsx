@@ -3,11 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
 import { useLoginForm } from '../hooks/useLoginForm';
 import { useSignIn } from '../hooks/useSignInForm';
-
-// Importamos TUS componentes de formulario
 import { LoginForm } from '../components/LoginForm';
 import { SignInForm } from '../components/SignInForm';
-
 import { Button } from '../components/tremor/TremorComponents';
 import {
   RiGoogleFill,
@@ -16,7 +13,6 @@ import {
   RiLinkedinFill,
 } from '@remixicon/react';
 
-// --- Icono de Red Social (Helper) ---
 const SocialIcon = ({ icon: Icon }: { icon: React.ElementType }) => (
   <a
     href="#"
@@ -26,14 +22,12 @@ const SocialIcon = ({ icon: Icon }: { icon: React.ElementType }) => (
   </a>
 );
 
-// --- Componente Principal de la Página ---
 export default function AuthPage() {
   const [isActive, setIsActive] = useState(false);
   const navigate = useNavigate();
   const { setUser } = useUser();
   const [successMessage, setSuccessMessage] = useState('');
 
-  // --- Lógica de Login ---
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState('');
   const login = useLoginForm({
@@ -48,7 +42,6 @@ export default function AuthPage() {
     },
   });
 
-  // --- Lógica de Registro ---
   const [signInLoading, setSignInLoading] = useState(false);
   const [signInError, setSignInError] = useState('');
   const signIn = useSignIn({
@@ -75,33 +68,36 @@ export default function AuthPage() {
     signIn.handleSubmit(e);
   };
 
-  // --- Clases de Animación y Estilo ---
-  const formContainerBase =
-    'absolute top-0 h-full w-1/2 transition-all duration-600 ease-in-out';
-    
-  const formPanelTransparentStyles = 
-    'rounded-l-2xl bg-gray-950/20 backdrop-blur-lg border border-gray-700/50';
+  const formPanelBaseClasses =
+    'absolute top-0 h-full w-1/2 flex flex-col items-center justify-center px-10 bg-gray-950/20 backdrop-blur-lg border border-gray-700/50 transition-all duration-600 ease-in-out';
 
-  const overlayContainerBase =
-    'absolute top-0 left-1/2 z-50 h-full w-1/2 overflow-hidden transition-all duration-600 ease-in-out rounded-r-2xl'; 
-  const overlayBase =
-    'relative -left-full h-full w-[200%] transition-all duration-600 ease-in-out';
-  const overlayPanelBase =
-    'absolute top-0 flex h-full w-1/2 flex-col items-center justify-center gap-4 px-10 text-center';
+  const overlayContainerBaseClasses =
+    'absolute top-0 left-1/2 h-full w-1/2 overflow-hidden bg-gray-900 transition-transform duration-600 ease-in-out z-40';
+
+  const overlayPanelWrapperClasses =
+    'relative -left-full h-full w-[200%] bg-gradient-to-r from-orange-500 to-orange-700 transition-transform duration-600 ease-in-out';
+
+  const overlayContentPanelClasses =
+    'absolute top-0 flex h-full w-1/2 flex-col items-start justify-center gap-4 px-10 text-left transition-transform duration-600 ease-in-out';
+
+  const overlayContentPanelRightClasses =
+    'absolute top-0 flex h-full w-1/2 flex-col items-end justify-center gap-4 px-10 text-right transition-transform duration-600 ease-in-out';
 
   return (
-    <div className="relative mx-auto h-auto min-h-[600px] w-full max-w-[820px] overflow-hidden">
-      
-      {/* --- Formulario de Registro (Sign Up) --- */}
-      <div
-        className={`${formContainerBase} left-0 ${formPanelTransparentStyles}
-          ${isActive 
-            ? 'translate-x-full opacity-100 z-20' // Visible y encima cuando está activo
-            : 'translate-x-0 opacity-0 z-10'   // Oculto a la izquierda por defecto
-          }
-        `}
-      >
-        <div className="flex h-full flex-col items-center justify-center gap-4 px-10">
+    <div className="w-full flex items-center justify-center py-8">
+      <div className="relative mx-auto h-auto min-h-[600px] w-full max-w-[820px] overflow-hidden">
+        {/* Panel de Registro */}
+        <div
+          className={`${formPanelBaseClasses} left-0 z-10 ${
+            isActive
+              ? 'translate-x-full rounded-r-2xl'
+              : 'translate-x-0 rounded-l-2xl'
+          }`}
+          style={{
+            pointerEvents: isActive ? 'auto' : 'none',
+            opacity: isActive ? 1 : 0,
+          }}
+        >
           <h1 className="text-3xl font-bold text-gray-100">Crear Cuenta</h1>
           <div className="my-2 flex gap-4">
             <SocialIcon icon={RiGoogleFill} />
@@ -120,18 +116,19 @@ export default function AuthPage() {
             error={signInError}
           />
         </div>
-      </div>
 
-      {/* --- Formulario de Inicio de Sesión (Sign In) --- */}
-      <div
-        className={`${formContainerBase} left-0 ${formPanelTransparentStyles}
-          ${isActive 
-            ? 'translate-x-full opacity-0 z-10' // Oculto y detrás cuando Sign Up está activo
-            : 'translate-x-0 opacity-100 z-20' // Visible y encima por defecto
-          }
-        `}
-      >
-        <div className="flex h-full flex-col items-center justify-center gap-4 px-10">
+        {/* Panel de Login */}
+        <div
+          className={`${formPanelBaseClasses} left-0 z-20 ${
+            isActive
+              ? 'translate-x-full rounded-r-2xl'
+              : 'translate-x-0 rounded-l-2xl'
+          }`}
+          style={{
+            pointerEvents: !isActive ? 'auto' : 'none',
+            opacity: !isActive ? 1 : 0,
+          }}
+        >
           <h1 className="text-3xl font-bold text-gray-100">Iniciar Sesión</h1>
           <div className="my-2 flex gap-4">
             <SocialIcon icon={RiGoogleFill} />
@@ -148,62 +145,72 @@ export default function AuthPage() {
             onSubmit={handleLoginSubmit}
             loading={loginLoading}
             error={loginError || successMessage}
-            errorClassName={
-              successMessage ? 'text-green-400' : 'text-red-600'
-            }
+            errorClassName={successMessage ? 'text-green-400' : 'text-red-600'}
           />
         </div>
-      </div>
 
-      {/* --- Contenedor del Overlay Deslizante --- */}
-      {/* z-index alto para estar siempre encima */}
-      <div 
-        className={`${overlayContainerBase} z-50 
-          ${isActive ? '-translate-x-full' : 'translate-x-0'}
-        `}
-      >
+        {/* Overlay animado */}
         <div
-          className={`${overlayBase} bg-gradient-to-r from-orange-500 to-orange-700 
-            ${isActive ? 'translate-x-1/2' : 'translate-x-0'}
-          `}
+          className={`${overlayContainerBaseClasses} ${
+            isActive
+              ? '-translate-x-full rounded-l-2xl'
+              : 'translate-x-0 rounded-r-2xl'
+          }`}
         >
-          {/* Panel Izquierdo (Muestra "Welcome Back!") */}
           <div
-            className={`${overlayPanelBase} 
-              ${isActive ? 'translate-x-0' : '-translate-x-1/4'}
-            `}
+            className={`${overlayPanelWrapperClasses} ${
+              isActive ? 'translate-x-1/2' : 'translate-x-0'
+            }`}
           >
-            <h1 className="text-3xl font-bold">¡Bienvenido de Nuevo!</h1>
-            <p className="text-sm">
-              Para seguir conectado, por favor inicia sesión con tu
-              información personal
-            </p>
-            <Button
-              variant="secondary"
-              className="mt-2 px-10"
-              onClick={() => setIsActive(false)}
+            {/* Panel izquierdo del overlay */}
+            <div
+              className={`${overlayContentPanelClasses} ${
+                isActive ? 'translate-x-0' : '-translate-x-[20%]'
+              }`}
             >
-              Sign In
-            </Button>
-          </div>
+              <h1 className="text-4xl font-extrabold text-gray-100">
+                <span className="text-5xl font-merriweather font-black text-black">
+                  Hola!
+                </span>
+                <br />
+                te esperábamos!
+              </h1>
+              <p className="text-sm">
+                Para seguir conectado, por favor inicia sesión con tu
+                información personal
+              </p>
+              <Button
+                variant="ghost"
+                className="mt-2 px-10 bg-gray-950/70 backdrop-blur-lg border border-gray-700/50 hover:border-white hover:bg-transparent"
+                onClick={() => setIsActive(false)}
+              >
+                Sign In
+              </Button>
+            </div>
 
-          {/* Panel Derecho (Muestra "Hello, Friend!") */}
-          <div
-            className={`${overlayPanelBase} right-0 
-              ${isActive ? 'translate-x-1/4' : 'translate-x-0'}
-            `}
-          >
-            <h1 className="text-3xl font-bold">¡Hola, Amigo!</h1>
-            <p className="text-sm">
-              Ingresa tus datos personales y comienza tu viaje con nosotros
-            </p>
-            <Button
-              variant="secondary"
-              className="mt-2 px-10"
-              onClick={() => setIsActive(true)}
+            {/* Panel derecho del overlay */}
+            <div
+              className={`${overlayContentPanelRightClasses} right-0 ${
+                isActive ? 'translate-x-[20%]' : 'translate-x-0'
+              }`}
             >
-              Sign Up
-            </Button>
+              <h1 className="text-4xl font-extrabold text-gray-100">
+                ¡Hola, <br />
+                <span className="text-5xl font-merriweather font-black text-black">
+                  Bienvenido!
+                </span>
+              </h1>
+              <p className="text-sm text-white">
+                Ingresa tus datos personales y comienza tu viaje con nosotros
+              </p>
+              <Button
+                variant="ghost"
+                className="mt-2 px-10 bg-gray-950/70 backdrop-blur-lg border border-gray-700/50 hover:border-white hover:bg-transparent"
+                onClick={() => setIsActive(true)}
+              >
+                Sign Up
+              </Button>
+            </div>
           </div>
         </div>
       </div>
