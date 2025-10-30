@@ -30,7 +30,7 @@ export default function AvailableRaces() {
   if (loading) {
     return (
       <section className="p-8 min-h-screen">
-        <Spinner />
+        <Spinner>Cargando combinaciones...</Spinner>
       </section>
     );
   }

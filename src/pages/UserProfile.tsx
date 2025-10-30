@@ -1,14 +1,24 @@
 // import React from 'react';
-import { useUserProfile } from '../hooks/useUserProfile'; 
+import { useUserProfile } from '../hooks/useUserProfile';
 
 import { UserStatsCard } from '../components/UserStatsCard';
 import { UserDataForm } from '../components/UserData';
 import { UserRaceHistory } from '../components/UserRaceHistory';
+import Spinner from '../components/Spinner.tsx';
 
 export default function UserProfile() {
   const {
-    user, results, formData, loading, isEditing, saving, stats,
-    setIsEditing, handleChange, handleSave, handleCancel,
+    user,
+    results,
+    formData,
+    loading,
+    isEditing,
+    saving,
+    stats,
+    setIsEditing,
+    handleChange,
+    handleSave,
+    handleCancel,
   } = useUserProfile();
 
   const { totalRaces, victories, podiums } = stats;
@@ -16,7 +26,7 @@ export default function UserProfile() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen text-gray-400">
-        <p className="text-lg">Cargando perfil...</p>
+        <Spinner>Cargando usuario</Spinner>
       </div>
     );
   }
@@ -35,26 +45,24 @@ export default function UserProfile() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-6 **bg-gray-900** text-gray-200 min-h-screen">
-      
       {totalRaces > 0 && (
-        <UserStatsCard 
-            stats={{ totalRaces, victories, podiums, lastRaceDate }} 
+        <UserStatsCard
+          stats={{ totalRaces, victories, podiums, lastRaceDate }}
         />
       )}
 
-      <UserDataForm 
-          user={user}
-          formData={formData}
-          isEditing={isEditing}
-          saving={saving}
-          handleChange={handleChange}
-          handleSave={handleSave}
-          handleCancel={handleCancel}
-          setIsEditing={setIsEditing}
+      <UserDataForm
+        user={user}
+        formData={formData}
+        isEditing={isEditing}
+        saving={saving}
+        handleChange={handleChange}
+        handleSave={handleSave}
+        handleCancel={handleCancel}
+        setIsEditing={setIsEditing}
       />
 
       <UserRaceHistory results={results} />
-      
     </div>
   );
 }
