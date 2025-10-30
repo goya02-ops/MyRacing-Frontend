@@ -1,6 +1,6 @@
-import { lazy, useState, useEffect, Suspense } from 'react';
-import { Membership } from '../types/entities.ts';
-import { fetchEntities, saveEntity } from '../services/apiMyRacing.ts';
+import { lazy, Suspense } from 'react';
+import { useMembershipLogic } from '../hooks/useMembershipLogic';
+
 import {
   Card,
   Button,
@@ -12,45 +12,17 @@ const MembershipForm = lazy(() => import('../components/MembershipForm'));
 const MembershipHistory = lazy(() => import('../components/MembershipHistory'));
 
 export default function MembershipAdmin() {
-  const [memberships, setMemberships] = useState<Membership[]>([]);
-  const [editing, setEditing] = useState<Membership | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [showHistory, setShowHistory] = useState(false);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const fetched = await fetchEntities(Membership);
-        // Ordenamos por fecha, de más antigua a más nueva
-        const sorted = [...fetched].sort((a, b) =>
-          new Date(a.dateFrom) > new Date(b.dateFrom) ? 1 : -1
-        );
-        setMemberships(sorted);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
-
-  // El último ítem del array ordenado es el actual
-  const currentM = memberships.at(-1);
-
-  const handleSave = async (membership: Membership) => {
-    const saved = await saveEntity(Membership, membership);
-    // Agregamos el nuevo y re-ordenamos
-    const updated = [...memberships, saved].sort((a, b) =>
-      new Date(a.dateFrom) > new Date(b.dateFrom) ? 1 : -1
-    );
-    setMemberships(updated);
-    setEditing(null); // Cierra el formulario al guardar
-  };
-
-  const handleCancel = () => {
-    setEditing(null);
-  };
+  const {
+    memberships,
+    editing,
+    loading,
+    showHistory,
+    currentMembership,
+    handleSave,
+    handleCancel,
+    handleToggleHistory,
+    handleToggleForm,
+  } = useMembershipLogic();
 
   if (loading) {
     return (
@@ -62,27 +34,20 @@ export default function MembershipAdmin() {
 
   return (
     <Card className="text-gray-200">
+      {/* 3.1 BOTONES DE CONTROL */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <h2 className="text-xl font-semibold">Administrar Membresías</h2>
         <div className="flex gap-2">
           {/* Botón para ver historial */}
           <Button
-            onClick={() => {
-              setEditing(null); // Cierra el form si está abierto
-              setShowHistory(!showHistory);
-            }}
+            onClick={handleToggleHistory}
             variant={showHistory ? 'primary' : 'ghost'}
           >
             {showHistory ? 'Ocultar Historial' : 'Ver Historial'}
           </Button>
 
           <Button
-            onClick={() => {
-              setEditing(editing ? null : new Membership());
-              setShowHistory(false); // Cierra el historial si está abierto
-            }}
-            // 'default' no es válido. Usamos 'primary' para la acción
-            // principal y 'secondary' (o 'ghost') para cancelar.
+            onClick={handleToggleForm}
             variant={editing ? 'secondary' : 'primary'}
           >
             {editing ? 'Cancelar Nuevo Valor' : '+ Nuevo Valor'}
@@ -90,20 +55,21 @@ export default function MembershipAdmin() {
         </div>
       </div>
 
+      {/* 3.2 VALOR ACTUAL */}
       <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
         <Label className="text-sm">Valor Actual</Label>
-        {!currentM ? (
+        {!currentMembership ? (
           <p className="text-gray-400 mt-2">
             Aún no se cargó ninguna membresía
           </p>
         ) : (
           <>
             <p className="text-3xl font-semibold text-orange-400 mt-1">
-              ${currentM.price}
+              ${currentMembership.price}
             </p>
             <p className="text-sm text-gray-500 mt-2">
               Vigente desde:{' '}
-              {new Date(currentM.dateFrom).toLocaleString('es-AR', {
+              {new Date(currentMembership.dateFrom).toLocaleString('es-AR', {
                 day: '2-digit',
                 month: '2-digit',
                 year: 'numeric',
@@ -116,6 +82,7 @@ export default function MembershipAdmin() {
         )}
       </div>
 
+      {/* 3.3 HISTORIAL DE VALORES (Carga dinámica) */}
       {showHistory && (
         <Suspense
           fallback={
@@ -128,6 +95,7 @@ export default function MembershipAdmin() {
         </Suspense>
       )}
 
+      {/* 3.4 FORMULARIO DE NUEVO VALOR (Carga dinámica) */}
       {editing && (
         <Suspense
           fallback={
