@@ -8,7 +8,6 @@ import {
   Label,
 } from '../components/tremor/TremorComponents';
 
-
 const MembershipForm = lazy(() => import('../components/MembershipForm'));
 const MembershipHistory = lazy(() => import('../components/MembershipHistory'));
 
@@ -63,7 +62,6 @@ export default function MembershipAdmin() {
 
   return (
     <Card className="text-gray-200">
-     
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <h2 className="text-xl font-semibold">Administrar Membresías</h2>
         <div className="flex gap-2">
@@ -77,25 +75,21 @@ export default function MembershipAdmin() {
           >
             {showHistory ? 'Ocultar Historial' : 'Ver Historial'}
           </Button>
-          
-        
+
           <Button
             onClick={() => {
               setEditing(editing ? null : new Membership());
               setShowHistory(false); // Cierra el historial si está abierto
             }}
-            // 'default' no es válido. Usamos 'primary' para la acción 
+            // 'default' no es válido. Usamos 'primary' para la acción
             // principal y 'secondary' (o 'ghost') para cancelar.
             variant={editing ? 'secondary' : 'primary'}
           >
             {editing ? 'Cancelar Nuevo Valor' : '+ Nuevo Valor'}
           </Button>
-       
-
         </div>
       </div>
 
-     
       <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
         <Label className="text-sm">Valor Actual</Label>
         {!currentM ? (
@@ -108,18 +102,20 @@ export default function MembershipAdmin() {
               ${currentM.price}
             </p>
             <p className="text-sm text-gray-500 mt-2">
-              Vigente desde: {
-                new Date(currentM.dateFrom).toLocaleString('es-AR', {
-                  day: '2-digit', month: '2-digit', year: 'numeric',
-                  hour: '2-digit', minute: '2-digit'
-                })
-              } hs
+              Vigente desde:{' '}
+              {new Date(currentM.dateFrom).toLocaleString('es-AR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}{' '}
+              hs
             </p>
           </>
         )}
       </div>
 
-      
       {showHistory && (
         <Suspense
           fallback={
@@ -132,7 +128,6 @@ export default function MembershipAdmin() {
         </Suspense>
       )}
 
-     
       {editing && (
         <Suspense
           fallback={

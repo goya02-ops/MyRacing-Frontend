@@ -1,7 +1,6 @@
 import { lazy, Suspense } from 'react';
 import type { AdminSection } from '../hooks/useAdminSection';
 
-
 const CategoryAdmin = lazy(() => import('../pages/CategoryAdmin'));
 const CircuitAdmin = lazy(() => import('../pages/CircuitAdmin'));
 const CombinationAdmin = lazy(() => import('../pages/CombinationAdmin'));
@@ -15,17 +14,24 @@ type Props = {
 };
 
 export default function AdminSectionRenderer({ section }: Props) {
- 
   const getComponent = () => {
     switch (section) {
-      case 'categories': return <CategoryAdmin />;
-      case 'circuits': return <CircuitAdmin />;
-      case 'combinations': return <CombinationAdmin />;
-      case 'memberships': return <MembershipAdmin />;
-      case 'simulators': return <SimulatorAdmin />;
-      case 'users': return <UserAdmin />;
-      case 'races': return <UserRacesAdmin />;
-      default: return <div>Sección no encontrada</div>;
+      case 'categories':
+        return <CategoryAdmin />;
+      case 'circuits':
+        return <CircuitAdmin />;
+      case 'combinations':
+        return <CombinationAdmin />;
+      case 'memberships':
+        return <MembershipAdmin />;
+      case 'simulators':
+        return <SimulatorAdmin />;
+      case 'users':
+        return <UserAdmin />;
+      case 'races':
+        return <UserRacesAdmin />;
+      default:
+        return <div>Sección no encontrada</div>;
     }
   };
 
@@ -40,7 +46,7 @@ export default function AdminSectionRenderer({ section }: Props) {
   };
 
   return (
-    <Suspense 
+    <Suspense
       fallback={
         <div className="flex justify-center items-center py-20">
           <p className="text-gray-400">

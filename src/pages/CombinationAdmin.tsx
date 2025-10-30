@@ -9,12 +9,19 @@ import {
   getCircuitName,
   getSimulatorName,
 } from '../utils/combination/getters';
+import { useScrollToElement } from '../hooks/useScrollToElement.ts';
 
 import {
   Card,
   Button,
   Badge,
   Divider,
+  Table,
+  TableHead,
+  TableRow,
+  TableHeaderCell,
+  TableBody,
+  TableCell,
 } from '../components/tremor/TremorComponents';
 
 const CombinationForm = lazy(() => import('../components/CombinationForm'));
@@ -23,6 +30,8 @@ export default function CombinationAdmin() {
   const { list, setList, editing, setEditing, simulators, loading } =
     useCombinationAdmin();
   const [isCreating, setIsCreating] = useState(false);
+
+  const formContainerRef = useScrollToElement<HTMLDivElement>(editing);
 
   const handleSave = useCallback(
     async (combination: Combination) => {
@@ -74,36 +83,75 @@ export default function CombinationAdmin() {
   return (
     <div className="space-y-6">
       <Card className="text-gray-200">
-        <div className="flex justify-between items-center mb-6">
+        <div
+          className="
+          flex flex-col sm:flex-row    
+          justify-between 
+          items-start sm:items-center  
+          mb-6                         
+          gap-4 sm:gap-0               
+        "
+        >
           <div className="flex items-center gap-4">
             <h2 className="text-xl font-semibold">Administrar Combinaciones</h2>
             <Badge variant="neutral">Total: {list.length}</Badge>
           </div>
-          <Button onClick={handleNewCombination}>+ Nueva Combinación</Button>
+          <Button onClick={handleNewCombination} className="w-full sm:w-auto">
+            + Nueva Combinación
+          </Button>
         </div>
 
-        {isCreating && editing && simulators && (
-          <div className="mb-6">
-            <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
-              <h3 className="text-lg font-semibold mb-4 text-orange-400">
-                Crear Nueva Combinación
-              </h3>
-              <Suspense
-                fallback={
-                  <div className="text-center p-4">Cargando formulario...</div>
-                }
-              >
-                <CombinationForm
-                  initial={editing as Combination}
-                  simulators={simulators}
-                  onSave={handleSave}
-                  onCancel={handleCancel}
-                />
-              </Suspense>
+        <div ref={formContainerRef}>
+          {isCreating && editing && simulators && (
+            <div className="mb-6">
+              <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                <h3 className="text-lg font-semibold mb-4 text-orange-400">
+                  Crear Nueva Combinación
+                </h3>
+                <Suspense
+                  fallback={
+                    <div className="text-center p-4">
+                      Cargando formulario...
+                    </div>
+                  }
+                >
+                  <CombinationForm
+                    initial={editing as Combination}
+                    simulators={simulators}
+                    onSave={handleSave}
+                    onCancel={handleCancel}
+                  />
+                </Suspense>
+              </div>
+              <Divider className="my-6" />
             </div>
-            <Divider className="my-6" />
-          </div>
-        )}
+          )}
+
+          {!isCreating && editing && simulators && (
+            <div className="mb-6">
+              <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                <h3 className="text-lg font-semibold mb-4 text-orange-400">
+                  Editar Combinación
+                </h3>
+                <Suspense
+                  fallback={
+                    <div className="text-center p-4">
+                      Cargando formulario...
+                    </div>
+                  }
+                >
+                  <CombinationForm
+                    initial={editing as Combination}
+                    simulators={simulators}
+                    onSave={handleSave}
+                    onCancel={handleCancel}
+                  />
+                </Suspense>
+              </div>
+              <Divider className="my-6" />
+            </div>
+          )}
+        </div>
 
         {list.length === 0 ? (
           <div className="text-center py-12">
@@ -113,106 +161,88 @@ export default function CombinationAdmin() {
             </p>
           </div>
         ) : (
-          <div className="space-y-2">
-            <div className="hidden md:flex text-sm font-semibold text-gray-400 pb-2 px-4 border-b border-gray-700/50">
-              <div className="flex-[2]">Simulador</div>
-              <div className="flex-[2]">Categoría</div>
-              <div className="flex-[2]">Circuito</div>
-              <div className="flex-1">Desde</div>
-              <div className="flex-1">Hasta</div>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableHeaderCell>Simulador</TableHeaderCell>
+                  <TableHeaderCell>Categoría</TableHeaderCell>
+                  <TableHeaderCell>Circuito</TableHeaderCell>
+                  <TableHeaderCell>Desde</TableHeaderCell>
+                  <TableHeaderCell>Hasta</TableHeaderCell>
+                  <TableHeaderCell className="text-center">
+                    Config.
+                  </TableHeaderCell>
+                  <TableHeaderCell className="text-center">
+                    Usuario
+                  </TableHeaderCell>
+                  <TableHeaderCell className="text-right">
+                    Acciones
+                  </TableHeaderCell>
+                </TableRow>
+              </TableHead>
 
-              <div className="flex-1 text-center">Config.</div>
-              <div className="flex-1 text-center">Usuario</div>
-              <div className="flex-1 text-right">Acciones</div>
-            </div>
-
-            {list.map((comb) => (
-              <div key={comb.id} className="space-y-2">
-                <div className="flex flex-col md:flex-row items-start md:items-center py-4 px-4 hover:bg-gray-900/50 rounded-lg border-b border-gray-700/50">
-                  <div className="flex-[2] w-full md:w-auto mb-2 md:mb-0 font-medium">
-                    {getSimulatorName(comb)}
-                  </div>
-                  <div className="flex-[2] w-full md:w-auto mb-2 md:mb-0">
-                    {getCategoryName(comb)}
-                  </div>
-                  <div className="flex-[2] w-full md:w-auto mb-2 md:mb-0">
-                    {getCircuitName(comb)}
-                  </div>
-                  <div className="flex-1 w-full md:w-auto mb-2 md:mb-0">
-                    {comb.dateFrom
-                      ? new Date(comb.dateFrom).toLocaleDateString('es-AR')
-                      : 'N/A'}
-                  </div>
-                  <div className="flex-1 w-full md:w-auto mb-2 md:mb-0">
-                    {comb.dateTo
-                      ? new Date(comb.dateTo).toLocaleDateString('es-AR')
-                      : 'N/A'}
-                  </div>
-
-                  <div className="flex-1 w-full md:w-auto mb-2 md:mb-0 flex md:flex-col md:items-center gap-1">
-                    <Badge
-                      variant="neutral"
-                      title="Vueltas"
-                    >{`V: ${comb.lapsNumber}`}</Badge>
-                    <Badge
-                      variant="neutral"
-                      title="Paradas"
-                    >{`P: ${comb.obligatoryStopsQuantity}`}</Badge>
-                  </div>
-
-                  <div className="flex-1 w-full md:w-auto mb-2 md:mb-0 flex md:justify-center">
-                    <Badge
-                      variant={
-                        comb.userType === 'Premium' ? 'warning' : 'default'
-                      }
-                    >
-                      {comb.userType?.toUpperCase()}
-                    </Badge>
-                  </div>
-
-                  <div className="flex-1 w-full md:w-auto flex justify-end">
-                    <Button
-                      variant={
-                        editing?.id === comb.id && !isCreating
-                          ? 'primary'
-                          : 'ghost'
-                      }
-                      onClick={() =>
-                        editing?.id === comb.id && !isCreating
-                          ? handleCancel()
-                          : handleEditCombination(comb)
-                      }
-                    >
-                      {editing?.id === comb.id && !isCreating
-                        ? 'Cancelar'
-                        : 'Editar'}
-                    </Button>
-                  </div>
-                </div>
-
-                {editing?.id === comb.id && !isCreating && simulators && (
-                  <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700 mb-2">
-                    <h3 className="text-lg font-semibold mb-4 text-orange-400">
-                      Editar Combinación
-                    </h3>
-                    <Suspense
-                      fallback={
-                        <div className="text-center p-4">
-                          Cargando formulario...
-                        </div>
-                      }
-                    >
-                      <CombinationForm
-                        initial={editing as Combination}
-                        simulators={simulators}
-                        onSave={handleSave}
-                        onCancel={handleCancel}
-                      />
-                    </Suspense>
-                  </div>
-                )}
-              </div>
-            ))}
+              <TableBody>
+                {list.map((comb) => (
+                  <TableRow key={comb.id}>
+                    <TableCell className="font-medium">
+                      {getSimulatorName(comb)}
+                    </TableCell>
+                    <TableCell>{getCategoryName(comb)}</TableCell>
+                    <TableCell>{getCircuitName(comb)}</TableCell>
+                    <TableCell>
+                      {comb.dateFrom
+                        ? new Date(comb.dateFrom).toLocaleDateString('es-AR')
+                        : 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                      {comb.dateTo
+                        ? new Date(comb.dateTo).toLocaleDateString('es-AR')
+                        : 'N/A'}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex flex-col items-center gap-1">
+                        <Badge
+                          variant="neutral"
+                          title="Vueltas"
+                        >{`V: ${comb.lapsNumber}`}</Badge>
+                        <Badge
+                          variant="neutral"
+                          title="Paradas"
+                        >{`P: ${comb.obligatoryStopsQuantity}`}</Badge>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Badge
+                        variant={
+                          comb.userType === 'Premium' ? 'warning' : 'default'
+                        }
+                      >
+                        {comb.userType?.toUpperCase()}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant={
+                          editing?.id === comb.id && !isCreating
+                            ? 'primary'
+                            : 'ghost'
+                        }
+                        onClick={() =>
+                          editing?.id === comb.id && !isCreating
+                            ? handleCancel()
+                            : handleEditCombination(comb)
+                        }
+                      >
+                        {editing?.id === comb.id && !isCreating
+                          ? 'Cancelar'
+                          : 'Editar'}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         )}
       </Card>
