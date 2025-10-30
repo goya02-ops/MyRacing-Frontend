@@ -16,7 +16,7 @@ export function useAvailableRacesState() {
   const { allCombinations, simulatorsWithRaces } = useCurrentRaces();
 
   useEffect(() => {
-    if (allCombinations.length > 0 || simulatorsWithRaces.length > 0) {
+    if (allCombinations || simulatorsWithRaces) {
       setLoading(false);
     }
   }, [allCombinations, simulatorsWithRaces]);
