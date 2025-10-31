@@ -1,6 +1,6 @@
 import { lazy, useState, useEffect, Suspense } from 'react';
 import { Category } from '../types/entities.ts';
-import { fetchEntities, saveEntity } from '../services/apiMyRacing.ts';
+import { fetchEntities, saveEntity } from '../services/apiService.ts';
 import {
   Card,
   Button,

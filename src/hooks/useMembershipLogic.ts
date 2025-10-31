@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Membership } from '../types/entities';
-import { fetchEntities, saveEntity } from '../services/apiMyRacing'; 
+import { fetchEntities, saveEntity } from '../services/apiService.ts';
 
 interface MembershipLogic {
   memberships: Membership[];
@@ -48,16 +48,15 @@ export function useMembershipLogic(): MembershipLogic {
     return memberships.at(-1);
   }, [memberships]);
 
-  
   const handleSave = useCallback(async (membership: Membership) => {
     try {
-      const saved = await saveEntity(Membership as any, membership); 
+      const saved = await saveEntity(Membership as any, membership);
 
       setMemberships((prev) => {
         const updated = [...prev, saved as Membership];
         return sortByDate(updated);
       });
-      setEditing(null); 
+      setEditing(null);
     } catch (error) {
       console.error('Error saving membership:', error);
       alert('Error al guardar el nuevo valor de membresía.');
@@ -68,15 +67,14 @@ export function useMembershipLogic(): MembershipLogic {
     setEditing(null);
   }, []);
 
-
   const handleToggleHistory = useCallback(() => {
-    setEditing(null); 
+    setEditing(null);
     setShowHistory((prev) => !prev);
   }, []);
 
   const handleToggleForm = useCallback(() => {
     setEditing((prev) => (prev ? null : new Membership()));
-    setShowHistory(false); 
+    setShowHistory(false);
   }, []);
 
   return {

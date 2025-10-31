@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { User } from '../types/entities';
-import { fetchEntities } from '../services/apiMyRacing';
+import { fetchEntities } from '../services/apiService.ts';
 import {
   Card,
   Button,
@@ -91,7 +91,6 @@ export default function UserRaces() {
       <h2 className="text-xl font-semibold mb-6">Carreras por Usuario</h2>
 
       <div className="flex flex-col md:flex-row gap-6">
-      
         <div className="flex-none md:w-72 md:border-r md:border-gray-700/50 md:pr-6">
           <h3 className="text-lg font-semibold mb-4">Usuarios</h3>
           <div className="space-y-2">
@@ -113,9 +112,7 @@ export default function UserRaces() {
           </div>
         </div>
 
-       
         <div className="flex-1 min-w-0">
-         
           {!selectedUser && (
             <div className="flex flex-col justify-center items-center h-full text-center text-gray-500 py-20">
               <span className="text-5xl mb-4">←</span>
@@ -125,10 +122,8 @@ export default function UserRaces() {
             </div>
           )}
 
-        
           {selectedUser && (
             <>
-             
               <div className="flex flex-col md:flex-row justify-between md:items-center gap-2 mb-4">
                 <div>
                   <h3 className="text-xl font-semibold text-orange-400">
@@ -146,7 +141,6 @@ export default function UserRaces() {
               </div>
               <Divider className="my-4" />
 
-              
               {loadingRaces && (
                 <div className="text-center text-gray-400 py-10">
                   Cargando carreras...
@@ -159,7 +153,6 @@ export default function UserRaces() {
                 </div>
               )}
 
-             
               {!loadingRaces && raceUsers.length > 0 && (
                 <div className="space-y-2">
                   {/* Encabezado de la lista */}
@@ -170,7 +163,6 @@ export default function UserRaces() {
                     <div className="w-24 text-center">Llegada</div>
                   </div>
 
-                 
                   {raceUsers.map((ru) => (
                     <div
                       key={ru.id}
