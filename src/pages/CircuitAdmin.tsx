@@ -1,6 +1,4 @@
-import { lazy, useState, useEffect, Suspense } from 'react';
-import { Circuit } from '../types/entities.ts';
-import { fetchEntities, saveEntity } from '../services/apiService.ts';
+import { lazy, Suspense } from 'react';
 import {
   Card,
   Button,
@@ -11,58 +9,33 @@ import {
   TableRow,
   TableHeaderCell,
   TableBody,
-  TableCell,
 } from '../components/tremor/TremorComponents';
 import { useScrollToElement } from '../hooks/useScrollToElement.ts';
+
+import { useCircuitAdmin } from '../hooks/useCircuitAdmin.ts';
+import { CircuitRow } from '../components/CircuitRow.tsx';
+import Spinner from '../components/Spinner.tsx';
 
 const CircuitForm = lazy(() => import('../components/CircuitForm'));
 
 export default function CircuitAdmin() {
-  const [list, setList] = useState<Circuit[]>([]);
-  const [editing, setEditing] = useState<Circuit | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    setLoading(true);
-    fetchEntities(Circuit)
-      .then(setList)
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
-
-  const handleSave = async (circuit: Circuit) => {
-    const saved = await saveEntity(Circuit, circuit);
-    setList((prev) =>
-      prev.some((c) => c.id === saved.id)
-        ? prev.map((c) => (c.id === saved.id ? saved : c))
-        : [...prev, saved]
-    );
-    setEditing(null);
-    setIsCreating(false);
-  };
-
-  const handleNewCircuit = () => {
-    setEditing(new Circuit());
-    setIsCreating(true);
-  };
-
-  const handleEditCircuit = (circuit: Circuit) => {
-    setEditing(circuit);
-    setIsCreating(false);
-  };
-
-  const handleCancel = () => {
-    setEditing(null);
-    setIsCreating(false);
-  };
+  const {
+    list,
+    editing,
+    isCreating,
+    loading,
+    handleSave,
+    handleNewCircuit,
+    handleEditCircuit,
+    handleCancel,
+  } = useCircuitAdmin();
 
   const formContainerRef = useScrollToElement<HTMLDivElement>(editing);
 
   if (loading) {
     return (
       <div className="flex justify-center items-center py-20">
-        <p className="text-gray-400">Cargando circuitos...</p>
+        <Spinner>Cargando circuitos...</Spinner>
       </div>
     );
   }
@@ -153,33 +126,14 @@ export default function CircuitAdmin() {
 
             <TableBody>
               {list.map((circuit) => (
-                <TableRow key={circuit.id}>
-                  <TableCell className="font-medium">
-                    {circuit.denomination}
-                  </TableCell>
-                  <TableCell>{circuit.abbreviation}</TableCell>
-                  <TableCell className="truncate max-w-xs">
-                    {circuit.description}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant={
-                        editing?.id === circuit.id && !isCreating
-                          ? 'primary'
-                          : 'ghost'
-                      }
-                      onClick={() =>
-                        editing?.id === circuit.id && !isCreating
-                          ? handleCancel()
-                          : handleEditCircuit(circuit)
-                      }
-                    >
-                      {editing?.id === circuit.id && !isCreating
-                        ? 'Cancelar'
-                        : 'Editar'}
-                    </Button>
-                  </TableCell>
-                </TableRow>
+                <CircuitRow
+                  key={circuit.id}
+                  circuit={circuit}
+                  editing={editing}
+                  isCreating={isCreating}
+                  handleEditCircuit={handleEditCircuit}
+                  handleCancel={handleCancel}
+                />
               ))}
             </TableBody>
           </Table>
