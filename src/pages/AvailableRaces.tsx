@@ -71,7 +71,7 @@ export default function AvailableRaces() {
         </>
       ) : (
         <ProtectedRoute>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 max-h-80">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <InformativeCard
               selectedCombination={selectedCombination}
               nextRace={nextFiveRaces[0]}
