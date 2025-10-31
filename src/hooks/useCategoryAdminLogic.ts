@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Category } from '../types/entities';
-import { fetchEntities, saveEntity } from '../services/apiMyRacing';
+import { fetchEntities, saveEntity } from '../services/apiService';
 
 interface CategoryAdminLogic {
   list: Category[];
