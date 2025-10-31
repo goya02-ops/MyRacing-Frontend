@@ -1,6 +1,8 @@
 import { lazy, useState, useEffect, Suspense } from 'react';
 import { Category } from '../types/entities.ts';
 import { fetchEntities, saveEntity } from '../services/apiService.ts';
+import { lazy, Suspense } from 'react'; 
+import { useCategoryAdminLogic } from '../hooks/useCategoryAdminLogic'; 
 import {
   Card,
   Button,
@@ -18,44 +20,16 @@ import { useScrollToElement } from '../hooks/useScrollToElement.ts';
 const CategoryForm = lazy(() => import('../components/CategoryForm.tsx'));
 
 export default function CategoryAdmin() {
-  const [list, setList] = useState<Category[]>([]);
-  const [editing, setEditing] = useState<Category | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    setLoading(true);
-    fetchEntities(Category)
-      .then(setList)
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
-
-  const handleSave = async (category: Category) => {
-    const saved = await saveEntity(Category, category);
-    setList((prev) =>
-      prev.some((c) => c.id === saved.id)
-        ? prev.map((c) => (c.id === saved.id ? saved : c))
-        : [...prev, saved]
-    );
-    setEditing(null);
-    setIsCreating(false);
-  };
-
-  const handleNewCategory = () => {
-    setEditing(new Category());
-    setIsCreating(true);
-  };
-
-  const handleEditCategory = (category: Category) => {
-    setEditing(category);
-    setIsCreating(false);
-  };
-
-  const handleCancel = () => {
-    setEditing(null);
-    setIsCreating(false);
-  };
+  const {
+    list,
+    editing,
+    isCreating,
+    loading,
+    handleSave,
+    handleCancel,
+    handleNewCategory,
+    handleEditCategory,
+  } = useCategoryAdminLogic();
 
   const formContainerRef = useScrollToElement<HTMLDivElement>(editing);
 
@@ -69,6 +43,7 @@ export default function CategoryAdmin() {
 
   return (
     <Card className="text-gray-200">
+      {/* HEADER Y BOTONES */}
       <div
         className="
         flex flex-col sm:flex-row    
@@ -86,12 +61,15 @@ export default function CategoryAdmin() {
           + Nueva Categoría
         </Button>
       </div>
+      
+      {/* FORMULARIO DE CREACIÓN / EDICIÓN */}
       <div ref={formContainerRef}>
-        {isCreating && editing && (
+        {/* Renderiza el formulario si 'editing' existe */}
+        {editing && (
           <div className="mb-6">
             <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
               <h3 className="text-lg font-semibold mb-4 text-orange-400">
-                Crear Nueva Categoría
+                {isCreating ? 'Crear Nueva Categoría' : `Editar Categoría: ${editing.denomination}`}
               </h3>
               <Suspense
                 fallback={
@@ -99,29 +77,7 @@ export default function CategoryAdmin() {
                 }
               >
                 <CategoryForm
-                  initial={editing as Category}
-                  onCancel={handleCancel}
-                  onSave={handleSave}
-                />
-              </Suspense>
-            </div>
-            <Divider className="my-6" />
-          </div>
-        )}
-
-        {!isCreating && editing && (
-          <div className="mb-6">
-            <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
-              <h3 className="text-lg font-semibold mb-4 text-orange-400">
-                Editar Categoría: {editing.denomination}
-              </h3>
-              <Suspense
-                fallback={
-                  <div className="text-center p-4">Cargando formulario...</div>
-                }
-              >
-                <CategoryForm
-                  initial={editing as Category}
+                  initial={editing} 
                   onCancel={handleCancel}
                   onSave={handleSave}
                 />
@@ -132,6 +88,7 @@ export default function CategoryAdmin() {
         )}
       </div>
 
+      {/* TABLA DE LISTADO */}
       {list.length === 0 ? (
         <div className="text-center py-12 text-gray-400">
           No hay categorías para mostrar
@@ -169,7 +126,7 @@ export default function CategoryAdmin() {
                       onClick={() =>
                         editing?.id === c.id && !isCreating
                           ? handleCancel()
-                          : handleEditCategory(c)
+                          : handleEditCategory(c) 
                       }
                     >
                       {editing?.id === c.id && !isCreating
