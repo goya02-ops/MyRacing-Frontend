@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { registerUserToRace } from '../services/apiMyRacing';
+import { registerUserToRace } from '../services/raceService.ts';
 import { User, Race } from '../types/entities';
 
 export function useRaceInscription(user: User | null, race: Race | null) {

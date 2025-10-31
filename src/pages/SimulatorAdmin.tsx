@@ -6,7 +6,7 @@ import {
   Category,
   Circuit,
 } from '../types/entities.ts';
-import { fetchEntities, saveEntity } from '../services/apiMyRacing.ts';
+import { fetchEntities, saveEntity } from '../services/apiService.ts';
 import { useScrollToElement } from '../hooks/useScrollToElement';
 
 import {
