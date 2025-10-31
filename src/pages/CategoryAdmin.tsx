@@ -1,8 +1,5 @@
-import { lazy, useState, useEffect, Suspense } from 'react';
-import { Category } from '../types/entities.ts';
-import { fetchEntities, saveEntity } from '../services/apiService.ts';
-import { lazy, Suspense } from 'react'; 
-import { useCategoryAdminLogic } from '../hooks/useCategoryAdminLogic'; 
+import { lazy, Suspense } from 'react';
+import { useCategoryAdminLogic } from '../hooks/useCategoryAdminLogic';
 import {
   Card,
   Button,
@@ -61,7 +58,7 @@ export default function CategoryAdmin() {
           + Nueva Categoría
         </Button>
       </div>
-      
+
       {/* FORMULARIO DE CREACIÓN / EDICIÓN */}
       <div ref={formContainerRef}>
         {/* Renderiza el formulario si 'editing' existe */}
@@ -69,7 +66,9 @@ export default function CategoryAdmin() {
           <div className="mb-6">
             <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
               <h3 className="text-lg font-semibold mb-4 text-orange-400">
-                {isCreating ? 'Crear Nueva Categoría' : `Editar Categoría: ${editing.denomination}`}
+                {isCreating
+                  ? 'Crear Nueva Categoría'
+                  : `Editar Categoría: ${editing.denomination}`}
               </h3>
               <Suspense
                 fallback={
@@ -77,7 +76,7 @@ export default function CategoryAdmin() {
                 }
               >
                 <CategoryForm
-                  initial={editing} 
+                  initial={editing}
                   onCancel={handleCancel}
                   onSave={handleSave}
                 />
@@ -126,7 +125,7 @@ export default function CategoryAdmin() {
                       onClick={() =>
                         editing?.id === c.id && !isCreating
                           ? handleCancel()
-                          : handleEditCategory(c) 
+                          : handleEditCategory(c)
                       }
                     >
                       {editing?.id === c.id && !isCreating
