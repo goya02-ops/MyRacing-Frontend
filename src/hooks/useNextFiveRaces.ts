@@ -1,7 +1,7 @@
 // hooks/useNextFiveRaces.ts
 import { useEffect, useMemo, useState } from 'react';
 import { Combination, Race } from '../types/entities';
-import { fetchOne } from '../services/apiMyRacing';
+import { fetchOne } from '../services/apiService.ts';
 
 export function useNextFiveRaces(combination: Combination | null) {
   const [racesWithRacers, setRacesWithRacers] = useState<Race[]>([]);

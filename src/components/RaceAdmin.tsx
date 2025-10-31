@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Race, Combination } from '../types/entities';
-import { fetchEntities, saveEntity } from '../services/apiMyRacing.ts';
+import { fetchEntities, saveEntity } from '../services/apiService';
 import RaceForm from './RaceForm';
 
 interface RaceWithId extends Race {
   id?: number;
+  combination?: any;
 }
 
 export default function RaceAdmin() {
@@ -57,7 +58,7 @@ export default function RaceAdmin() {
     const id =
       typeof combinationId === 'object' ? combinationId?.id : combinationId;
     const comb = combinations.find((c) => c.id === id);
-    return comb ? `ID ${comb.id} (${comb.name || 'Reglas'}` : 'N/A';
+    return comb ? `ID ${comb.id} (${comb.id|| 'Reglas'}` : 'N/A';
   };
 
   if (loading) {

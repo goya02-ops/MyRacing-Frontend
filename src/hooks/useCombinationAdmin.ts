@@ -1,9 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Combination, Simulator, Category, Circuit } from '../types/entities.ts'; 
-import { fetchEntities } from '../services/apiMyRacing.ts';
+import {
+  Combination,
+  Simulator,
+  Category,
+  Circuit,
+} from '../types/entities.ts';
+import { fetchEntities } from '../services/apiService.ts';
 
 // Interfaz para el valor de retorno del hook
-interface UseCombinationAdminReturnType { 
+interface UseCombinationAdminReturnType {
   list: Combination[];
   setList: React.Dispatch<React.SetStateAction<Combination[]>>;
   simulators: Simulator[] | null;
@@ -30,20 +35,19 @@ export default function useCombinationAdmin(): UseCombinationAdminReturnType {
         const [combos, sims, cats, circs] = await Promise.all([
           fetchEntities(Combination),
           fetchEntities(Simulator),
-          fetchEntities(Category), 
-          fetchEntities(Circuit), 
+          fetchEntities(Category),
+          fetchEntities(Circuit),
         ]);
-        
+
         setList(combos);
         // Filtrar y guardar listas de dependencias
-        setSimulators(sims.filter((s) => s.status === 'Activo')); 
+        setSimulators(sims.filter((s) => s.status === 'Activo'));
         setCategories(cats);
         setCircuits(circs);
-        
       } catch (error) {
         console.error('Error fetching data:', error);
         // Establecer a un array vacío en caso de fallo para desbloquear el renderizado
-        setSimulators([]); 
+        setSimulators([]);
         setCategories([]);
         setCircuits([]);
       } finally {
@@ -51,7 +55,7 @@ export default function useCombinationAdmin(): UseCombinationAdminReturnType {
       }
     };
     fetchData();
-  }, []); 
+  }, []);
 
   return {
     list,
