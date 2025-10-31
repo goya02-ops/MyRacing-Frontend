@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Combination, Simulator } from '../types/entities.ts';
-import { fetchCurrentRaces } from '../services/apiMyRacing.ts';
+import { fetchCurrentRaces } from '../services/raceService.ts';
 
 export function useCurrentRaces() {
   const [allCombinations, setAllCombinations] = useState<Combination[]>([]);

@@ -1,44 +1,45 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { User } from '../types/entities';
-import { fetchProfileData, updateProfileData } from '../services/FetchUsers'; 
-import { getStoredUser } from '../services/apiMyRacing'; 
+import { fetchProfileData, updateProfileData } from '../services/userService';
+import { getStoredUser } from '../services/authService.ts';
 interface RaceUser {
   id?: number;
   registrationDateTime: string | Date;
   startPosition: number;
   finishPosition: number;
-  race: { raceDateTime: string } | any; 
+  race: { raceDateTime: string } | any;
   user: any;
 }
 
 interface UserProfileData {
-    user: User | null;
-    results: RaceUser[];
-    formData: User;
-    loading: boolean; 
-    isEditing: boolean;
-    saving: boolean;
-    stats: { totalRaces: number; victories: number; podiums: number };
-    
-    setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
-    handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
-    handleSave: () => Promise<void>;
-    handleCancel: () => void;
+  user: User | null;
+  results: RaceUser[];
+  formData: User;
+  loading: boolean;
+  isEditing: boolean;
+  saving: boolean;
+  stats: { totalRaces: number; victories: number; podiums: number };
+
+  setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
+  handleChange: (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => void;
+  handleSave: () => Promise<void>;
+  handleCancel: () => void;
 }
 
-const EMPTY_USER: User = { 
-    userName: '', 
-    realName: '', 
-    email: '', 
-    type: 'common' 
-} as User; 
-
+const EMPTY_USER: User = {
+  userName: '',
+  realName: '',
+  email: '',
+  type: 'common',
+} as User;
 
 export function useUserProfile(): UserProfileData {
   const [user, setUser] = useState<User | null>(null);
   const [results, setResults] = useState<RaceUser[]>([]);
-  const [formData, setFormData] = useState<User>(EMPTY_USER); 
-  const [loading, setLoading] = useState(true); 
+  const [formData, setFormData] = useState<User>(EMPTY_USER);
+  const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -46,12 +47,11 @@ export function useUserProfile(): UserProfileData {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const data = await fetchProfileData(); 
-        
+        const data = await fetchProfileData();
+
         setUser(data.user);
         setResults(data.results as RaceUser[]);
         setFormData({ ...data.user });
-        
       } catch (error) {
         console.error('Error al cargar datos del perfil:', error);
         alert('Error al cargar el perfil.');
@@ -62,21 +62,22 @@ export function useUserProfile(): UserProfileData {
     fetchData();
   }, []);
 
-  const handleChange = useCallback((
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev!,
-      [name]: value,
-    }));
-  }, []);
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+      const { name, value } = e.target;
+      setFormData((prev) => ({
+        ...prev!,
+        [name]: value,
+      }));
+    },
+    []
+  );
 
   const handleSave = useCallback(async () => {
     if (!formData || !formData.id) return;
 
     setSaving(true);
-    
+
     if (!formData.realName.trim() || !formData.email.includes('@')) {
       alert('Nombre completo y email son obligatorios.');
       setSaving(false);
@@ -85,9 +86,9 @@ export function useUserProfile(): UserProfileData {
 
     try {
       const updatedData = await updateProfileData(
-          formData.id, 
-          formData.realName, 
-          formData.email
+        formData.id,
+        formData.realName,
+        formData.email
       );
 
       setUser(updatedData);
@@ -95,7 +96,7 @@ export function useUserProfile(): UserProfileData {
       setIsEditing(false);
 
       alert('Perfil actualizado con éxito.');
-      
+
       const storedUser = getStoredUser();
       if (storedUser) {
         localStorage.setItem(
@@ -129,9 +130,17 @@ export function useUserProfile(): UserProfileData {
     return { totalRaces, victories, podiums };
   }, [results]);
 
-
   return {
-    user, results, formData, loading, isEditing, saving, stats,
-    setIsEditing, handleChange, handleSave, handleCancel,
+    user,
+    results,
+    formData,
+    loading,
+    isEditing,
+    saving,
+    stats,
+    setIsEditing,
+    handleChange,
+    handleSave,
+    handleCancel,
   };
 }
