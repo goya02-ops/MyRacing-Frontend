@@ -66,9 +66,11 @@ export class Combination {
 
 export class RaceUser {
   id?: number;
-  race!: number;
-  user!: number;
-  registrationDate!: string;
+  registrationDateTime!: Date;
+  startPosition?: number;
+  finishPosition?: number;
+  race!: Race;
+  user!: User;
 }
 
 export class Race {
