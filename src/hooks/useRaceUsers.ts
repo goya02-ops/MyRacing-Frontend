@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
-import { User } from '../types/entities'; 
+import { User } from '../types/entities';
 import { fetchEntities } from '../services/apiService.ts';
 
-import { fetchRaceUsersByUserId, type RaceUserResponse } from '../services/raceUserService'; 
-
-export interface RaceUser extends RaceUserResponse {} 
+import { fetchRaceUsersByUserId } from '../services/raceUserService';
+import { RaceUser } from '../types/entities';
 
 export const useRaceUsers = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -13,10 +12,8 @@ export const useRaceUsers = () => {
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [loadingRaces, setLoadingRaces] = useState(false);
 
-  
   useEffect(() => {
-   
-    fetchEntities(User) 
+    fetchEntities(User)
       .then((fetchedUsers: User[]) => {
         const nonAdminUsers = fetchedUsers.filter((u) => u.type !== 'admin');
         setUsers(nonAdminUsers);

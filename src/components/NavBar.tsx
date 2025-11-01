@@ -20,7 +20,6 @@ export function Navbar() {
   const { user, logout } = useUser();
   const navigate = useNavigate();
   const location = useLocation();
-
   const handleNavigate = (path: string) => {
     navigate(path);
   };
