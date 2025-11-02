@@ -1,12 +1,10 @@
 import { useState, useCallback } from 'react';
 import { useScrollToElement } from '../../../hooks/useScrollToElement';
 import { Simulator } from '../../../types/entities';
-
 import { handleSaveEntity as genericHandleSaveEntity } from '../../../utils/GlobalHandlers';
 import { Card } from '../../../components/tremor/TremorComponents';
 
 import { useSimulatorCRUD } from '../hooks/useSimulatorCRUD.ts';
-import { useVersionDependencies } from '../hooks/useVersionDependencies.ts';
 
 import { SimulatorAdminProvider } from '../../../context/SimulatorAdminContext.tsx';
 
@@ -37,9 +35,6 @@ export default function SimulatorAdmin() {
     handleSaveSimulator,
   } = useSimulatorCRUD();
 
-  const { categories, circuits, loadingDependencies } =
-    useVersionDependencies(activeManager);
-
   const handleSaveEntity = useCallback(
     <T extends { id?: number }>(
       entityClass: new () => T,
@@ -48,17 +43,15 @@ export default function SimulatorAdmin() {
       onSuccess: () => void,
       duplicateCheck?: (entity: T) => boolean
     ): Promise<void> => {
-      const relatedData = { simulators, categories, circuits };
       return genericHandleSaveEntity(
         entityClass,
         entity,
         setter,
         onSuccess,
-        relatedData,
         duplicateCheck
       );
     },
-    [simulators, categories, circuits]
+    [simulators]
   );
 
   const formContainerRef = useScrollToElement<HTMLDivElement>(editingSimulator);
@@ -68,7 +61,7 @@ export default function SimulatorAdmin() {
   }
 
   return (
-    <SimulatorAdminProvider value={{ categories, circuits, handleSaveEntity }}>
+    <SimulatorAdminProvider value={{ handleSaveEntity }}>
       <Card className="text-gray-200">
         <AdminHeader
           listLength={simulators.length}
@@ -88,7 +81,6 @@ export default function SimulatorAdmin() {
           editingSimulator={editingSimulator}
           isCreatingSimulator={isCreatingSimulator}
           activeManager={activeManager}
-          loadingDependencies={loadingDependencies}
           onEdit={handleEditSimulator}
           onCancel={handleCancelSimulator}
           onToggleManager={setActiveManager}

@@ -20,7 +20,6 @@ interface SimulatorListProps {
   editingSimulator: Simulator | null;
   isCreatingSimulator: boolean;
   activeManager: ActiveManager;
-  loadingDependencies: boolean;
   onEdit: (sim: Simulator) => void;
   onCancel: () => void;
   onToggleManager: React.Dispatch<React.SetStateAction<ActiveManager>>;
@@ -31,7 +30,6 @@ export function SimulatorList({
   editingSimulator,
   isCreatingSimulator,
   activeManager,
-  loadingDependencies,
   onEdit,
   onCancel,
   onToggleManager,
@@ -61,7 +59,6 @@ export function SimulatorList({
                 editingSimulator={editingSimulator}
                 isCreatingSimulator={isCreatingSimulator}
                 activeManager={activeManager}
-                loadingDependencies={loadingDependencies}
                 onEdit={onEdit}
                 onCancel={onCancel}
                 onToggleManager={onToggleManager}

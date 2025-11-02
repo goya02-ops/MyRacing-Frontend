@@ -19,7 +19,6 @@ interface SimulatorRowProps {
   editingSimulator: Simulator | null;
   isCreatingSimulator: boolean;
   activeManager: ActiveManager;
-  loadingDependencies: boolean;
   onEdit: (sim: Simulator) => void;
   onCancel: () => void;
   onToggleManager: React.Dispatch<React.SetStateAction<ActiveManager>>;
@@ -30,7 +29,6 @@ export function SimulatorRow({
   editingSimulator,
   isCreatingSimulator,
   activeManager,
-  loadingDependencies,
   onEdit,
   onCancel,
   onToggleManager,
@@ -108,11 +106,7 @@ export function SimulatorRow({
           <TableCell colSpan={3} className="p-0">
             <Suspense
               fallback={
-                <div className="p-4 text-center">
-                  {loadingDependencies
-                    ? 'Cargando dependencias...'
-                    : 'Cargando Manager...'}
-                </div>
+                <div className="p-4 text-center">Cargando Manager...</div>
               }
             >
               <VersionManager

@@ -1,10 +1,4 @@
 import { saveEntity } from '../services/apiService';
-import type { Simulator, Category, Circuit } from '../types/entities';
-interface RelatedData {
-  simulators: Simulator[];
-  categories: Category[];
-  circuits: Circuit[];
-}
 
 export const getRelationId = (
   entity: any,
@@ -20,7 +14,6 @@ export const handleSaveEntity = async <T extends { id?: number }>(
   entity: T,
   setter: React.Dispatch<React.SetStateAction<T[]>>,
   onSuccess: () => void,
-  relatedData: RelatedData,
   duplicateCheck?: (entity: T) => boolean
 ) => {
   if (duplicateCheck && duplicateCheck(entity)) {
@@ -39,33 +32,14 @@ export const handleSaveEntity = async <T extends { id?: number }>(
   try {
     const saved = await saveEntity(entityClass, entityToSave as T);
 
-    const hydratedSaved: any = { ...saved };
-    const rd = relatedData;
-
-    if ('category' in saved) {
-      hydratedSaved.category =
-        rd.categories.find((c) => c.id === getRelationId(saved, 'category')) ||
-        (saved as any).category;
-    }
-    if ('circuit' in saved) {
-      hydratedSaved.circuit =
-        rd.circuits.find((c) => c.id === getRelationId(saved, 'circuit')) ||
-        (saved as any).circuit;
-    }
-    if ('simulator' in saved) {
-      hydratedSaved.simulator =
-        rd.simulators.find((s) => s.id === getRelationId(saved, 'simulator')) ||
-        (saved as any).simulator;
-    }
-
     setter((prev) => {
       const existingIndex = prev.findIndex((item) => item.id === saved.id);
       if (existingIndex > -1) {
         const newArray = [...prev];
-        newArray[existingIndex] = hydratedSaved as T;
+        newArray[existingIndex] = saved as T;
         return newArray;
       } else {
-        return [...prev, hydratedSaved as T];
+        return [...prev, saved as T];
       }
     });
 

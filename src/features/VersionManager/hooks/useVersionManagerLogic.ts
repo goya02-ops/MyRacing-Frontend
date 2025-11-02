@@ -37,7 +37,6 @@ interface VersionManagerLogic {
 
 export function useVersionManagerLogic(
   activeManager: ActiveManager,
-
   handleSaveEntity: HandleSaveEntityBound
 ): VersionManagerLogic {
   const [categoryVersions, setCategoryVersions] = useState<CategoryVersion[]>(
@@ -129,7 +128,7 @@ export function useVersionManagerLogic(
           React.SetStateAction<CategoryVersion[]>
         >,
         handleCancelVersion,
-        (version: CategoryVersion) => isDuplicate(version, 'category') // Función de chequeo
+        (version: CategoryVersion) => isDuplicate(version, 'category')
       );
     },
     [handleSaveEntity, handleCancelVersion, isDuplicate]

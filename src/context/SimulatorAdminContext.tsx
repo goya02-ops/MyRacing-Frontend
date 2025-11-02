@@ -1,6 +1,8 @@
 import { createContext, use, type ReactNode } from 'react';
-import { Category, Circuit } from '../types/entities.ts';
+// Ya no necesitamos 'Category' y 'Circuit' aquí
+// import { Category, Circuit } from '../types/entities.ts';
 
+// 1. Actualizamos el tipo de la función (sin 'relatedData')
 type HandleSaveEntityFunc = <T extends { id?: number }>(
   entityClass: new () => T,
   entity: T,
@@ -10,8 +12,6 @@ type HandleSaveEntityFunc = <T extends { id?: number }>(
 ) => Promise<void>;
 
 interface SimulatorAdminContextType {
-  categories: Category[];
-  circuits: Circuit[];
   handleSaveEntity: HandleSaveEntityFunc;
 }
 
