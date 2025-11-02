@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Membership } from '../../../types/entities';
-import { fetchEntities, saveEntity } from '../../../services/apiService.ts';
+import { useAdminCRUD } from '../../../hooks/useAdminCRUD';
 
 interface MembershipLogic {
   memberships: Membership[];
@@ -8,7 +8,6 @@ interface MembershipLogic {
   loading: boolean;
   showHistory: boolean;
   currentMembership: Membership | undefined;
-
   setShowHistory: React.Dispatch<React.SetStateAction<boolean>>;
   setEditing: React.Dispatch<React.SetStateAction<Membership | null>>;
   handleSave: (membership: Membership) => Promise<void>;
@@ -17,78 +16,51 @@ interface MembershipLogic {
   handleToggleForm: () => void;
 }
 
-const sortByDate = (list: Membership[]) => {
-  return [...list].sort((a, b) =>
-    new Date(a.dateFrom) > new Date(b.dateFrom) ? 1 : -1
+const sortByDate = (list: Membership[]): Membership[] => {
+  // [...list] para crear una nueva copia y no mutar el estado original
+  return [...list].sort(
+    (a, b) => new Date(a.dateFrom).getTime() - new Date(b.dateFrom).getTime()
   );
 };
 
 export function useMembershipLogic(): MembershipLogic {
-  const [memberships, setMemberships] = useState<Membership[]>([]);
-  const [editing, setEditing] = useState<Membership | null>(null);
-  const [loading, setLoading] = useState(true);
+  const crud = useAdminCRUD(Membership);
+
   const [showHistory, setShowHistory] = useState(false);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const fetched = await fetchEntities(Membership as any);
-        const sorted = sortByDate(fetched as Membership[]);
-        setMemberships(sorted);
-      } catch (error) {
-        console.error('Error fetching membership data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+  const sortedMemberships = useMemo(() => {
+    return sortByDate(crud.list);
+  }, [crud.list]);
 
   const currentMembership = useMemo(() => {
-    return memberships.at(-1);
-  }, [memberships]);
-
-  const handleSave = useCallback(async (membership: Membership) => {
-    try {
-      const saved = await saveEntity(Membership as any, membership);
-
-      setMemberships((prev) => {
-        const updated = [...prev, saved as Membership];
-        return sortByDate(updated);
-      });
-      setEditing(null);
-    } catch (error) {
-      console.error('Error saving membership:', error);
-      alert('Error al guardar el nuevo valor de membresía.');
-    }
-  }, []);
-
-  const handleCancel = useCallback(() => {
-    setEditing(null);
-  }, []);
+    return sortedMemberships.at(-1);
+  }, [sortedMemberships]);
 
   const handleToggleHistory = useCallback(() => {
-    setEditing(null);
+    crud.handleCancel();
     setShowHistory((prev) => !prev);
-  }, []);
+  }, [crud.handleCancel]);
 
   const handleToggleForm = useCallback(() => {
-    setEditing((prev) => (prev ? null : new Membership()));
+    if (crud.editing) {
+      crud.handleCancel();
+    } else {
+      crud.handleNew();
+    }
     setShowHistory(false);
-  }, []);
+  }, [crud.editing, crud.handleNew, crud.handleCancel]);
 
   return {
-    memberships,
-    editing,
-    loading,
+    memberships: sortedMemberships,
+    editing: crud.editing,
+    loading: crud.loading,
     showHistory,
     currentMembership,
-
     setShowHistory,
-    setEditing,
-    handleSave,
-    handleCancel,
-    handleToggleHistory,
-    handleToggleForm,
+    setEditing: crud.setEditing,
+    handleSave: crud.handleSave, // Del hook genérico
+    handleCancel: crud.handleCancel, // Del hook genérico
+    handleToggleHistory, // Handler adaptado
+    handleToggleForm, // Handler adaptado
   };
 }

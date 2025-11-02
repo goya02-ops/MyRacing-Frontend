@@ -7,6 +7,7 @@ interface AdminCRUDLogic<T> {
   list: T[];
   setList: React.Dispatch<React.SetStateAction<T[]>>;
   editing: T | null;
+  setEditing: React.Dispatch<React.SetStateAction<T | null>>;
   isCreating: boolean;
   loading: boolean;
   handleSave: (entity: T) => Promise<void>;
@@ -74,6 +75,7 @@ export function useAdminCRUD<T extends { id?: number }>(
     list,
     setList,
     editing,
+    setEditing,
     isCreating,
     loading,
     handleSave,

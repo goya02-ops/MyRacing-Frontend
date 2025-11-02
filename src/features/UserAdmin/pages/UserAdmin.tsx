@@ -1,39 +1,25 @@
-import { useState, useEffect } from 'react';
-import { User } from '../../../types/entities';
-import { fetchEntities } from '../../../services/apiService.ts';
-
 import {
   Card,
   Badge,
   Button,
 } from '../../../components/tremor/TremorComponents';
 
-export default function UserAdmin() {
-  const [list, setList] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+import { useUserAdmin } from '../hooks/useUserAdmin';
+import Spinner from '../../../components/Spinner';
 
-  useEffect(() => {
-    fetchEntities(User)
-      .then((users) => {
-        const nonAdminUsers = users.filter((u) => u.type !== 'admin');
-        setList(nonAdminUsers);
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+export default function UserAdmin() {
+  const { list, loading } = useUserAdmin();
 
   if (loading) {
     return (
       <div className="flex justify-center items-center py-20">
-        <p className="text-gray-400">Cargando usuarios...</p>
+        <Spinner>Cargando usuarios...</Spinner>
       </div>
     );
   }
 
   return (
     <Card className="text-gray-200 p-0">
-      {' '}
-      {/* p-0 para controlar el padding nosotros */}
       <div className="flex justify-between items-center p-6">
         <h2 className="text-xl font-semibold">Usuarios Registrados</h2>
         <Badge color="gray">Total: {list.length}</Badge>
