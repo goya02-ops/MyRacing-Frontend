@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Divider } from '../../../components/tremor/TremorComponents';
 import { Simulator } from '../../../types/entities';
 
-const SimulatorForm = lazy(() => import('../../../components/SimulatorForm'));
+const SimulatorForm = lazy(() => import('./SimulatorForm'));
 
 interface FormRendererProps {
   formRef: React.RefObject<HTMLDivElement | null>;

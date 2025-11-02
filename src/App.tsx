@@ -4,17 +4,24 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ProtectedRoute } from './components/ProtectedRoute.tsx';
 import { Navbar } from './components/NavBar.tsx';
 import { DecorativeBackground } from './components/DecorativeBackground.tsx';
-import {Footer} from "./components/Footer.tsx"
+import { Footer } from './components/Footer.tsx';
 
-const AuthPage = lazy(() => import('./pages/AuthPage'));
-const UserProfile = lazy(() => import('./pages/UserProfile.tsx'));
-const AvailableRaces = lazy(() => import('./pages/AvailableRaces.tsx'));
-const UserAdmin = lazy(() => import('./pages/UserAdmin.tsx'));
-const AdminDashboard = lazy(() => import('./pages/AdminDashboard.tsx'));
+const AuthPage = lazy(() => import('./features/Auth/pages/AuthPage.tsx'));
+const UserProfile = lazy(
+  () => import('./features/UserProfile/pages/UserProfile.tsx')
+);
+const AvailableRaces = lazy(
+  () => import('./features/AvailableRaces/pages/AvailableRaces.tsx')
+);
+const UserAdmin = lazy(
+  () => import('./features/UserAdmin/pages/UserAdmin.tsx')
+);
+const AdminDashboard = lazy(
+  () => import('./features/AdminDashboard/pages/AdminDashboard.tsx')
+);
 
 function AppContent() {
   return (
-
     <div className="bg-gray-900 min-h-screen relative isolate">
       <DecorativeBackground />
       <div className="relative z-10 flex flex-col min-h-screen">

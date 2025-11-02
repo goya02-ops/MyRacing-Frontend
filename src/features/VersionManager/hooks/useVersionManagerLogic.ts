@@ -1,7 +1,3 @@
-// src/features/VersionManager/hooks/useVersionManagerLogic.ts
-// (Es el archivo original, pero quitamos 'categories' y 'circuits' de los args
-// y agregamos 'title' e 'isCategory' al return)
-
 import { useState, useEffect, useCallback } from 'react';
 import { fetchEntities } from '../../../services/apiService';
 import { getRelationId } from '../../../utils/GlobalHandlers';
@@ -29,8 +25,8 @@ interface VersionManagerLogic {
   circuitVersions: CircuitVersion[];
   editingVersion: CategoryVersion | CircuitVersion | null;
   isCreatingVersion: boolean;
-  title: string; // <-- AÑADIDO
-  isCategory: boolean; // <-- AÑADIDO
+  title: string;
+  isCategory: boolean;
 
   handleNewVersion: () => void;
   handleEditVersion: (version: CategoryVersion | CircuitVersion) => void;
@@ -41,7 +37,6 @@ interface VersionManagerLogic {
 
 export function useVersionManagerLogic(
   activeManager: ActiveManager,
-  // categories y circuits ya NO se reciben aquí
   handleSaveEntity: HandleSaveEntityBound
 ): VersionManagerLogic {
   const [categoryVersions, setCategoryVersions] = useState<CategoryVersion[]>(
@@ -54,7 +49,7 @@ export function useVersionManagerLogic(
   const [isCreatingVersion, setIsCreatingVersion] = useState(false);
 
   const isCategory = activeManager.type === 'category';
-  const title = isCategory ? 'Categorías' : 'Circuitos'; // <-- AÑADIDO
+  const title = isCategory ? 'Categorías' : 'Circuitos';
   const currentVersions = isCategory ? categoryVersions : circuitVersions;
 
   useEffect(() => {
@@ -133,7 +128,7 @@ export function useVersionManagerLogic(
           React.SetStateAction<CategoryVersion[]>
         >,
         handleCancelVersion,
-        (version: CategoryVersion) => isDuplicate(version, 'category') // Función de chequeo
+        (version: CategoryVersion) => isDuplicate(version, 'category')
       );
     },
     [handleSaveEntity, handleCancelVersion, isDuplicate]
@@ -159,8 +154,8 @@ export function useVersionManagerLogic(
     circuitVersions,
     editingVersion,
     isCreatingVersion,
-    title, // <-- AÑADIDO
-    isCategory, // <-- AÑADIDO
+    title,
+    isCategory,
     handleNewVersion,
     handleEditVersion,
     handleCancelVersion,

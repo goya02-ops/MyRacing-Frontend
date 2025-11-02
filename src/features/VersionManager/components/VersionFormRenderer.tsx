@@ -8,12 +8,8 @@ import {
   CircuitVersion,
 } from '../../../types/entities';
 
-const CategoryVersionForm = lazy(
-  () => import('../../../components/CategoryVersionForm')
-);
-const CircuitVersionForm = lazy(
-  () => import('../../../components/CircuitVersionForm')
-);
+const CategoryVersionForm = lazy(() => import('./CategoryVersionForm'));
+const CircuitVersionForm = lazy(() => import('./CircuitVersionForm'));
 
 interface VersionFormRendererProps {
   editingVersion: CategoryVersion | CircuitVersion | null;
