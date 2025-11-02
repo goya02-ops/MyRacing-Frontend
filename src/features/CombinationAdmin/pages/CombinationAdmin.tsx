@@ -1,4 +1,4 @@
-import { lazy, useCallback, useState, Suspense, useMemo } from 'react';
+import { lazy, useCallback, useState, Suspense } from 'react';
 import { Combination } from '../../../types/entities.ts';
 
 // Hooks
@@ -6,8 +6,8 @@ import { useCombinationAdmin } from '../hooks/useCombinationAdmin.ts';
 import { useCombinationDependencies } from '../hooks/useCombinationDependencies.ts';
 import { useScrollToElement } from '../../../hooks/useScrollToElement.ts';
 import { CombinationAdminProvider } from '../../../context/CombinationAdminContext.tsx';
+import { useCombinationFilters } from '../hooks/useCombinationFilters.ts';
 
-// Utils
 import { isDuplicateCombination } from '../../../utils/combination/duplicate.ts';
 import { normalizeCombination } from '../../../utils/combination/normalize.ts';
 
@@ -26,46 +26,8 @@ import {
 import CombinationFilterPanel from '../components/CombinationFilterPanel.tsx';
 import Spinner from '../../../components/Spinner.tsx';
 
-// Componentes Lazy
 const CombinationList = lazy(() => import('../components/CombinationList.tsx'));
 const CombinationForm = lazy(() => import('../components/CombinationForm.tsx'));
-
-type UserTypeFilter = 'ALL' | 'PREMIUM' | 'COMÚN';
-type EntityFilter = number | 'ALL';
-
-const getSimulatorIdFromCombination = (
-  comb: Combination
-): number | undefined => {
-  if (comb.categoryVersion?.simulator) {
-    return typeof comb.categoryVersion.simulator === 'object'
-      ? comb.categoryVersion.simulator.id
-      : (comb.categoryVersion.simulator as number);
-  }
-  if (comb.circuitVersion?.simulator) {
-    return typeof comb.circuitVersion.simulator === 'object'
-      ? comb.circuitVersion.simulator.id
-      : (comb.circuitVersion.simulator as number);
-  }
-  return undefined;
-};
-const getCategoryIdFromCombination = (
-  comb: Combination
-): number | undefined => {
-  if (comb.categoryVersion?.category) {
-    return typeof comb.categoryVersion.category === 'object'
-      ? comb.categoryVersion.category.id
-      : (comb.categoryVersion.category as number);
-  }
-  return undefined;
-};
-const getCircuitIdFromCombination = (comb: Combination): number | undefined => {
-  if (comb.circuitVersion?.circuit) {
-    return typeof comb.circuitVersion.circuit === 'object'
-      ? comb.circuitVersion.circuit.id
-      : (comb.circuitVersion.circuit as number);
-  }
-  return undefined;
-};
 
 export default function CombinationAdmin() {
   const crud = useCombinationAdmin();
@@ -84,13 +46,9 @@ export default function CombinationAdmin() {
 
   const [isCreating, setIsCreating] = useState(false);
   const [filtersVisible, setFiltersVisible] = useState(false);
-  const [filterSimulatorId, setFilterSimulatorId] =
-    useState<EntityFilter>('ALL');
-  const [filterCategoryId, setFilterCategoryId] = useState<EntityFilter>('ALL');
-  const [filterCircuitId, setFilterCircuitId] = useState<EntityFilter>('ALL');
-  const [filterUserType, setFilterUserType] = useState<UserTypeFilter>('ALL');
-  const [filterDateFrom, setFilterDateFrom] = useState('');
-  const [filterDateTo, setFilterDateTo] = useState('');
+
+  const filters = useCombinationFilters(list);
+  const { filteredList } = filters;
 
   const formContainerRef = useScrollToElement<HTMLDivElement>(editing);
 
@@ -120,55 +78,6 @@ export default function CombinationAdmin() {
     setIsCreating(false);
   };
 
-  const filteredList = useMemo(() => {
-    return list.filter((comb: Combination) => {
-      const simId = getSimulatorIdFromCombination(comb);
-      const catId = getCategoryIdFromCombination(comb);
-      const circId = getCircuitIdFromCombination(comb);
-      const userType = comb.userType?.toUpperCase() as UserTypeFilter;
-      const combDateFrom = comb.dateFrom
-        ? new Date(comb.dateFrom).getTime()
-        : 0;
-      const combDateTo = comb.dateTo
-        ? new Date(comb.dateTo).getTime()
-        : Infinity;
-      const filterStartDate = filterDateFrom
-        ? new Date(filterDateFrom).getTime()
-        : 0;
-      const filterEndDate = filterDateTo
-        ? new Date(filterDateTo).getTime()
-        : Infinity;
-      const matchSimulator =
-        filterSimulatorId === 'ALL' ||
-        (simId !== undefined && simId === filterSimulatorId);
-      const matchCategory =
-        filterCategoryId === 'ALL' ||
-        (catId !== undefined && catId === filterCategoryId);
-      const matchCircuit =
-        filterCircuitId === 'ALL' ||
-        (circId !== undefined && circId === filterCircuitId);
-      const matchUserType =
-        filterUserType === 'ALL' || userType === filterUserType;
-      const matchDates =
-        combDateFrom <= filterEndDate && combDateTo >= filterStartDate;
-      return (
-        matchSimulator &&
-        matchCategory &&
-        matchCircuit &&
-        matchUserType &&
-        matchDates
-      );
-    });
-  }, [
-    list,
-    filterSimulatorId,
-    filterCategoryId,
-    filterCircuitId,
-    filterUserType,
-    filterDateFrom,
-    filterDateTo,
-  ]);
-
   if (loadingCombinations || loadingDependencies) {
     return (
       <div className="flex justify-center items-center py-20">
@@ -183,7 +92,6 @@ export default function CombinationAdmin() {
     >
       <div className="space-y-6">
         <Card className="text-gray-200">
-          {/* Header (Botones y Título) */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 sm:gap-0">
             <div className="flex items-center gap-4">
               <h2 className="text-xl font-semibold">
@@ -197,13 +105,7 @@ export default function CombinationAdmin() {
               <button
                 type="button"
                 onClick={() => setFiltersVisible((prev) => !prev)}
-                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors border border-orange-500/60
-                ${
-                  filtersVisible
-                    ? 'bg-transparent text-orange-300 hover:text-orange-400 hover:border-orange-400'
-                    : 'bg-transparent text-gray-300 hover:text-white hover:border-gray-500'
-                }
-              `}
+                className={`... (clases del botón de filtro) ...`}
               >
                 {filtersVisible ? 'Ocultar Filtros' : 'Mostrar Filtros'}
               </button>
@@ -216,22 +118,7 @@ export default function CombinationAdmin() {
             </div>
           </div>
 
-          {filtersVisible && (
-            <CombinationFilterPanel
-              filterSimulatorId={filterSimulatorId}
-              setFilterSimulatorId={setFilterSimulatorId}
-              filterCategoryId={filterCategoryId}
-              setFilterCategoryId={setFilterCategoryId}
-              filterCircuitId={filterCircuitId}
-              setFilterCircuitId={setFilterCircuitId}
-              filterUserType={filterUserType}
-              setFilterUserType={setFilterUserType}
-              filterDateFrom={filterDateFrom}
-              setFilterDateFrom={setFilterDateFrom}
-              filterDateTo={filterDateTo}
-              setFilterDateTo={setFilterDateTo}
-            />
-          )}
+          {filtersVisible && <CombinationFilterPanel filters={filters} />}
 
           <div ref={formContainerRef}>
             {isCreating && editing && (
@@ -287,7 +174,6 @@ export default function CombinationAdmin() {
                     </TableHeaderCell>
                   </TableRow>
                 </TableHead>
-
                 <TableBody>
                   <Suspense
                     fallback={

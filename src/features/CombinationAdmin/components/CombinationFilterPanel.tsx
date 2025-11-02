@@ -7,42 +7,34 @@ import {
   SelectValue,
   SelectContent,
 } from '../../../components/tremor/TremorComponents';
+import { useCombinationAdminContext } from '../../../context/CombinationAdminContext.tsx';
 
-import { useCombinationAdminContext } from '../../../context/CombinationAdminContext';
-
-type UserTypeFilter = 'ALL' | 'PREMIUM' | 'COMÚN';
-type EntityFilter = number | 'ALL';
+import type {
+  CombinationFilterLogic,
+  UserTypeFilter,
+} from '../hooks/useCombinationFilters';
 
 interface FilterPanelProps {
-  filterSimulatorId: EntityFilter;
-  setFilterSimulatorId: (v: EntityFilter) => void;
-  filterCategoryId: EntityFilter;
-  setFilterCategoryId: (v: EntityFilter) => void;
-  filterCircuitId: EntityFilter;
-  setFilterCircuitId: (v: EntityFilter) => void;
-  filterUserType: UserTypeFilter;
-  setFilterUserType: (v: UserTypeFilter) => void;
-  filterDateFrom: string;
-  setFilterDateFrom: (v: string) => void;
-  filterDateTo: string;
-  setFilterDateTo: (v: string) => void;
+  filters: CombinationFilterLogic;
 }
 
-export default function CombinationFilterPanel({
-  filterSimulatorId,
-  setFilterSimulatorId,
-  filterCategoryId,
-  setFilterCategoryId,
-  filterCircuitId,
-  setFilterCircuitId,
-  filterUserType,
-  setFilterUserType,
-  filterDateFrom,
-  setFilterDateFrom,
-  filterDateTo,
-  setFilterDateTo,
-}: FilterPanelProps) {
+export default function CombinationFilterPanel({ filters }: FilterPanelProps) {
   const { simulators, categories, circuits } = useCombinationAdminContext();
+
+  const {
+    filterSimulatorId,
+    setFilterSimulatorId,
+    filterCategoryId,
+    setFilterCategoryId,
+    filterCircuitId,
+    setFilterCircuitId,
+    filterUserType,
+    setFilterUserType,
+    filterDateFrom,
+    setFilterDateFrom,
+    filterDateTo,
+    setFilterDateTo,
+  } = filters;
 
   return (
     <div className="mb-6 space-y-4 rounded-lg border border-gray-700 bg-gray-900/50 p-4">
@@ -68,7 +60,6 @@ export default function CombinationFilterPanel({
             </SelectContent>
           </Select>
         </div>
-
         <div>
           <Label>Categoría</Label>
           <Select
@@ -90,7 +81,6 @@ export default function CombinationFilterPanel({
             </SelectContent>
           </Select>
         </div>
-
         <div>
           <Label>Circuito</Label>
           <Select
@@ -112,7 +102,6 @@ export default function CombinationFilterPanel({
             </SelectContent>
           </Select>
         </div>
-
         <div>
           <Label>Tipo Usuario</Label>
           <Select

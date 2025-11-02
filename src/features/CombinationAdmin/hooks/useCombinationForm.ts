@@ -4,7 +4,7 @@ import {
   CircuitVersion,
   Simulator,
 } from '../../../types/entities.ts';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { fetchOne } from '../../../services/apiService.ts';
 
 interface UseCombinationFormProps {
@@ -13,14 +13,14 @@ interface UseCombinationFormProps {
 
 interface UseCombinationFormReturn {
   form: Combination;
-  setForm: React.Dispatch<React.SetStateAction<Combination>>;
   selectedSimulator: number | undefined;
-  setSelectedSimulator: React.Dispatch<
-    React.SetStateAction<number | undefined>
-  >;
   categoryVersions: CategoryVersion[];
   circuitVersions: CircuitVersion[];
   loading: boolean;
+  handleSimulatorChange: (value: string) => void;
+  handleSelectChange: (name: string, value: string) => void;
+  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  getIdValue: (field: 'categoryVersion' | 'circuitVersion') => number | '';
 }
 
 export function useCombinationForm({
@@ -81,13 +81,54 @@ export function useCombinationForm({
     fetchSimulatorData();
   }, [selectedSimulator]);
 
+  const handleSimulatorChange = useCallback(
+    (value: string) => {
+      const simId = value ? Number(value) : undefined;
+      setSelectedSimulator(simId);
+      setForm((prev) => ({
+        ...prev,
+        categoryVersion: undefined,
+        circuitVersion: undefined,
+      }));
+    },
+    [setForm, setSelectedSimulator]
+  );
+
+  const handleSelectChange = useCallback(
+    (name: string, value: string) => {
+      setForm((prev) => ({
+        ...prev,
+        [name]: name === 'userType' ? value : value ? Number(value) : undefined,
+      }));
+    },
+    [setForm]
+  );
+
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { name, value, type } = e.target;
+      setForm((prev) => ({
+        ...prev,
+        [name]: type === 'number' ? (value ? Number(value) : 0) : value,
+      }));
+    },
+    [setForm]
+  );
+
+  const getIdValue = (field: 'categoryVersion' | 'circuitVersion') => {
+    const val = form[field];
+    return typeof val === 'object' && val ? val.id || '' : val || '';
+  };
+
   return {
     form,
-    setForm,
     selectedSimulator,
-    setSelectedSimulator,
     categoryVersions,
     circuitVersions,
     loading,
+    handleSimulatorChange,
+    handleSelectChange,
+    handleInputChange,
+    getIdValue,
   };
 }
