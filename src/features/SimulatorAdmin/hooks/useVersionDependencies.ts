@@ -13,7 +13,7 @@ export function useVersionDependencies(activeManager: ActiveManager) {
   const [loadingDependencies, setLoadingDependencies] = useState(false);
 
   useEffect(() => {
-    // Solo busca dependencias si un manager está abierto Y no las hemos cargado ya
+    // Solo busca dependencias si un manager está abierto Y no las cargamos todavía
     const shouldFetch =
       activeManager.type !== null &&
       (categories.length === 0 || circuits.length === 0);
