@@ -1,40 +1,30 @@
-import { Simulator, Category, Circuit } from '../../types/entities';
+import { Simulator } from '../../types/entities';
 import { Button, Divider } from '../../components/tremor/TremorComponents';
 
-// Importamos los sub-componentes
 import { VersionHeader } from './components/VersionHeader';
 import { VersionFormRenderer } from './components/VersionFormRenderer';
 import { VersionList } from './components/VersionList';
+
 import { useVersionManagerLogic } from './hooks/useVersionManagerLogic';
 
-// Tipos (sin cambios)
+import { useSimulatorAdminContext } from '../../context/SimulatorAdminContext';
+
 type ActiveManager = {
   type: 'category' | 'circuit' | null;
   simulator: Simulator | null;
 };
-type HandleSaveEntityBound = <T extends { id?: number }>(
-  entityClass: new () => T,
-  entity: T,
-  setter: React.Dispatch<React.SetStateAction<T[]>>,
-  onSuccess: () => void,
-  duplicateCheck?: (entity: T) => boolean
-) => Promise<void>;
 
 interface VersionManagerProps {
   activeManager: ActiveManager;
-  categories: Category[];
-  circuits: Circuit[];
-  handleSaveEntity: HandleSaveEntityBound;
   onClose: () => void;
 }
 
 export default function VersionManager({
   activeManager,
-  categories,
-  circuits,
-  handleSaveEntity,
   onClose,
 }: VersionManagerProps) {
+  const { categories, circuits, handleSaveEntity } = useSimulatorAdminContext();
+
   const hookProps = useVersionManagerLogic(activeManager, handleSaveEntity);
 
   if (!activeManager.simulator) return null;

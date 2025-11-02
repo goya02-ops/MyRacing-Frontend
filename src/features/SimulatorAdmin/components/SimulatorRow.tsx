@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { Simulator, Category, Circuit } from '../../../types/entities';
+import { Simulator } from '../../../types/entities';
 import {
   TableRow,
   TableCell,
@@ -13,26 +13,16 @@ type ActiveManager = {
   type: 'category' | 'circuit' | null;
   simulator: Simulator | null;
 };
-type HandleSaveEntityBound = <T extends { id?: number }>(
-  entityClass: new () => T,
-  entity: T,
-  setter: React.Dispatch<React.SetStateAction<T[]>>,
-  onSuccess: () => void,
-  duplicateCheck?: (entity: T) => boolean
-) => Promise<void>;
 
 interface SimulatorRowProps {
   simulator: Simulator;
   editingSimulator: Simulator | null;
   isCreatingSimulator: boolean;
   activeManager: ActiveManager;
-  categories: Category[];
-  circuits: Circuit[];
   loadingDependencies: boolean;
   onEdit: (sim: Simulator) => void;
   onCancel: () => void;
   onToggleManager: React.Dispatch<React.SetStateAction<ActiveManager>>;
-  handleSaveEntity: HandleSaveEntityBound;
 }
 
 export function SimulatorRow({
@@ -40,13 +30,10 @@ export function SimulatorRow({
   editingSimulator,
   isCreatingSimulator,
   activeManager,
-  categories,
-  circuits,
   loadingDependencies,
   onEdit,
   onCancel,
   onToggleManager,
-  handleSaveEntity,
 }: SimulatorRowProps) {
   const isEditingThis = editingSimulator?.id === s.id && !isCreatingSimulator;
   const isManagerOpen =
@@ -130,9 +117,6 @@ export function SimulatorRow({
             >
               <VersionManager
                 activeManager={activeManager}
-                categories={categories}
-                circuits={circuits}
-                handleSaveEntity={handleSaveEntity}
                 onClose={() => onToggleManager({ type: null, simulator: null })}
               />
             </Suspense>

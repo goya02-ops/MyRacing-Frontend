@@ -1,11 +1,14 @@
 import { useState, useCallback } from 'react';
 import { useScrollToElement } from '../../../hooks/useScrollToElement';
 import { Simulator } from '../../../types/entities';
+
 import { handleSaveEntity as genericHandleSaveEntity } from '../../../utils/GlobalHandlers';
 import { Card } from '../../../components/tremor/TremorComponents';
 
 import { useSimulatorCRUD } from '../hooks/useSimulatorCRUD.ts';
 import { useVersionDependencies } from '../hooks/useVersionDependencies.ts';
+
+import { SimulatorAdminProvider } from '../../../context/SimulatorAdminContext.tsx';
 
 import { AdminHeader } from '../components/AdminHeader';
 import { SimulatorFormRenderer } from '../components/SimulatorFormRenderer';
@@ -65,30 +68,32 @@ export default function SimulatorAdmin() {
   }
 
   return (
-    <Card className="text-gray-200">
-      <AdminHeader listLength={simulators.length} onNew={handleNewSimulator} />
+    <SimulatorAdminProvider value={{ categories, circuits, handleSaveEntity }}>
+      <Card className="text-gray-200">
+        <AdminHeader
+          listLength={simulators.length}
+          onNew={handleNewSimulator}
+        />
 
-      <SimulatorFormRenderer
-        formRef={formContainerRef}
-        editingSimulator={editingSimulator}
-        isCreatingSimulator={isCreatingSimulator}
-        onCancel={handleCancelSimulator}
-        onSave={handleSaveSimulator}
-      />
+        <SimulatorFormRenderer
+          formRef={formContainerRef}
+          editingSimulator={editingSimulator}
+          isCreatingSimulator={isCreatingSimulator}
+          onCancel={handleCancelSimulator}
+          onSave={handleSaveSimulator}
+        />
 
-      <SimulatorList
-        simulators={simulators}
-        editingSimulator={editingSimulator}
-        isCreatingSimulator={isCreatingSimulator}
-        activeManager={activeManager}
-        categories={categories}
-        circuits={circuits}
-        loadingDependencies={loadingDependencies}
-        onEdit={handleEditSimulator}
-        onCancel={handleCancelSimulator}
-        onToggleManager={setActiveManager}
-        handleSaveEntity={handleSaveEntity}
-      />
-    </Card>
+        <SimulatorList
+          simulators={simulators}
+          editingSimulator={editingSimulator}
+          isCreatingSimulator={isCreatingSimulator}
+          activeManager={activeManager}
+          loadingDependencies={loadingDependencies}
+          onEdit={handleEditSimulator}
+          onCancel={handleCancelSimulator}
+          onToggleManager={setActiveManager}
+        />
+      </Card>
+    </SimulatorAdminProvider>
   );
 }
