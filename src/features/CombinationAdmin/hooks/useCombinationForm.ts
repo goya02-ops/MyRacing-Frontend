@@ -7,7 +7,11 @@ import {
 import { useState, useEffect } from 'react';
 import { fetchOne } from '../../../services/apiService.ts';
 
-interface useCombinationForm {
+interface UseCombinationFormProps {
+  initial: Combination;
+}
+
+interface UseCombinationFormReturn {
   form: Combination;
   setForm: React.Dispatch<React.SetStateAction<Combination>>;
   selectedSimulator: number | undefined;
@@ -19,11 +23,14 @@ interface useCombinationForm {
   loading: boolean;
 }
 
-export function useCombinationForm(initial: Combination): useCombinationForm {
+export function useCombinationForm({
+  initial,
+}: UseCombinationFormProps): UseCombinationFormReturn {
   const [form, setForm] = useState<Combination>({
     ...initial,
     raceIntervalMinutes: initial.raceIntervalMinutes || 30,
   });
+
   const [selectedSimulator, setSelectedSimulator] = useState<
     number | undefined
   >(() => {
@@ -44,7 +51,6 @@ export function useCombinationForm(initial: Combination): useCombinationForm {
   const [circuitVersions, setCircuitVersions] = useState<CircuitVersion[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Fetch the selected simulator and set category/circuit versions from its properties
   useEffect(() => {
     const fetchSimulatorData = async () => {
       if (!selectedSimulator) {
@@ -67,13 +73,14 @@ export function useCombinationForm(initial: Combination): useCombinationForm {
       } catch (error) {
         setCategoryVersions([]);
         setCircuitVersions([]);
-        console.error('Error fetching simulator:', error);
+        console.error('Error fetching simulator versions:', error);
       } finally {
         setLoading(false);
       }
     };
     fetchSimulatorData();
   }, [selectedSimulator]);
+
   return {
     form,
     setForm,

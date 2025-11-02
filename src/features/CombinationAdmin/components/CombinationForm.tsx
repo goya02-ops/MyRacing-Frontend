@@ -13,19 +13,21 @@ import {
   SelectContent,
 } from '../../../components/tremor/TremorComponents';
 
+import { useCombinationAdminContext } from '../../../context/CombinationAdminContext';
+
 interface CombinationFormProps {
   initial: Combination;
-  simulators: Simulator[];
   onSave: (combination: Combination) => void;
   onCancel: () => void;
 }
 
 export default function CombinationForm({
   initial,
-  simulators,
   onSave,
   onCancel,
 }: CombinationFormProps) {
+  const { simulators, loadingDependencies } = useCombinationAdminContext();
+
   const {
     form,
     setForm,
@@ -34,7 +36,7 @@ export default function CombinationForm({
     categoryVersions,
     circuitVersions,
     loading,
-  } = useCombinationForm(initial);
+  } = useCombinationForm({ initial });
 
   const { handleInputChange, handleSelectChange, handleSimulatorChange } =
     createHandlers(setSelectedSimulator, setForm);
@@ -55,7 +57,6 @@ export default function CombinationForm({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <Label htmlFor="simulator">1. Simulador</Label>
-
           <Select
             name="simulator"
             value={selectedSimulator?.toString() || ''}
@@ -65,13 +66,14 @@ export default function CombinationForm({
               } as React.ChangeEvent<HTMLSelectElement>;
               handleSimulatorChange(event);
             }}
+            disabled={loadingDependencies}
             required
           >
             <SelectTrigger id="simulator">
               <SelectValue placeholder="Seleccione un simulador" />
             </SelectTrigger>
             <SelectContent>
-              {simulators.map((sim) => (
+              {simulators.map((sim: Simulator) => (
                 <SelectItem key={sim.id} value={sim.id!.toString()}>
                   {sim.name}
                 </SelectItem>
@@ -82,7 +84,6 @@ export default function CombinationForm({
 
         <div>
           <Label htmlFor="categoryVersion">2. Categoría</Label>
-
           <Select
             name="categoryVersion"
             value={getIdValue('categoryVersion').toString()}
@@ -101,7 +102,7 @@ export default function CombinationForm({
                   !selectedSimulator
                     ? 'Primero seleccione un simulador'
                     : loading
-                    ? 'Cargando...'
+                    ? 'Cargando versiones...'
                     : 'Seleccione una categoría'
                 }
               />
@@ -124,7 +125,6 @@ export default function CombinationForm({
 
         <div>
           <Label htmlFor="circuitVersion">3. Circuito</Label>
-
           <Select
             name="circuitVersion"
             value={getIdValue('circuitVersion').toString()}
@@ -143,7 +143,7 @@ export default function CombinationForm({
                   !selectedSimulator
                     ? 'Primero seleccione un simulador'
                     : loading
-                    ? 'Cargando...'
+                    ? 'Cargando versiones...'
                     : 'Seleccione un circuito'
                 }
               />
@@ -242,7 +242,6 @@ export default function CombinationForm({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="userType">Tipo de Usuario</Label>
-
           <Select
             name="userType"
             value={form.userType}
