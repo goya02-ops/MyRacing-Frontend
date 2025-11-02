@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { signIn } from '../services/authService';
+import { signIn } from '../../../services/authService';
 
 type SignInFormValues = {
   userName: string;
