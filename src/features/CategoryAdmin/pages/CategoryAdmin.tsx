@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { useCategoryAdminLogic } from '../hooks/useCategoryAdminLogic.ts';
+import { useCategoryAdmin } from '../hooks/useCategoryAdmin.ts';
 import {
   Card,
   Button,
@@ -26,7 +26,7 @@ export default function CategoryAdmin() {
     handleCancel,
     handleNewCategory,
     handleEditCategory,
-  } = useCategoryAdminLogic();
+  } = useCategoryAdmin();
 
   const formContainerRef = useScrollToElement<HTMLDivElement>(editing);
 
