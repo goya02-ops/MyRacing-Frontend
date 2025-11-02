@@ -5,7 +5,9 @@ const CategoryAdmin = lazy(() => import('../pages/CategoryAdmin'));
 const CircuitAdmin = lazy(() => import('../pages/CircuitAdmin'));
 const CombinationAdmin = lazy(() => import('../pages/CombinationAdmin'));
 const MembershipAdmin = lazy(() => import('../pages/MembershipAdmin'));
-const SimulatorAdmin = lazy(() => import('../pages/SimulatorAdmin'));
+const SimulatorAdmin = lazy(
+  () => import('../features/SimulatorAdmin/pages/SimulatorAdmin')
+);
 const UserAdmin = lazy(() => import('../pages/UserAdmin'));
 const UserRacesAdmin = lazy(() => import('../pages/UserRacesAdmin'));
 
