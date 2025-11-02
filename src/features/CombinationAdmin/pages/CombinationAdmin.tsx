@@ -1,15 +1,9 @@
-import { lazy, useCallback, useState, Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 import { Combination } from '../../../types/entities.ts';
 
-// Hooks
-import { useCombinationAdmin } from '../hooks/useCombinationAdmin.ts';
 import { useCombinationDependencies } from '../hooks/useCombinationDependencies.ts';
-import { useScrollToElement } from '../../../hooks/useScrollToElement.ts';
+import { useCombinationAdminPage } from '../hooks/useCombinationAdminPage.ts';
 import { CombinationAdminProvider } from '../../../context/CombinationAdminContext.tsx';
-import { useCombinationFilters } from '../hooks/useCombinationFilters.ts';
-
-import { isDuplicateCombination } from '../../../utils/combination/duplicate.ts';
-import { normalizeCombination } from '../../../utils/combination/normalize.ts';
 
 import {
   Card,
@@ -30,53 +24,24 @@ const CombinationList = lazy(() => import('../components/CombinationList.tsx'));
 const CombinationForm = lazy(() => import('../components/CombinationForm.tsx'));
 
 export default function CombinationAdmin() {
-  const crud = useCombinationAdmin();
   const { simulators, categories, circuits, loadingDependencies } =
     useCombinationDependencies();
 
   const {
     list,
+    filteredList,
     editing,
     loading: loadingCombinations,
-    handleSave: genericHandleSave,
-    handleCancel: genericHandleCancel,
-    handleNew: genericHandleNew,
-    handleEdit: genericHandleEdit,
-  } = crud;
-
-  const [isCreating, setIsCreating] = useState(false);
-  const [filtersVisible, setFiltersVisible] = useState(false);
-
-  const filters = useCombinationFilters(list);
-  const { filteredList } = filters;
-
-  const formContainerRef = useScrollToElement<HTMLDivElement>(editing);
-
-  const handleSave = useCallback(
-    async (combination: Combination) => {
-      const normalized = normalizeCombination(combination);
-      if (isDuplicateCombination(list, normalized)) {
-        alert('Esta combinación ya existe con las mismas fechas.');
-        return;
-      }
-      await genericHandleSave(normalized);
-      setIsCreating(false);
-    },
-    [list, genericHandleSave]
-  );
-
-  const handleNewCombination = () => {
-    genericHandleNew();
-    setIsCreating(true);
-  };
-  const handleEditCombination = (combination: Combination) => {
-    genericHandleEdit(combination);
-    setIsCreating(false);
-  };
-  const handleCancel = () => {
-    genericHandleCancel();
-    setIsCreating(false);
-  };
+    isCreating,
+    filtersVisible,
+    setFiltersVisible,
+    filters,
+    formContainerRef,
+    handleSave,
+    handleNewCombination,
+    handleEditCombination,
+    handleCancel,
+  } = useCombinationAdminPage();
 
   if (loadingCombinations || loadingDependencies) {
     return (
