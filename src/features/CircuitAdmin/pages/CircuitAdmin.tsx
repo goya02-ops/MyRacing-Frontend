@@ -1,4 +1,11 @@
-import { lazy, Suspense } from 'react';
+// src/features/CircuitAdmin/pages/CircuitAdmin.tsx
+
+import { lazy, Suspense, useState, useCallback } from 'react';
+import { Circuit } from '../../../types/entities'; // Importamos la entidad
+// Hooks conceptuales de TanStack Query (se implementarán a continuación)
+import { useEntityQuery } from '../../../hooks/useEntityQuery.ts';
+import { useEntityMutation } from '../../../hooks/useEntityMutation.ts';
+
 import {
   Card,
   Button,
@@ -11,28 +18,50 @@ import {
   TableBody,
 } from '../../../components/tremor/TremorComponents';
 import { useScrollToElement } from '../../../hooks/useScrollToElement.ts';
-
-import { useCircuitAdmin } from '../hooks/useCircuitAdmin.ts';
 import { CircuitRow } from '../components/CircuitRow.tsx';
 import Spinner from '../../../components/Spinner.tsx';
 
 const CircuitForm = lazy(() => import('../components/CircuitForm'));
 
 export default function CircuitAdmin() {
-  const {
-    list,
-    editing,
-    isCreating,
-    loading,
-    handleSave,
-    handleNewCircuit,
-    handleEditCircuit,
-    handleCancel,
-  } = useCircuitAdmin();
+  const { list, isLoading } = useEntityQuery(Circuit);
+
+  const { saveEntity } = useEntityMutation(Circuit);
+
+  const [editing, setEditing] = useState<Circuit | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
 
   const formContainerRef = useScrollToElement<HTMLDivElement>(editing);
 
-  if (loading) {
+  const handleCancel = useCallback(() => {
+    setEditing(null);
+    setIsCreating(false);
+  }, []);
+
+  const handleSave = useCallback(
+    async (circuit: Circuit) => {
+      try {
+        await saveEntity(circuit);
+        handleCancel();
+      } catch (error: any) {
+        console.error('Error al guardar circuito:', error);
+        alert(`Error al guardar: ${error.message || String(error)}`);
+      }
+    },
+    [saveEntity, handleCancel]
+  );
+
+  const handleNewCircuit = useCallback(() => {
+    setEditing(new Circuit());
+    setIsCreating(true);
+  }, []);
+
+  const handleEditCircuit = useCallback((circuit: Circuit) => {
+    setEditing({ ...circuit });
+    setIsCreating(false);
+  }, []);
+
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center py-20">
         <Spinner>Cargando circuitos...</Spinner>
@@ -61,11 +90,13 @@ export default function CircuitAdmin() {
       </div>
 
       <div ref={formContainerRef}>
-        {isCreating && editing && (
+        {(isCreating || editing) && (
           <div className="mb-6">
             <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
               <h3 className="text-lg font-semibold mb-4 text-orange-400">
-                Crear Nuevo Circuito
+                {isCreating
+                  ? 'Crear Nuevo Circuito'
+                  : `Editar Circuito: ${editing?.denomination}`}
               </h3>
               <Suspense
                 fallback={
@@ -73,29 +104,7 @@ export default function CircuitAdmin() {
                 }
               >
                 <CircuitForm
-                  initial={editing}
-                  onSave={handleSave}
-                  onCancel={handleCancel}
-                />
-              </Suspense>
-            </div>
-            <Divider className="my-6" />
-          </div>
-        )}
-
-        {!isCreating && editing && (
-          <div className="mb-6">
-            <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
-              <h3 className="text-lg font-semibold mb-4 text-orange-400">
-                Editar Circuito: {editing.denomination}
-              </h3>
-              <Suspense
-                fallback={
-                  <div className="text-center p-4">Cargando formulario...</div>
-                }
-              >
-                <CircuitForm
-                  initial={editing}
+                  initial={editing!}
                   onSave={handleSave}
                   onCancel={handleCancel}
                 />

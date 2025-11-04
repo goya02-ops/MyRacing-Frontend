@@ -1,5 +1,5 @@
-// src/hooks/useAdminCRUD.ts
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchEntities, saveEntity } from '../services/apiService';
 import type { Constructor } from '../types/entityMeta';
 
@@ -19,29 +19,30 @@ interface AdminCRUDLogic<T> {
 export function useAdminCRUD<T extends { id?: number }>(
   cls: Constructor<T>
 ): AdminCRUDLogic<T> {
-  const [list, setList] = useState<T[]>([]);
+  const queryClient = useQueryClient();
+
+  const queryKey = [cls.name];
+
+  const { data: list = [], isLoading: loading } = useQuery<T[], Error>({
+    queryKey: queryKey,
+    queryFn: () => fetchEntities(cls),
+  });
+
   const [editing, setEditing] = useState<T | null>(null);
   const [isCreating, setIsCreating] = useState(false);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    setLoading(true);
-    fetchEntities(cls)
-      .then((data) => setList(data as T[]))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [cls]);
+  const { mutateAsync: saveMutation } = useMutation({
+    mutationFn: (entity: T) => saveEntity(cls, entity),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKey });
+    },
+  });
 
   const handleSave = useCallback(
     async (entity: T) => {
       try {
-        const saved = await saveEntity(cls, entity);
-
-        setList((prev) =>
-          prev.some((item) => item.id === saved.id)
-            ? prev.map((item) => (item.id === saved.id ? (saved as T) : item))
-            : [...prev, saved as T]
-        );
+        await saveMutation(entity);
         setEditing(null);
         setIsCreating(false);
       } catch (error) {
@@ -53,7 +54,7 @@ export function useAdminCRUD<T extends { id?: number }>(
         );
       }
     },
-    [cls]
+    [cls.name, saveMutation, queryClient, queryKey]
   );
 
   const handleNew = useCallback(() => {
@@ -73,7 +74,7 @@ export function useAdminCRUD<T extends { id?: number }>(
 
   return {
     list,
-    setList,
+    setList: () => {},
     editing,
     setEditing,
     isCreating,

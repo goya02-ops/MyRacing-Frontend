@@ -1,5 +1,8 @@
-import { lazy, Suspense } from 'react';
-import { useCategoryAdmin } from '../hooks/useCategoryAdmin.ts';
+import { lazy, Suspense, useState, useCallback } from 'react';
+import { Category } from '../../../types/entities.ts';
+import { useEntityQuery } from '../../../hooks/useEntityQuery.ts';
+import { useEntityMutation } from '../../../hooks/useEntityMutation.ts';
+
 import {
   Card,
   Button,
@@ -7,30 +10,53 @@ import {
   Divider,
   Table,
   TableHead,
-  TableRow,
   TableHeaderCell,
   TableBody,
-  TableCell,
+  TableRow,
 } from '../../../components/tremor/TremorComponents.tsx';
 import { useScrollToElement } from '../../../hooks/useScrollToElement.ts';
+import { CategoryRow } from '../components/CategoryRow.tsx';
 
 const CategoryForm = lazy(() => import('../components/CategoryForm.tsx'));
 
 export default function CategoryAdmin() {
-  const {
-    list,
-    editing,
-    isCreating,
-    loading,
-    handleSave,
-    handleCancel,
-    handleNewCategory,
-    handleEditCategory,
-  } = useCategoryAdmin();
+  const { list, isLoading } = useEntityQuery(Category);
 
+  const { saveEntity } = useEntityMutation(Category);
+
+  const [editing, setEditing] = useState<Category | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
   const formContainerRef = useScrollToElement<HTMLDivElement>(editing);
 
-  if (loading) {
+  const handleCancel = useCallback(() => {
+    setEditing(null);
+    setIsCreating(false);
+  }, []);
+
+  const handleSave = useCallback(
+    async (category: Category) => {
+      try {
+        await saveEntity(category);
+        handleCancel();
+      } catch (error: any) {
+        console.error('Error al guardar categoría:', error);
+        alert(`Error al guardar: ${error.message || String(error)}`);
+      }
+    },
+    [saveEntity, handleCancel]
+  );
+
+  const handleNewCategory = useCallback(() => {
+    setEditing(new Category());
+    setIsCreating(true);
+  }, []);
+
+  const handleEditCategory = useCallback((category: Category) => {
+    setEditing({ ...category });
+    setIsCreating(false);
+  }, []);
+
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center py-20">
         <p className="text-gray-400">Cargando categorías...</p>
@@ -40,16 +66,7 @@ export default function CategoryAdmin() {
 
   return (
     <Card className="text-gray-200">
-      {/* HEADER Y BOTONES */}
-      <div
-        className="
-        flex flex-col sm:flex-row    
-        justify-between 
-        items-start sm:items-center  
-        mb-6                         
-        gap-4 sm:gap-0               
-      "
-      >
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 sm:gap-0">
         <div className="flex items-center gap-4">
           <h2 className="text-xl font-semibold">Categorías</h2>
           <Badge variant="neutral">Total: {list.length}</Badge>
@@ -59,9 +76,7 @@ export default function CategoryAdmin() {
         </Button>
       </div>
 
-      {/* FORMULARIO DE CREACIÓN / EDICIÓN */}
       <div ref={formContainerRef}>
-        {/* Renderiza el formulario si 'editing' existe */}
         {editing && (
           <div className="mb-6">
             <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
@@ -87,7 +102,6 @@ export default function CategoryAdmin() {
         )}
       </div>
 
-      {/* TABLA DE LISTADO */}
       {list.length === 0 ? (
         <div className="text-center py-12 text-gray-400">
           No hay categorías para mostrar
@@ -107,33 +121,14 @@ export default function CategoryAdmin() {
             </TableHead>
             <TableBody>
               {list.map((c) => (
-                <TableRow key={c.id}>
-                  <TableCell className="font-medium">
-                    {c.denomination}
-                  </TableCell>
-                  <TableCell>{c.abbreviation}</TableCell>
-                  <TableCell className="truncate max-w-xs">
-                    {c.description}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant={
-                        editing?.id === c.id && !isCreating
-                          ? 'primary'
-                          : 'ghost'
-                      }
-                      onClick={() =>
-                        editing?.id === c.id && !isCreating
-                          ? handleCancel()
-                          : handleEditCategory(c)
-                      }
-                    >
-                      {editing?.id === c.id && !isCreating
-                        ? 'Cancelar'
-                        : 'Editar'}
-                    </Button>
-                  </TableCell>
-                </TableRow>
+                <CategoryRow
+                  key={c.id}
+                  category={c}
+                  editing={editing}
+                  isCreating={isCreating}
+                  handleEditCategory={handleEditCategory}
+                  handleCancel={handleCancel}
+                />
               ))}
             </TableBody>
           </Table>
