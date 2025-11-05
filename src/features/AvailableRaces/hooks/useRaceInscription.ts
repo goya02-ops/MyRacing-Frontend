@@ -1,28 +1,31 @@
-import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { registerUserToRace } from '../../../services/raceService.ts';
 import { User, Race } from '../../../types/entities';
 
 export function useRaceInscription(user: User | null, race: Race | null) {
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const queryClient = useQueryClient();
 
-  const handleInscription = async () => {
-    if (!user || !race) return;
-    try {
-      setLoading(true);
-      await registerUserToRace(user.id!, race.id!);
-      setSuccess(true);
-    } catch (err) {
+  const mutation = useMutation({
+    mutationFn: () => {
+      if (!user || !race) throw new Error('Usuario o carrera no definidos');
+      return registerUserToRace(user.id!, race.id!);
+    },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['racesForCombination', race?.combination?.id],
+      });
+    },
+
+    onError: (err) => {
       console.error('Error al inscribirse:', err);
       alert('No se pudo inscribir, intente nuevamente');
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
 
   return {
-    loading,
-    success,
-    handleInscription,
+    loading: mutation.isPending,
+    success: mutation.isSuccess,
+    handleInscription: mutation.mutate,
   };
 }

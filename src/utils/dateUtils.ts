@@ -1,10 +1,6 @@
-//Comentarios sobre lo que hace luego descartar si es necesario
-/**
- * Formatea una fecha/hora a un string localizado (ej. 'DD/MM/AAAA HH:MM').
- * @param value La fecha o string de fecha.
- * @returns La fecha/hora formateada o un mensaje de error/N/A.
- */
-export const formatDateTime = (value: Date | string | undefined | null): string => {
+export const formatDateTime = (
+  value: Date | string | undefined | null
+): string => {
   if (!value) return 'N/A';
   try {
     const date = new Date(value);

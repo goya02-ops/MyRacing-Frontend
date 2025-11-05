@@ -1,4 +1,4 @@
-import { lazy } from 'react';
+import { lazy, Suspense } from 'react'; // Import Suspense
 import { Button } from '../../../components/tremor/TremorComponents.tsx';
 import { RiArrowLeftFill } from '@remixicon/react';
 
@@ -16,13 +16,15 @@ const InformativeCard = lazy(() => import('../components/InformativeCard.tsx'));
 export default function AvailableRaces() {
   const {
     loading,
+    isLoadingRaces,
     selectedSimulator,
     setSelectedSimulator,
     selectedCombination,
     setSelectedCombination,
     simulatorsWithRaces,
     filteredCombinations,
-    nextFiveRaces,
+    nextRaces,
+    pastRaces,
     countdown,
     resetSelection,
   } = useAvailableRacesState();
@@ -34,6 +36,8 @@ export default function AvailableRaces() {
       </section>
     );
   }
+
+  const nextRace = nextRaces.length > 0 ? nextRaces[0] : null;
 
   return (
     <section className="p-8 min-h-screen">
@@ -71,25 +75,28 @@ export default function AvailableRaces() {
         </>
       ) : (
         <ProtectedRoute>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <InformativeCard
-              selectedCombination={selectedCombination}
-              nextRace={nextFiveRaces[0]}
-              countdown={countdown}
-            />
-            <div className="lg:col-span-1">
-              <CombinationCard
-                combination={selectedCombination}
-                nextRace={nextFiveRaces[0]}
+          <Suspense fallback={<Spinner>Cargando detalles...</Spinner>}>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <InformativeCard
+                selectedCombination={selectedCombination}
+                nextRace={nextRace}
+                countdown={countdown}
               />
+              <div className="lg:col-span-1">
+                <CombinationCard
+                  combination={selectedCombination}
+                  nextRace={nextRace}
+                />
+              </div>
+              <div className="lg:col-span-3">
+                <RaceList
+                  nextRaces={nextRaces}
+                  pastRaces={pastRaces}
+                  isLoadingRaces={isLoadingRaces}
+                />
+              </div>
             </div>
-            <div className="lg:col-span-3">
-              <RaceList
-                nextFiveRaces={nextFiveRaces}
-                races={selectedCombination.races!}
-              />
-            </div>
-          </div>
+          </Suspense>
         </ProtectedRoute>
       )}
     </section>

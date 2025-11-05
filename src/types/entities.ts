@@ -77,5 +77,6 @@ export class Race {
   id?: number;
   raceDateTime: string = '';
   registrationDeadline: string = '';
-  raceUsers!: RaceUser[];
+  raceUsers?: RaceUser[];
+  combination!: Combination;
 }

@@ -1,40 +1,45 @@
-// src/hooks/useAvailableRacesState.ts
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Combination, Simulator } from '../../../types/entities';
-import { useCurrentRaces } from './useCurrentRaces';
-import { useNextFiveRaces } from './useNextFiveRaces';
+import { useCurrentCombinations } from './useCurrentCombinations';
+import { useCombinationRaces } from './useCombinationRaces';
 import { useCountdown } from '../../../hooks/useCountdown';
 
 export function useAvailableRacesState() {
+  // Estado local de UI
   const [selectedSimulator, setSelectedSimulator] = useState<Simulator | null>(
     null
   );
   const [selectedCombination, setSelectedCombination] =
     useState<Combination | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  const { allCombinations, simulatorsWithRaces } = useCurrentRaces();
+  // Carga de Combinaciones
+  const { allCombinations, simulatorsWithRaces, isLoadingCombinations } =
+    useCurrentCombinations();
 
-  useEffect(() => {
-    if (allCombinations || simulatorsWithRaces) {
-      setLoading(false);
-    }
-  }, [allCombinations, simulatorsWithRaces]);
+  // Carga de Carreras
+  const { racesData, isLoadingRaces } = useCombinationRaces(
+    selectedCombination?.id
+  );
 
+  // Lógica de filtrado
   const filteredCombinations = useMemo(() => {
     if (!selectedSimulator) return allCombinations;
     return allCombinations.filter(
-      (c) =>
-        c.categoryVersion?.simulator?.id === selectedSimulator.id ||
-        c.circuitVersion?.simulator?.id === selectedSimulator.id
+      (c) => c.categoryVersion?.simulator?.id === selectedSimulator.id
     );
   }, [allCombinations, selectedSimulator]);
 
-  const nextFiveRaces = useNextFiveRaces(selectedCombination);
+  // Lógica de separación de carreras
+  const { nextRaces, pastRaces } = useMemo(() => {
+    const upcoming = racesData.nextRaces || [];
+    const past = racesData.previousRaces || [];
+
+    return { nextRaces: upcoming, pastRaces: past };
+  }, [racesData]);
+
+  // El countdown usa la primera carrera de la lista filtrada
   const countdown = useCountdown(
-    nextFiveRaces.length > 0
-      ? new Date(nextFiveRaces[0].registrationDeadline)
-      : null
+    nextRaces.length > 0 ? new Date(nextRaces[0].registrationDeadline) : null
   );
 
   const resetSelection = () => {
@@ -43,14 +48,16 @@ export function useAvailableRacesState() {
   };
 
   return {
-    loading,
+    loading: isLoadingCombinations,
+    isLoadingRaces,
     selectedSimulator,
     setSelectedSimulator,
     selectedCombination,
     setSelectedCombination,
     simulatorsWithRaces,
     filteredCombinations,
-    nextFiveRaces,
+    nextRaces,
+    pastRaces,
     countdown,
     resetSelection,
   };
