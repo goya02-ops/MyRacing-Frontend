@@ -1,12 +1,12 @@
-import { lazy, Suspense } from 'react';
-import { useMembershipLogic } from '../hooks/useMembershipLogic';
-
+import { lazy, Suspense } from 'react'; 
+import { useMembershipAdmin } from '../hooks/useMembershipAdmin';
 import {
   Card,
   Button,
   Divider,
   Label,
 } from '../../../components/tremor/TremorComponents';
+
 
 const MembershipForm = lazy(() => import('../components/MembershipForm'));
 const MembershipHistory = lazy(() => import('../components/MembershipHistory'));
@@ -22,7 +22,7 @@ export default function MembershipAdmin() {
     handleCancel,
     handleToggleHistory,
     handleToggleForm,
-  } = useMembershipLogic();
+  } = useMembershipAdmin();
 
   if (loading) {
     return (
@@ -34,10 +34,12 @@ export default function MembershipAdmin() {
 
   return (
     <Card className="text-gray-200">
+     
       {/* 3.1 BOTONES DE CONTROL */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <h2 className="text-xl font-semibold">Administrar Membresías</h2>
         <div className="flex gap-2">
+          
           {/* Botón para ver historial */}
           <Button
             onClick={handleToggleHistory}
@@ -45,13 +47,15 @@ export default function MembershipAdmin() {
           >
             {showHistory ? 'Ocultar Historial' : 'Ver Historial'}
           </Button>
-
+          
+          {/* Botón para abrir/cerrar el formulario */}
           <Button
             onClick={handleToggleForm}
             variant={editing ? 'secondary' : 'primary'}
           >
             {editing ? 'Cancelar Nuevo Valor' : '+ Nuevo Valor'}
           </Button>
+       
         </div>
       </div>
 
