@@ -1,11 +1,12 @@
+import { useQuery } from '@tanstack/react-query';
+import { fetchOne } from '../../../services/apiService.ts'; 
 import {
   Combination,
   CategoryVersion,
   CircuitVersion,
   Simulator,
 } from '../../../types/entities.ts';
-import { useState, useEffect, useCallback } from 'react';
-import { fetchOne } from '../../../services/apiService.ts';
+import { useState, useCallback, useMemo } from 'react';
 
 interface UseCombinationFormProps {
   initial: Combination;
@@ -23,68 +24,53 @@ interface UseCombinationFormReturn {
   getIdValue: (field: 'categoryVersion' | 'circuitVersion') => number | '';
 }
 
+const fetchSimulatorDetails = async (selectedSimulator: number) => {
+    const simulator = (await fetchOne(Simulator as any, {
+      id: selectedSimulator,
+    })) as Simulator;
+    
+    const categoryVersions = Array.isArray(simulator.categories) ? simulator.categories : [];
+    const circuitVersions = Array.isArray(simulator.circuits) ? simulator.circuits : [];
+
+    return { categoryVersions, circuitVersions };
+};
+
+
 export function useCombinationForm({
   initial,
 }: UseCombinationFormProps): UseCombinationFormReturn {
+    
+  const initialSimulatorId = useMemo(() => {
+    if (initial.id && initial.categoryVersion && typeof initial.categoryVersion === 'object') {
+        const sim = initial.categoryVersion.simulator;
+        return typeof sim === 'object' ? sim.id : sim;
+    }
+    return undefined;
+  }, [initial]);
+  
   const [form, setForm] = useState<Combination>({
     ...initial,
     raceIntervalMinutes: initial.raceIntervalMinutes || 30,
   });
 
-  const [selectedSimulator, setSelectedSimulator] = useState<
-    number | undefined
-  >(() => {
-    if (
-      initial.id &&
-      initial.categoryVersion &&
-      typeof initial.categoryVersion === 'object'
-    ) {
-      const sim = initial.categoryVersion.simulator;
-      return typeof sim === 'object' ? sim.id : sim;
-    }
-    return undefined;
+  const [selectedSimulator, setSelectedSimulator] = useState<number | undefined>(initialSimulatorId);
+  
+  const { data, isLoading: loadingVersions } = useQuery({
+    queryKey: ['simulatorVersions', selectedSimulator],
+    queryFn: () => fetchSimulatorDetails(selectedSimulator!), 
+    enabled: !!selectedSimulator, 
+    staleTime: Infinity, 
   });
 
-  const [categoryVersions, setCategoryVersions] = useState<CategoryVersion[]>(
-    []
-  );
-  const [circuitVersions, setCircuitVersions] = useState<CircuitVersion[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const fetchSimulatorData = async () => {
-      if (!selectedSimulator) {
-        setCategoryVersions([]);
-        setCircuitVersions([]);
-        return;
-      }
-      setLoading(true);
-      try {
-        const simulator = (await fetchOne(Simulator as any, {
-          id: selectedSimulator,
-        })) as Simulator;
-
-        setCategoryVersions(
-          Array.isArray(simulator.categories) ? simulator.categories : []
-        );
-        setCircuitVersions(
-          Array.isArray(simulator.circuits) ? simulator.circuits : []
-        );
-      } catch (error) {
-        setCategoryVersions([]);
-        setCircuitVersions([]);
-        console.error('Error fetching simulator versions:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchSimulatorData();
-  }, [selectedSimulator]);
+  const categoryVersions = data?.categoryVersions || [];
+  const circuitVersions = data?.circuitVersions || [];
+  const loading = loadingVersions; 
 
   const handleSimulatorChange = useCallback(
     (value: string) => {
       const simId = value ? Number(value) : undefined;
       setSelectedSimulator(simId);
+      
       setForm((prev) => ({
         ...prev,
         categoryVersion: undefined,
@@ -114,7 +100,7 @@ export function useCombinationForm({
     },
     [setForm]
   );
-
+  
   const getIdValue = (field: 'categoryVersion' | 'circuitVersion') => {
     const val = form[field];
     return typeof val === 'object' && val ? val.id || '' : val || '';
@@ -123,8 +109,8 @@ export function useCombinationForm({
   return {
     form,
     selectedSimulator,
-    categoryVersions,
-    circuitVersions,
+    categoryVersions: categoryVersions as CategoryVersion[],
+    circuitVersions: circuitVersions as CircuitVersion[],
     loading,
     handleSimulatorChange,
     handleSelectChange,

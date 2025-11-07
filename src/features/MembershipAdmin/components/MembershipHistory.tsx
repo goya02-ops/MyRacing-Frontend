@@ -1,5 +1,5 @@
-import type { Membership } from '../types/entities.ts';
-import { Badge } from '../components/tremor/TremorComponents'; 
+import type { Membership } from '../../../types/entities';
+import { Badge } from '../../../components/tremor/TremorComponents';
 
 interface Props {
   memberships: Membership[];

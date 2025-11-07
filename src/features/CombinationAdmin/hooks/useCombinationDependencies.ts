@@ -1,37 +1,22 @@
-import { useState, useEffect } from 'react';
+import { useEntityQuery } from '../../../hooks/useEntityQuery.ts'; 
 import { Simulator, Category, Circuit } from '../../../types/entities.ts';
-import { fetchEntities } from '../../../services/apiService.ts';
 
 export function useCombinationDependencies() {
-  const [simulators, setSimulators] = useState<Simulator[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [circuits, setCircuits] = useState<Circuit[]>([]);
-  const [loadingDependencies, setLoadingDependencies] = useState(true);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [sims, cats, circs] = await Promise.all([
-          fetchEntities(Simulator),
-          fetchEntities(Category),
-          fetchEntities(Circuit),
-        ]);
+  const { list: allSimulators, isLoading: isLoadingSims } = useEntityQuery(Simulator as any);
 
-        // Guardamos solo los simuladores activos para los selectores
-        setSimulators(sims.filter((s) => s.status === 'Activo') || []);
-        setCategories(cats || []);
-        setCircuits(circs || []);
-      } catch (error) {
-        console.error('Error fetching dependencies:', error);
-        setSimulators([]);
-        setCategories([]);
-        setCircuits([]);
-      } finally {
-        setLoadingDependencies(false);
-      }
-    };
-    fetchData();
-  }, []);
+  const simulators = (allSimulators as Simulator[]).filter((s: Simulator) => s.status === 'Activo');
 
-  return { simulators, categories, circuits, loadingDependencies };
+  const { list: categories, isLoading: isLoadingCats } = useEntityQuery(Category as any);
+
+  const { list: circuits, isLoading: isLoadingCircs } = useEntityQuery(Circuit as any);
+  
+  const loadingDependencies = isLoadingSims || isLoadingCats || isLoadingCircs;
+
+  return { 
+    simulators, 
+    categories: categories as Category[], 
+    circuits: circuits as Circuit[],     
+    loadingDependencies 
+  };
 }
