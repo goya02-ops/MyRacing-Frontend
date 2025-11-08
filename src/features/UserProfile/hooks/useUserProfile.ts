@@ -1,10 +1,9 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'; 
 import { User } from '../../../types/entities';
-import {
-  fetchProfileData,
-  updateProfileData,
-} from '../../../services/userService';
+import { fetchProfileData, updateProfileData } from '../../../services/userService';
 import { getStoredUser } from '../../../services/authService.ts';
+
 interface RaceUser {
   id?: number;
   registrationDateTime: string | Date;
@@ -13,6 +12,18 @@ interface RaceUser {
   race: { raceDateTime: string } | any;
   user: any;
 }
+
+interface ProfileData {
+  user: User;
+  results: RaceUser[];
+}
+
+const EMPTY_USER: User = {
+  userName: '',
+  realName: '',
+  email: '',
+  type: 'common',
+} as User;
 
 interface UserProfileData {
   user: User | null;
@@ -24,46 +35,61 @@ interface UserProfileData {
   stats: { totalRaces: number; victories: number; podiums: number };
 
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
-  handleChange: (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => void;
+  handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   handleSave: () => Promise<void>;
   handleCancel: () => void;
 }
 
-const EMPTY_USER: User = {
-  userName: '',
-  realName: '',
-  email: '',
-  type: 'common',
-} as User;
+const PROFILE_QUERY_KEY = ['userProfile'];
 
 export function useUserProfile(): UserProfileData {
-  const [user, setUser] = useState<User | null>(null);
-  const [results, setResults] = useState<RaceUser[]>([]);
+  const queryClient = useQueryClient();
+  const currentUser = getStoredUser();
+  const userId = currentUser?.id;
+
   const [formData, setFormData] = useState<User>(EMPTY_USER);
-  const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
+
+  const { data, isLoading } = useQuery<ProfileData, Error>({
+    queryKey: PROFILE_QUERY_KEY,
+    queryFn: fetchProfileData,
+    enabled: !!userId, 
+  });
+
+  const { mutateAsync: mutateUpdate, isPending: isSaving } = useMutation<
+    User,
+    Error,
+    { id: number; realName: string; email: string }
+  >({
+    mutationFn: ({ id, realName, email }) => updateProfileData(id, realName, email),
+
+    onSuccess: (updatedData) => {
+      queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEY });
+
+      const storedUser = getStoredUser();
+      if (storedUser) {
+        localStorage.setItem(
+          'user',
+          JSON.stringify({
+            ...storedUser,
+            realName: updatedData.realName,
+            email: updatedData.email,
+          })
+        );
+      }
+    },
+  });
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const data = await fetchProfileData();
+    if (data?.user) {
+      if (!isEditing) 
+      setFormData({ ...data.user }); 
+    }
+  }, [data]);
 
-        setUser(data.user);
-        setResults(data.results as RaceUser[]);
-        setFormData({ ...data.user });
-      } catch (error) {
-        console.error('Error al cargar datos del perfil:', error);
-        alert('Error al cargar el perfil.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+  const user = data?.user || null;
+  const results = data?.results || [];
+  const loading = isLoading; 
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -79,52 +105,33 @@ export function useUserProfile(): UserProfileData {
   const handleSave = useCallback(async () => {
     if (!formData || !formData.id) return;
 
-    setSaving(true);
-
     if (!formData.realName.trim() || !formData.email.includes('@')) {
       alert('Nombre completo y email son obligatorios.');
-      setSaving(false);
       return;
     }
 
     try {
-      const updatedData = await updateProfileData(
-        formData.id,
-        formData.realName,
-        formData.email
-      );
+      await mutateUpdate({
+        id: formData.id,
+        realName: formData.realName,
+        email: formData.email,
+      });
 
-      setUser(updatedData);
-      setFormData(updatedData);
       setIsEditing(false);
-
       alert('Perfil actualizado con éxito.');
 
-      const storedUser = getStoredUser();
-      if (storedUser) {
-        localStorage.setItem(
-          'user',
-          JSON.stringify({
-            ...storedUser,
-            realName: updatedData.realName,
-            email: updatedData.email,
-          })
-        );
-      }
     } catch (error) {
       console.error('Error al guardar el perfil:', error);
       alert('Error al guardar el perfil.');
-    } finally {
-      setSaving(false);
     }
-  }, [formData]);
+  }, [formData, mutateUpdate]);
 
   const handleCancel = useCallback(() => {
     setIsEditing(false);
-    if (user) {
-      setFormData({ ...user });
+    if (data?.user) {
+      setFormData({ ...data.user });
     }
-  }, [user]);
+  }, [data]);
 
   const stats = useMemo(() => {
     const totalRaces = results.length;
@@ -139,7 +146,7 @@ export function useUserProfile(): UserProfileData {
     formData,
     loading,
     isEditing,
-    saving,
+    saving: isSaving, 
     stats,
     setIsEditing,
     handleChange,

@@ -4,11 +4,11 @@ import {
   Button,
 } from '../../../components/tremor/TremorComponents';
 
-import { useUserAdmin } from '../hooks/useUserAdmin';
+import { useUserAdminData } from '../hooks/useUserAdminData'; 
 import Spinner from '../../../components/Spinner';
 
 export default function UserAdmin() {
-  const { list, loading } = useUserAdmin();
+  const { list, loading } = useUserAdminData(); 
 
   if (loading) {
     return (
@@ -25,6 +25,7 @@ export default function UserAdmin() {
         <Badge color="gray">Total: {list.length}</Badge>
       </div>
       <div className="px-6">
+        {/* Encabezado de la tabla */}
         <div className="hidden md:flex text-sm font-semibold text-gray-400 border-b border-gray-700/50 pb-2">
           <div className="w-1/4">Nombre de Usuario</div>
           <div className="w-1/4">Nombre Real</div>
@@ -62,6 +63,7 @@ export default function UserAdmin() {
                   </Badge>
                 </div>
                 <div className="w-full md:w-1/6">
+                  {/* Botón de acción (Mantenemos la funcionalidad futura) */}
                   <Button variant="secondary" disabled>
                     Funcionalidad futura
                   </Button>

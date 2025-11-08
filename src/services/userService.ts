@@ -19,14 +19,17 @@ interface ProfileData {
 
 export async function fetchProfileData(): Promise<ProfileData> {
   const currentUser = getStoredUser();
+  
   if (!currentUser || !currentUser.id) {
     throw new Error('Usuario no autenticado en almacenamiento local.');
   }
+  
   const userResponse = await fetchWithAuth(`/users/${currentUser.id}`);
   if (!userResponse.ok) {
     throw new Error('No se pudieron obtener los datos del usuario.');
   }
   const userData = (await userResponse.json()).data;
+  
   const racesResponse = await fetchWithAuth(
     `/race-users/by-user?userId=${currentUser.id}`
   );
