@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
-import { fetchEntities } from '../../../services/apiService';
+import { useState, useCallback, useMemo } from 'react';
+import { useEntityQuery } from '../../../hooks/useEntityQuery.ts';
+import { useEntityMutation } from '../../../hooks/useEntityMutation.ts';
 import { getRelationId } from '../../../utils/GlobalHandlers';
 import {
   Simulator,
@@ -12,76 +13,48 @@ type ActiveManager = {
   simulator: Simulator | null;
 };
 
-type HandleSaveEntityBound = <T extends { id?: number }>(
-  entityClass: new () => T,
-  entity: T,
-  setter: React.Dispatch<React.SetStateAction<T[]>>,
-  onSuccess: () => void,
-  duplicateCheck?: (entity: T) => boolean
-) => Promise<void>;
 
-interface VersionManagerLogic {
-  categoryVersions: CategoryVersion[];
-  circuitVersions: CircuitVersion[];
-  editingVersion: CategoryVersion | CircuitVersion | null;
-  isCreatingVersion: boolean;
-  title: string;
-  isCategory: boolean;
+export function useVersionManagerLogic(activeManager: ActiveManager) {
 
-  handleNewVersion: () => void;
-  handleEditVersion: (version: CategoryVersion | CircuitVersion) => void;
-  handleCancelVersion: () => void;
-  onSaveCategoryVersion: (v: CategoryVersion) => void;
-  onSaveCircuitVersion: (v: CircuitVersion) => void;
-}
-
-export function useVersionManagerLogic(
-  activeManager: ActiveManager,
-  handleSaveEntity: HandleSaveEntityBound
-): VersionManagerLogic {
-  const [categoryVersions, setCategoryVersions] = useState<CategoryVersion[]>(
-    []
-  );
-  const [circuitVersions, setCircuitVersions] = useState<CircuitVersion[]>([]);
   const [editingVersion, setEditingVersion] = useState<
     CategoryVersion | CircuitVersion | null
   >(null);
-  const [isCreatingVersion, setIsCreatingVersion] = useState(false);
+  
+
+  const isCreatingVersion = !!editingVersion && !editingVersion.id;
 
   const isCategory = activeManager.type === 'category';
+  const simulatorId = activeManager.simulator?.id;
   const title = isCategory ? 'Categorías' : 'Circuitos';
+
+ 
+  const { list: allCategoryVersions, isLoading: loadingCategories } =
+    useEntityQuery(CategoryVersion as any);
+  const { list: allCircuitVersions, isLoading: loadingCircuits } =
+    useEntityQuery(CircuitVersion as any);
+
+ 
+  const categoryVersions = useMemo(() => {
+    if (!simulatorId) return [];
+    return (allCategoryVersions as any[]).filter(
+      (v: any) => getRelationId(v, 'simulator') === simulatorId
+    ) as CategoryVersion[];
+  }, [allCategoryVersions, simulatorId]);
+
+  const circuitVersions = useMemo(() => {
+    if (!simulatorId) return [];
+    return (allCircuitVersions as any[]).filter(
+      (v: any) => getRelationId(v, 'simulator') === simulatorId
+    ) as CircuitVersion[];
+  }, [allCircuitVersions, simulatorId]);
+
   const currentVersions = isCategory ? categoryVersions : circuitVersions;
 
-  useEffect(() => {
-    if (!activeManager.simulator) return;
 
-    const fetchVersions = async () => {
-      try {
-        if (activeManager.type === 'category') {
-          const allVersions = await fetchEntities(CategoryVersion as any);
-          setCategoryVersions(
-            allVersions.filter(
-              (v: any) =>
-                getRelationId(v, 'simulator') === activeManager.simulator?.id
-            ) as CategoryVersion[]
-          );
-        } else if (activeManager.type === 'circuit') {
-          const allVersions = await fetchEntities(CircuitVersion as any);
-          setCircuitVersions(
-            allVersions.filter(
-              (v: any) =>
-                getRelationId(v, 'simulator') === activeManager.simulator?.id
-            ) as CircuitVersion[]
-          );
-        }
-      } catch (error) {
-        console.error('Error fetching versions:', error);
-      }
-    };
-    setEditingVersion(null);
-    setIsCreatingVersion(false);
-    fetchVersions();
-  }, [activeManager]);
+  const { saveEntity: saveCategory, isSaving: isSavingCategory } =
+    useEntityMutation(CategoryVersion as any);
+  const { saveEntity: saveCircuit, isSaving: isSavingCircuit } =
+    useEntityMutation(CircuitVersion as any);
 
   const handleNewVersion = useCallback(() => {
     const newVersion = isCategory
@@ -89,22 +62,21 @@ export function useVersionManagerLogic(
       : new CircuitVersion();
     newVersion.simulator = activeManager.simulator!;
     setEditingVersion(newVersion);
-    setIsCreatingVersion(true);
+
   }, [isCategory, activeManager.simulator]);
 
   const handleEditVersion = useCallback(
     (version: CategoryVersion | CircuitVersion) => {
-      setEditingVersion(version);
-      setIsCreatingVersion(false);
+      setEditingVersion({ ...version }); // Copiamos para no mutar la caché
     },
     []
   );
 
   const handleCancelVersion = useCallback(() => {
     setEditingVersion(null);
-    setIsCreatingVersion(false);
   }, []);
 
+ 
   const isDuplicate = useCallback(
     (version: any, entityType: 'category' | 'circuit') => {
       return currentVersions.some(
@@ -120,46 +92,53 @@ export function useVersionManagerLogic(
   );
 
   const onSaveCategoryVersion = useCallback(
-    (v: CategoryVersion) => {
-      handleSaveEntity(
-        CategoryVersion as any,
-        v,
-        setCategoryVersions as React.Dispatch<
-          React.SetStateAction<CategoryVersion[]>
-        >,
-        handleCancelVersion,
-        (version: CategoryVersion) => isDuplicate(version, 'category')
-      );
+    async (v: CategoryVersion) => {
+      if (isDuplicate(v, 'category')) {
+        alert('Error: Ya existe una versión para esa categoría.');
+        return;
+      }
+      try {
+        await saveCategory(v);
+        handleCancelVersion(); // Cerramos el form al éxito
+      } catch (error) {
+        console.error('Error saving CategoryVersion:', error);
+        alert('Error al guardar la categoría.');
+      }
     },
-    [handleSaveEntity, handleCancelVersion, isDuplicate]
+    [saveCategory, handleCancelVersion, isDuplicate]
   );
 
   const onSaveCircuitVersion = useCallback(
-    (v: CircuitVersion) => {
-      handleSaveEntity(
-        CircuitVersion as any,
-        v,
-        setCircuitVersions as React.Dispatch<
-          React.SetStateAction<CircuitVersion[]>
-        >,
-        handleCancelVersion,
-        (version: CircuitVersion) => isDuplicate(version, 'circuit')
-      );
+    async (v: CircuitVersion) => {
+      if (isDuplicate(v, 'circuit')) {
+        alert('Error: Ya existe una versión para ese circuito.');
+        return;
+      }
+      try {
+        await saveCircuit(v);
+        handleCancelVersion(); // Cerramos el form al éxito
+      } catch (error) {
+        console.error('Error saving CircuitVersion:', error);
+        alert('Error al guardar el circuito.');
+      }
     },
-    [handleSaveEntity, handleCancelVersion, isDuplicate]
+    [saveCircuit, handleCancelVersion, isDuplicate]
   );
 
+  
   return {
     categoryVersions,
     circuitVersions,
     editingVersion,
-    isCreatingVersion,
+    isCreatingVersion, 
     title,
     isCategory,
+    loading: loadingCategories || loadingCircuits, 
+    isSaving: isSavingCategory || isSavingCircuit, 
     handleNewVersion,
     handleEditVersion,
     handleCancelVersion,
-    onSaveCategoryVersion,
-    onSaveCircuitVersion,
+    onSaveCategoryVersion, 
+    onSaveCircuitVersion
   };
 }

@@ -4,12 +4,14 @@ import { Simulator } from '../../../types/entities';
 
 const SimulatorForm = lazy(() => import('./SimulatorForm'));
 
+
 interface FormRendererProps {
   formRef: React.RefObject<HTMLDivElement | null>;
   editingSimulator: Simulator | null;
   isCreatingSimulator: boolean;
   onSave: (sim: Simulator) => void;
   onCancel: () => void;
+  isSaving?: boolean; 
 }
 
 export function SimulatorFormRenderer({
@@ -18,6 +20,7 @@ export function SimulatorFormRenderer({
   isCreatingSimulator,
   onSave,
   onCancel,
+  isSaving,
 }: FormRendererProps) {
   if (!editingSimulator) return null;
 
@@ -37,6 +40,7 @@ export function SimulatorFormRenderer({
               initial={editingSimulator}
               onCancel={onCancel}
               onSave={onSave}
+              isSaving={isSaving}
             />
           </Suspense>
         </div>

@@ -18,6 +18,7 @@ interface Props {
   simulators: Simulator[];
   onSave: (circuitVersion: CircuitVersion) => void;
   onCancel: () => void;
+  isSaving?: boolean; 
 }
 
 export default function CircuitVersionForm({
@@ -25,6 +26,7 @@ export default function CircuitVersionForm({
   circuits,
   onSave,
   onCancel,
+  isSaving, 
 }: Props) {
   const [form, setForm] = useState<CircuitVersion>(initial);
 
@@ -47,16 +49,11 @@ export default function CircuitVersionForm({
     handleSelectChange(event);
   };
 
-  // Lógica de 'value' simplificada y más segura
   const getCircuitValue = () => {
     const circ = form.circuit;
     if (typeof circ === 'object' && circ !== null) {
-      // Si es un objeto, usa su ID. Si el ID no existe (ej. es nuevo), usa ''
       return circ.id?.toString() || '';
     }
-    // Si es un number, null o undefined, usa el valor o ''
-    // (circ || '') maneja null/undefined.
-    // El 'String()' convierte el número 123 a "123" sin error.
     return String(circ || '');
   };
 
@@ -76,6 +73,7 @@ export default function CircuitVersionForm({
             value={getCircuitValue()}
             onValueChange={(value) => handleSelectValueChange('circuit', value)}
             required
+            disabled={isSaving} 
           >
             <SelectTrigger id="circuit">
               <SelectValue placeholder="Seleccione un circuito" />
@@ -112,6 +110,7 @@ export default function CircuitVersionForm({
             value={form.status}
             onValueChange={(value) => handleSelectValueChange('status', value)}
             required
+            disabled={isSaving} 
           >
             <SelectTrigger id="status">
               <SelectValue placeholder="Seleccione un estado" />
@@ -127,11 +126,20 @@ export default function CircuitVersionForm({
       <Divider className="pt-2" />
 
       <div className="flex justify-end gap-3">
-        <Button type="button" variant="secondary" onClick={onCancel}>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={onCancel}
+          disabled={isSaving} 
+        >
           Cancelar
         </Button>
-        <Button type="submit" variant="primary">
-          Guardar
+        <Button
+          type="submit"
+          variant="primary"
+          disabled={isSaving} 
+        >
+          {isSaving ? 'Guardando...' : 'Guardar'}
         </Button>
       </div>
     </form>

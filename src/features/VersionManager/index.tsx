@@ -1,13 +1,9 @@
 import { Simulator } from '../../types/entities';
 import { Button, Divider } from '../../components/tremor/TremorComponents';
-
 import { VersionHeader } from './components/VersionHeader';
 import { VersionFormRenderer } from './components/VersionFormRenderer';
 import { VersionList } from './components/VersionList';
-import { useVersionManagerLogic } from './hooks/useVersionManagerLogic';
-
-import { useSimulatorAdminContext } from '../../context/SimulatorAdminContext';
-
+import { useVersionManagerLogic } from './hooks/useVersionManagerLogic'; 
 import { useVersionDependencies } from '../SimulatorAdmin/hooks/useVersionDependencies';
 import Spinner from '../../components/Spinner';
 
@@ -25,12 +21,12 @@ export default function VersionManager({
   activeManager,
   onClose,
 }: VersionManagerProps) {
-  const { handleSaveEntity } = useSimulatorAdminContext();
+
 
   const { categories, circuits, loadingDependencies } =
     useVersionDependencies(activeManager);
 
-  const hookProps = useVersionManagerLogic(activeManager, handleSaveEntity);
+  const hookProps = useVersionManagerLogic(activeManager);
 
   if (!activeManager.simulator) return null;
 
@@ -47,27 +43,33 @@ export default function VersionManager({
           <Spinner>Cargando dependencias...</Spinner>
         </div>
       ) : (
-        <>
-          <VersionFormRenderer
-            {...hookProps}
-            activeManager={activeManager}
-            categories={categories}
-            circuits={circuits}
-          />
+        <VersionFormRenderer
+          {...hookProps}
+          activeManager={activeManager}
+          categories={categories}
+          circuits={circuits}
+          isSaving={hookProps.isSaving} 
+        />
+      )}
 
-          <VersionList
-            isCategory={hookProps.isCategory}
-            versions={
-              hookProps.isCategory
-                ? hookProps.categoryVersions
-                : hookProps.circuitVersions
-            }
-            editingVersion={hookProps.editingVersion}
-            isCreatingVersion={hookProps.isCreatingVersion}
-            handleEditVersion={hookProps.handleEditVersion}
-            handleCancelVersion={hookProps.handleCancelVersion}
-          />
-        </>
+
+      {hookProps.loading ? ( // <-- ¡NUEVO!
+        <div className="flex justify-center p-4">
+          <Spinner>Cargando versiones...</Spinner>
+        </div>
+      ) : (
+        <VersionList
+          isCategory={hookProps.isCategory}
+          versions={
+            hookProps.isCategory
+              ? hookProps.categoryVersions
+              : hookProps.circuitVersions
+          }
+          editingVersion={hookProps.editingVersion}
+          isCreatingVersion={hookProps.isCreatingVersion}
+          handleEditVersion={hookProps.handleEditVersion}
+          handleCancelVersion={hookProps.handleCancelVersion}
+        />
       )}
 
       <Divider className="my-4" />
