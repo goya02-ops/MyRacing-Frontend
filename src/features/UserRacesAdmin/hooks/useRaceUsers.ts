@@ -1,53 +1,42 @@
-import { useState, useEffect } from 'react';
-import { User } from '../../../types/entities';
-import { fetchEntities } from '../../../services/apiService.ts';
+import { useState, useMemo } from 'react';
+import { useRaceUsers } from '../hooks/useRaceUsers';
+import { RaceUser } from '../../../types/entities.ts';
 
-import { fetchRaceUsersByUserId } from '../../../services/raceUserService';
-import { RaceUser } from '../../../types/entities';
+export function useUserRacesPage() {
+  const {
+    users,
+    selectedUserId,
+    raceUsers,
+    loadingUsers,
+    loadingRaces,
+    handleUserSelect,
+    selectedUser,
+  } = useRaceUsers();
 
-export const useRaceUsers = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
-  const [raceUsers, setRaceUsers] = useState<RaceUser[]>([]);
-  const [loadingUsers, setLoadingUsers] = useState(true);
-  const [loadingRaces, setLoadingRaces] = useState(false);
+  const [userSearchTerm, setUserSearchTerm] = useState('');
+  const [minFinishPosition, setMinFinishPosition] = useState<number | ''>('');
+  const [raceDateFrom, setRaceDateFrom] = useState('');
 
-  useEffect(() => {
-    fetchEntities(User)
-      .then((fetchedUsers: User[]) => {
-        const nonAdminUsers = fetchedUsers.filter((u) => u.type !== 'admin');
-        setUsers(nonAdminUsers);
-      })
-      .catch((error) => {
-        console.error('Error al cargar usuarios:', error);
-        setUsers([]);
-      })
-      .finally(() => setLoadingUsers(false));
-  }, []);
+  const filteredRaceUsers = useMemo(() => {
+    return raceUsers.filter((ru: RaceUser) => {
+      let matchesPosition = true;
+      let matchesDate = true;
 
-  // 2. Cargar carreras cuando se selecciona un usuario
-  useEffect(() => {
-    if (selectedUserId) {
-      setLoadingRaces(true);
-      fetchRaceUsersByUserId(selectedUserId)
-        .then((data) => {
-          setRaceUsers(data as RaceUser[]);
-        })
-        .catch((error) => {
-          console.error('Error cargando carreras:', error);
-          setRaceUsers([]);
-        })
-        .finally(() => setLoadingRaces(false));
-    } else {
-      setRaceUsers([]);
-    }
-  }, [selectedUserId]);
+      if (minFinishPosition !== '') {
+        const minPos = Number(minFinishPosition);
+        matchesPosition =
+          ru.finishPosition! > 0 && ru.finishPosition! <= minPos;
+      }
 
-  const handleUserSelect = (userId: number) => {
-    setSelectedUserId((prevId) => (prevId === userId ? null : userId));
-  };
+      if (raceDateFrom && ru.race?.raceDateTime) {
+        const raceDate = new Date(ru.race.raceDateTime).getTime();
+        const filterDate = new Date(raceDateFrom).getTime();
+        matchesDate = raceDate >= filterDate;
+      }
 
-  const selectedUser = users.find((u) => u.id === selectedUserId);
+      return matchesPosition && matchesDate;
+    });
+  }, [raceUsers, minFinishPosition, raceDateFrom]);
 
   return {
     users,
@@ -57,5 +46,12 @@ export const useRaceUsers = () => {
     loadingRaces,
     handleUserSelect,
     selectedUser,
+    userSearchTerm,
+    setUserSearchTerm,
+    minFinishPosition,
+    setMinFinishPosition,
+    raceDateFrom,
+    setRaceDateFrom,
+    filteredRaceUsers,
   };
-};
+}
