@@ -20,7 +20,7 @@ export default function CombinationForm({
   onCancel,
 }: CombinationFormProps) {
   const { simulators, loadingDependencies } = useCombinationAdminContext();
-
+  
   const {
     form,
     selectedSimulator,
@@ -32,6 +32,9 @@ export default function CombinationForm({
     handleInputChange,
     getIdValue,
   } = useCombinationForm({ initial });
+
+  // Acá detectamos si estamos editando
+  const isEditing = !!initial.id;
 
   return (
     <form
@@ -62,6 +65,7 @@ export default function CombinationForm({
         dateFrom={form.dateFrom}
         dateTo={form.dateTo}
         onInputChange={handleInputChange}
+        isEditing={isEditing} // Paso el prop
       />
 
       <Divider />

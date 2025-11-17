@@ -1,5 +1,6 @@
 export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+
 let isRefreshing = false;
 let refreshSubscribers: ((token: string) => void)[] = [];
 
@@ -17,11 +18,13 @@ async function refreshToken() {
   if (!refreshToken) {
     throw new Error('No refresh token');
   }
+
   const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ refreshToken }),
   });
+
   if (!response.ok) {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
@@ -29,9 +32,19 @@ async function refreshToken() {
     window.location.href = '/login';
     throw new Error('Refresh token expired');
   }
+
   const data = await response.json();
   localStorage.setItem('accessToken', data.accessToken);
   return data.accessToken;
+}
+
+//No se usa pero puede ser útil más adelante
+export function getAuthHeaders() {
+  const token = localStorage.getItem('accessToken');
+  return {
+    'Content-Type': 'application/json',
+    ...(token && { 'Authorization': `Bearer ${token}` })
+  };
 }
 
 export async function fetchWithAuth(
@@ -43,9 +56,11 @@ export async function fetchWithAuth(
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
   };
+
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
+
   let response = await fetch(`${API_BASE_URL}${url}`, {
     ...options,
     headers,
@@ -58,6 +73,7 @@ export async function fetchWithAuth(
         const newToken = await refreshToken();
         isRefreshing = false;
         onRefreshed(newToken);
+
         headers['Authorization'] = `Bearer ${newToken}`;
         response = await fetch(`${API_BASE_URL}${url}`, {
           ...options,
@@ -76,5 +92,6 @@ export async function fetchWithAuth(
       });
     }
   }
+
   return response;
 }

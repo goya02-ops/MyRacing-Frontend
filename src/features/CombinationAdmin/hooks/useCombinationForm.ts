@@ -23,11 +23,29 @@ interface UseCombinationFormReturn {
   getIdValue: (field: 'categoryVersion' | 'circuitVersion') => number | '';
 }
 
+// Helper para formatear fechas a datetime-local
+function formatDateTimeLocal(date: string | Date | undefined): string {
+  if (!date) return '';
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '';
+  
+  
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
 export function useCombinationForm({
   initial,
 }: UseCombinationFormProps): UseCombinationFormReturn {
   const [form, setForm] = useState<Combination>({
     ...initial,
+    dateFrom: formatDateTimeLocal(initial.dateFrom), 
+    dateTo: formatDateTimeLocal(initial.dateTo),     
     raceIntervalMinutes: initial.raceIntervalMinutes || 30,
   });
 
@@ -63,7 +81,6 @@ export function useCombinationForm({
         const simulator = (await fetchOne(Simulator as any, {
           id: selectedSimulator,
         })) as Simulator;
-
         setCategoryVersions(
           Array.isArray(simulator.categories) ? simulator.categories : []
         );
