@@ -55,7 +55,10 @@ export function RaceListItem({ race, user }: Props) {
           {isPast ? (
             <Button variant="secondary">Ver historial</Button>
           ) : (
-            <Button onClick={handleInscription} disabled={loading || success}>
+            <Button
+              onClick={() => handleInscription}
+              disabled={loading || success}
+            >
               {loading
                 ? 'Inscribiendo...'
                 : success

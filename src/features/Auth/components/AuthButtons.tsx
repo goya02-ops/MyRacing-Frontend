@@ -24,7 +24,7 @@ export function AuthButtons() {
   if (user) {
     return (
       <Button
-        onClick={handleLogout}
+        onClick={() => handleLogout}
         isLoading={showLoading}
         variant="secondary"
       >

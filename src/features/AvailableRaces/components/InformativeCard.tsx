@@ -62,7 +62,7 @@ export default function InformativeCard({
                     <div className="absolute top-6 right-6 md:top-10 md:right-10 flex items-center gap-2 bg-black/60 px-3 py-2 rounded-full">
                       <GiFullMotorcycleHelmet className="text-white text-xl md:text-3xl" />
                       <span className="text-white text-lg md:text-2xl font-semibold">
-                        {nextRace.raceUsers.length}
+                        {nextRace!.raceUsers!.length}
                       </span>
                     </div>
                   }

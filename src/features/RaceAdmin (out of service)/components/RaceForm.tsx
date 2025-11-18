@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 // Importamos la clase base Race
-import { Race, Combination } from '../types/entities'; 
+import { Race, Combination } from '../../../types/entities';
 
 // 1. DEFINICIÓN DE LA INTERFAZ LOCAL (Para incluir el 'id' heredado)
 // Esto resuelve el error "Property 'id' does not exist on type 'Race'"
 interface RaceWithId extends Race {
-    id?: number; 
+  id?: number;
 }
 
 // 2. DEFINICIÓN DE LAS PROPS USANDO LA INTERFAZ LOCAL
@@ -16,13 +16,12 @@ interface RaceFormProps {
   onCancel: () => void;
 }
 
-export default function RaceForm({ 
-  initial, 
-  combinations, 
-  onSave, 
-  onCancel 
+export default function RaceForm({
+  initial,
+  combinations,
+  onSave,
+  onCancel,
 }: RaceFormProps) {
-  
   // 3. Inicialización del estado con el tipo correcto (RaceWithId)
   const [form, setForm] = useState<RaceWithId>(initial);
 
@@ -34,23 +33,23 @@ export default function RaceForm({
   // Maneja cambios en campos de texto/número/fecha
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ 
-      ...prev, 
-      [name]: value
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
     }));
   };
 
   // 4. Maneja el cambio en el select de Combination
   const handleCombinationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
-    
+
     // Al guardar, el backend solo necesita el ID de la Combination.
     // Convertimos el string 'value' a Number.
     const combinationId = Number(value);
-    
-    setForm((prev) => ({ 
-      ...prev, 
-      [name]: combinationId
+
+    setForm((prev) => ({
+      ...prev,
+      [name]: combinationId,
     }));
   };
 
@@ -61,7 +60,7 @@ export default function RaceForm({
       return form.combination.id;
     }
     // Si ya es el ID (número) o undefined
-    return form.combination || ''; 
+    return form.combination || '';
   };
 
   return (
@@ -73,7 +72,7 @@ export default function RaceForm({
     >
       {/* USO DEL ID: No da error porque 'form' es de tipo RaceWithId */}
       <h3>{form.id ? 'Editar' : 'Crear'} Carrera</h3>
-      
+
       {/* Campo 1: Fecha y Hora de la Carrera */}
       <label>
         Fecha y Hora de la Carrera:
@@ -110,7 +109,7 @@ export default function RaceForm({
           <option value="">Seleccione una combinación</option>
           {combinations.map((comb) => (
             <option key={comb.id} value={comb.id}>
-              {comb.id} - {comb.name || 'Sin nombre'}
+              {comb.id}
             </option>
           ))}
         </select>

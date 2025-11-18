@@ -52,7 +52,7 @@ export function CombinationCard({ combination, nextRace }: Props) {
       </div>
 
       {nextRace && (
-        <Button onClick={handleInscription} disabled={loading || success}>
+        <Button onClick={() => handleInscription} disabled={loading || success}>
           {loading
             ? 'Inscribiendo...'
             : success
