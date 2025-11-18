@@ -45,16 +45,32 @@ export function Navbar() {
               </TabNavigationLink>
 
               {user && (
-                <TabNavigationLink
-                  asChild
-                  data-active={
-                    location.pathname === '/my-profile' ? '' : undefined
-                  }
-                >
-                  <button onClick={() => handleNavigate('/my-profile')}>
-                    Mi Perfil
-                  </button>
-                </TabNavigationLink>
+                <>
+                  <TabNavigationLink
+                    asChild
+                    data-active={
+                      location.pathname === '/my-profile' ? '' : undefined
+                    }
+                  >
+                    <button onClick={() => handleNavigate('/my-profile')}>
+                      Mi Perfil
+                    </button>
+                  </TabNavigationLink>
+                  <TabNavigationLink
+                    asChild
+                    data-active={
+                      location.pathname === '/membership-payment'
+                        ? ''
+                        : undefined
+                    }
+                  >
+                    <button
+                      onClick={() => handleNavigate('/membership-payment')}
+                    >
+                      Pagar membresía
+                    </button>
+                  </TabNavigationLink>
+                </>
               )}
 
               {user?.type === 'admin' && (
@@ -116,19 +132,36 @@ export function Navbar() {
                       </DrawerClose>
 
                       {user && (
-                        <DrawerClose asChild>
-                          <Button
-                            variant={
-                              location.pathname === '/my-profile'
-                                ? 'primary'
-                                : 'ghost'
-                            }
-                            className="w-full justify-start"
-                            onClick={() => handleNavigate('/my-profile')}
-                          >
-                            Mi Perfil
-                          </Button>
-                        </DrawerClose>
+                        <>
+                          <DrawerClose asChild>
+                            <Button
+                              variant={
+                                location.pathname === '/my-profile'
+                                  ? 'primary'
+                                  : 'ghost'
+                              }
+                              className="w-full justify-start"
+                              onClick={() => handleNavigate('/my-profile')}
+                            >
+                              Mi Perfil
+                            </Button>
+                          </DrawerClose>
+                          <DrawerClose asChild>
+                            <Button
+                              variant={
+                                location.pathname === '/membership-payment'
+                                  ? 'primary'
+                                  : 'ghost'
+                              }
+                              className="w-full justify-start"
+                              onClick={() =>
+                                handleNavigate('/membership-payment')
+                              }
+                            >
+                              Pagar membresía
+                            </Button>
+                          </DrawerClose>
+                        </>
                       )}
 
                       {user?.type === 'admin' && (

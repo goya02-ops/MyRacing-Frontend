@@ -7,6 +7,9 @@ import { DecorativeBackground } from './components/DecorativeBackground.tsx';
 import { Footer } from './components/Footer.tsx';
 
 const AuthPage = lazy(() => import('./features/Auth/pages/AuthPage.tsx'));
+const MembershipPayment = lazy(
+  () => import('./features/MembershipPayment/pages/membershipPayment.tsx')
+);
 const UserProfile = lazy(
   () => import('./features/UserProfile/pages/UserProfile.tsx')
 );
@@ -55,6 +58,15 @@ function AppContent() {
                 element={
                   <ProtectedRoute>
                     <UserProfile />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/membership-payment"
+                element={
+                  <ProtectedRoute>
+                    <MembershipPayment />
                   </ProtectedRoute>
                 }
               />
