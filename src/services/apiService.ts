@@ -29,7 +29,7 @@ export async function saveEntity<T extends { id?: number }>(
 
   //  Normalizar relaciones: si hay objetos con solo id, convertirlos a { id }
   const normalized = JSON.parse(
-    JSON.stringify(entity, (key, value) => {
+    JSON.stringify(entity, (_key, value) => {
       if (
         value &&
         typeof value === 'object' &&

@@ -34,7 +34,7 @@ function AppContent() {
           <Suspense
             fallback={
               <div className="flex justify-center items-center py-20 text-gray-400">
-                Cargando página...
+                Cargando páginas...
               </div>
             }
           >

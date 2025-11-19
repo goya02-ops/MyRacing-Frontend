@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { User } from '../../../types/entities';
 import {
-  fetchProfileData,
-  updateProfileData,
+  fetchMyProfile,
+  updateMyProfile,
 } from '../../../services/userService';
 import { getStoredUser } from '../../../services/authService.ts';
+
 interface RaceUser {
   id?: number;
   registrationDateTime: string | Date;
@@ -22,7 +23,6 @@ interface UserProfileData {
   isEditing: boolean;
   saving: boolean;
   stats: { totalRaces: number; victories: number; podiums: number };
-
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
   handleChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -50,8 +50,7 @@ export function useUserProfile(): UserProfileData {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const data = await fetchProfileData();
-
+        const data = await fetchMyProfile();
         setUser(data.user);
         setResults(data.results as RaceUser[]);
         setFormData({ ...data.user });
@@ -77,7 +76,7 @@ export function useUserProfile(): UserProfileData {
   );
 
   const handleSave = useCallback(async () => {
-    if (!formData || !formData.id) return;
+    if (!formData) return;
 
     setSaving(true);
 
@@ -88,8 +87,7 @@ export function useUserProfile(): UserProfileData {
     }
 
     try {
-      const updatedData = await updateProfileData(
-        formData.id,
+      const updatedData = await updateMyProfile(
         formData.realName,
         formData.email
       );
@@ -97,7 +95,6 @@ export function useUserProfile(): UserProfileData {
       setUser(updatedData);
       setFormData(updatedData);
       setIsEditing(false);
-
       alert('Perfil actualizado con éxito.');
 
       const storedUser = getStoredUser();
