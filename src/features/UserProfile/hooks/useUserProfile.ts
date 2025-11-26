@@ -5,6 +5,7 @@ import {
   updateMyProfile,
 } from '../../../services/userService';
 import { getStoredUser } from '../../../services/authService.ts';
+import { useToast } from '../../../context/ToastContext';
 
 interface RaceUser {
   id?: number;
@@ -45,6 +46,8 @@ export function useUserProfile(): UserProfileData {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  
+  const { showToast } = useToast(); 
 
   useEffect(() => {
     const fetchData = async () => {
@@ -56,7 +59,7 @@ export function useUserProfile(): UserProfileData {
         setFormData({ ...data.user });
       } catch (error) {
         console.error('Error al cargar datos del perfil:', error);
-        alert('Error al cargar el perfil.');
+        showToast('Error de Carga', 'No se pudo cargar el perfil de usuario.', 'error');
       } finally {
         setLoading(false);
       }
@@ -81,7 +84,7 @@ export function useUserProfile(): UserProfileData {
     setSaving(true);
 
     if (!formData.realName.trim() || !formData.email.includes('@')) {
-      alert('Nombre completo y email son obligatorios.');
+      showToast('Campos Requeridos', 'Nombre completo y email son obligatorios.', 'warning');
       setSaving(false);
       return;
     }
@@ -95,7 +98,8 @@ export function useUserProfile(): UserProfileData {
       setUser(updatedData);
       setFormData(updatedData);
       setIsEditing(false);
-      alert('Perfil actualizado con éxito.');
+      
+      showToast('Éxito', 'Perfil actualizado correctamente.', 'success');
 
       const storedUser = getStoredUser();
       if (storedUser) {
@@ -110,11 +114,11 @@ export function useUserProfile(): UserProfileData {
       }
     } catch (error) {
       console.error('Error al guardar el perfil:', error);
-      alert('Error al guardar el perfil.');
+      showToast('Error al Guardar', 'Fallo al actualizar el perfil en el servidor.', 'error');
     } finally {
       setSaving(false);
     }
-  }, [formData]);
+  }, [formData, showToast]);
 
   const handleCancel = useCallback(() => {
     setIsEditing(false);
