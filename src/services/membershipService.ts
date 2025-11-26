@@ -31,3 +31,20 @@ export async function createPaymentPreference(): Promise<{
 
   return res.json();
 }
+
+export async function processPayment(formData: any): Promise<any> {
+  const res = await fetchWithAuth(`/payment/process-payment`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(formData),
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(
+      error.message || 'Error al procesar el pago. (Error de red/servidor)'
+    );
+  }
+
+  return res.json();
+}

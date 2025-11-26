@@ -1,14 +1,15 @@
 import { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useUser } from '../../../context/UserContext.tsx';
 import {
   fetchCurrentMembership,
   createPaymentPreference,
+  processPayment,
 } from '../../../services/membershipService.ts';
 
 export function useMembershipPage() {
   const { user } = useUser();
-
+  const queryClient = useQueryClient();
   const [preferenceId, setPreferenceId] = useState<string | null>(null);
 
   const {
@@ -33,7 +34,15 @@ export function useMembershipPage() {
       },
     });
 
-  const isPremium = user?.type === 'premium' || user?.type === 'admin';
+  const processPaymentMutation = useMutation({
+    mutationFn: processPayment,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['currentMembership'] });
+    },
+  });
+
+  const isPremium = user?.type === 'premium';
+  const isAdmin = user?.type === 'admin';
 
   return {
     user,
@@ -41,9 +50,11 @@ export function useMembershipPage() {
     isLoading: isLoadingPrice,
     isError,
     isPremium,
-
+    isAdmin,
     preferenceId,
     isCreatingPreference,
     handleCreatePreference: createPreference,
+    processPaymentAsync: processPaymentMutation.mutateAsync,
+    isProcessingPayment: processPaymentMutation.isPending,
   };
 }

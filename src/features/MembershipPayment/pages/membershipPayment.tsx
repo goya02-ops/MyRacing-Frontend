@@ -1,4 +1,4 @@
-import { initMercadoPago, Wallet } from '@mercadopago/sdk-react';
+import { initMercadoPago, Payment } from '@mercadopago/sdk-react';
 import {
   Card,
   Button,
@@ -13,6 +13,7 @@ import {
   RiCheckboxCircleFill,
   RiCopperCoinFill,
 } from '@remixicon/react';
+import { useNavigate } from 'react-router-dom';
 
 const MP_PUBLIC_KEY = 'TEST-3a5b26c4-1de7-4241-ac99-db18c349a54e';
 if (MP_PUBLIC_KEY) {
@@ -24,17 +25,50 @@ if (MP_PUBLIC_KEY) {
 }
 
 export default function MembershipPage() {
+  const navigate = useNavigate();
   const {
     user,
     membership,
     isLoading,
     isError,
     isPremium,
+    isAdmin,
     preferenceId,
     isCreatingPreference,
     handleCreatePreference,
+    processPaymentAsync,
   } = useMembershipPage();
 
+  const onSubmit = async ({ selectedPaymentMethod, formData }: any) => {
+    if (!formData) {
+      console.log(
+        `Pago delegado al Webhook. Método: ${
+          selectedPaymentMethod?.name || 'N/A'
+        }.`
+      );
+
+      navigate('/payment-success');
+
+      return;
+    }
+
+    try {
+      await processPaymentAsync(formData);
+      navigate('/payment-success');
+      return;
+    } catch (error) {
+      console.error('Error en el pago:', error);
+      throw error;
+    }
+  };
+
+  const onError = async (error: any) => {
+    console.error('Error en Brick MP:', error);
+  };
+
+  const onReady = async () => {
+    // Brick cargado
+  };
   const renderContent = () => {
     if (!MP_PUBLIC_KEY) {
       return (
@@ -75,7 +109,7 @@ export default function MembershipPage() {
     if (isPremium) {
       return (
         <Callout
-          title="¡Ya eres Premium!"
+          title="¡Ya sos Premium!"
           icon={RiCheckboxCircleFill}
           variant="success"
           className="mt-4 text-center"
@@ -86,7 +120,17 @@ export default function MembershipPage() {
       );
     }
 
-    // Si es usuario "common" y la membresía cargó OK
+    if (isAdmin) {
+      return (
+        <Callout
+          title="¡El administrador no tiene que pagar membresía!"
+          icon={RiCheckboxCircleFill}
+          variant="warning"
+          className="mt-4 text-center"
+        />
+      );
+    }
+
     return (
       <>
         <div className="text-center">
@@ -117,7 +161,7 @@ export default function MembershipPage() {
             ) : (
               <>
                 <RiCopperCoinFill />
-                'Pagar y convertirme en Premium'
+                Pagar y convertirme en Premium
               </>
             )}
           </Button>
@@ -126,18 +170,28 @@ export default function MembershipPage() {
             className="mt-6 w-full flex justify-center"
             id="wallet_container"
           >
-            <Wallet
-              initialization={{ preferenceId: preferenceId }}
+            <Payment
+              initialization={{
+                preferenceId: preferenceId,
+                amount: membership.price,
+              }}
               customization={{
-                texts: {
-                  action: 'Pagar',
-                  valueProp: 'Pagar ahora',
-                },
                 visual: {
-                  buttonBackground: 'brand',
-                  borderRadius: '6px',
+                  style: {
+                    theme: 'default',
+                  },
+                },
+                paymentMethods: {
+                  ticket: 'all',
+                  creditCard: 'all',
+                  prepaidCard: 'all',
+                  debitCard: 'all',
+                  mercadoPago: 'all',
                 },
               }}
+              onSubmit={onSubmit}
+              onError={onError}
+              onReady={onReady}
             />
           </div>
         )}
