@@ -38,13 +38,26 @@ export async function processPayment(formData: any): Promise<any> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(formData),
   });
-
   if (!res.ok) {
-    const error = await res.json();
-    throw new Error(
-      error.message || 'Error al procesar el pago. (Error de red/servidor)'
+    const errorData = await res.json();
+
+    const customError: any = new Error(
+      errorData.message || 'Error al procesar el pago.'
     );
+    customError.paymentId = errorData.paymentId;
+    customError.status = errorData.status;
+
+    throw customError;
   }
 
+  return res.json();
+}
+
+export async function checkPaymentStatus(paymentId: string): Promise<any> {
+  const res = await fetchWithAuth(`/payment/check-payment-status/${paymentId}`);
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.message || 'Error al verificar el pago.');
+  }
   return res.json();
 }

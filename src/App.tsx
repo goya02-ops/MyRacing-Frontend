@@ -23,6 +23,10 @@ const AdminDashboard = lazy(
   () => import('./features/AdminDashboard/pages/AdminDashboard.tsx')
 );
 
+const PaymentStatus = lazy(
+  () => import('./features/MembershipPayment/pages/paymentStatus.tsx')
+);
+
 function AppContent() {
   return (
     <div className="bg-gray-900 min-h-screen relative isolate">
@@ -70,6 +74,16 @@ function AppContent() {
                   </ProtectedRoute>
                 }
               />
+
+              <Route
+                path="/payment-status"
+                element={
+                  <ProtectedRoute>
+                    <PaymentStatus />
+                  </ProtectedRoute>
+                }
+              />
+
               <Route
                 path="/admin-dashboard"
                 element={
