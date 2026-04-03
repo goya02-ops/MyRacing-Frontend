@@ -1,4 +1,3 @@
-// components/CategoryVersionForm.tsx
 import { useEffect, useState } from 'react';
 import { CategoryVersion, Category, Simulator } from '../../../types/entities';
 import {
@@ -19,6 +18,7 @@ interface CategoryVersionFormProps {
   simulators: Simulator[];
   onSave: (categoryVersion: CategoryVersion) => void;
   onCancel: () => void;
+  isSaving?: boolean; 
 }
 
 export default function CategoryVersionForm({
@@ -26,6 +26,7 @@ export default function CategoryVersionForm({
   categories,
   onSave,
   onCancel,
+  isSaving, 
 }: CategoryVersionFormProps) {
   const [form, setForm] = useState<CategoryVersion>(initial);
 
@@ -37,13 +38,10 @@ export default function CategoryVersionForm({
     const { name, value } = e.target;
     setForm((prev) => ({
       ...prev,
-      // Si el name es 'status', guarda el string,
-      // si no (es 'category'), lo guarda como número
       [name]: name === 'status' ? value : value ? Number(value) : undefined,
     }));
   };
 
-  // Adaptador para el 'onValueChange' de Tremor
   const handleSelectValueChange = (name: string, value: string) => {
     const event = {
       target: { name, value },
@@ -77,6 +75,7 @@ export default function CategoryVersionForm({
               handleSelectValueChange('category', value)
             }
             required
+            disabled={isSaving} 
           >
             <SelectTrigger id="category">
               <SelectValue placeholder="Seleccione una categoría" />
@@ -102,7 +101,7 @@ export default function CategoryVersionForm({
                 : ''
             }
             disabled
-            readOnly // Añadido para reforzar que es solo lectura
+            readOnly
           />
         </div>
 
@@ -113,6 +112,7 @@ export default function CategoryVersionForm({
             value={form.status}
             onValueChange={(value) => handleSelectValueChange('status', value)}
             required
+            disabled={isSaving} 
           >
             <SelectTrigger id="status">
               <SelectValue placeholder="Seleccione un estado" />
@@ -128,11 +128,20 @@ export default function CategoryVersionForm({
       <Divider className="pt-2" />
 
       <div className="flex justify-end gap-3">
-        <Button type="button" variant="secondary" onClick={onCancel}>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={onCancel}
+          disabled={isSaving} 
+        >
           Cancelar
         </Button>
-        <Button type="submit" variant="primary">
-          Guardar
+        <Button
+          type="submit"
+          variant="primary"
+          disabled={isSaving} 
+        >
+          {isSaving ? 'Guardando...' : 'Guardar'}
         </Button>
       </div>
     </form>

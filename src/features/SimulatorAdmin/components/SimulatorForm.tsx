@@ -12,17 +12,24 @@ import {
   SelectValue,
 } from '../../../components/tremor/TremorComponents';
 
+
 interface Props {
   initial: Simulator;
   onSave: (simulator: Simulator) => void;
   onCancel: () => void;
+  isSaving?: boolean; 
 }
 
-export default function SimulatorForm({ initial, onSave, onCancel }: Props) {
+export default function SimulatorForm({
+  initial,
+  onSave,
+  onCancel,
+  isSaving, 
+}: Props) {
   const [form, setForm] = useState<Simulator>(initial);
 
   useEffect(() => {
-    // Sincroniza el formulario si el 'initial' prop cambia
+  
     setForm(initial);
   }, [initial]);
 
@@ -34,7 +41,7 @@ export default function SimulatorForm({ initial, onSave, onCancel }: Props) {
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    // Creamos un evento sintético para reutilizar el handleChange
+   
     const event = {
       target: { name, value },
     } as React.ChangeEvent<HTMLSelectElement>;
@@ -59,6 +66,7 @@ export default function SimulatorForm({ initial, onSave, onCancel }: Props) {
             onChange={handleChange}
             placeholder="Nombre del simulador"
             required
+            disabled={isSaving} 
           />
         </div>
 
@@ -69,6 +77,7 @@ export default function SimulatorForm({ initial, onSave, onCancel }: Props) {
             value={form.status}
             onValueChange={(value) => handleSelectChange('status', value)}
             required
+            disabled={isSaving} 
           >
             <SelectTrigger id="status">
               <SelectValue placeholder="Selecciona un estado" />
@@ -84,11 +93,20 @@ export default function SimulatorForm({ initial, onSave, onCancel }: Props) {
       <Divider className="pt-2" />
 
       <div className="flex justify-end gap-3">
-        <Button type="button" variant="secondary" onClick={onCancel}>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={onCancel}
+          disabled={isSaving} 
+        >
           Cancelar
         </Button>
-        <Button type="submit" variant="primary">
-          Guardar
+        <Button
+          type="submit"
+          variant="primary"
+          disabled={isSaving} 
+        >
+          {isSaving ? 'Guardando...' : 'Guardar'}
         </Button>
       </div>
     </form>

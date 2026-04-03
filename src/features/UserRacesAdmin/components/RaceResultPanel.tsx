@@ -6,8 +6,8 @@ import { RaceResultRow } from './RaceResultRow';
 interface RaceResultsPanelProps {
   selectedUser: User | undefined;
   loadingRaces: boolean;
-  raceUsers: RaceUser[]; // El total
-  filteredRaceUsers: RaceUser[]; // Los filtrados
+  raceUsers: RaceUser[];
+  filteredRaceUsers: RaceUser[];
   minFinishPosition: number | '';
   setMinFinishPosition: (value: number | '') => void;
   raceDateFrom: string;
@@ -24,7 +24,6 @@ export function RaceResultsPanel({
   raceDateFrom,
   setRaceDateFrom,
 }: RaceResultsPanelProps) {
-  // Vista de "Placeholder"
   if (!selectedUser) {
     return (
       <div className="flex-1 min-w-0">
@@ -38,7 +37,6 @@ export function RaceResultsPanel({
     );
   }
 
-  // Vista de "Resultados"
   return (
     <div className="flex-1 min-w-0">
       <div className="flex flex-col md:flex-row justify-between md:items-center gap-2 mb-4">

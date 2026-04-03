@@ -1,4 +1,6 @@
+// Importa el núcleo HTTP y los helpers de sesión
 import { fetchWithAuth } from './apiClient';
+import { getStoredUser } from './authService';
 import { User } from '../types/entities';
 
 interface RaceUserApi {
@@ -15,15 +17,22 @@ interface ProfileData {
   results: RaceUserApi[];
 }
 
-
-export async function fetchMyProfile(): Promise<ProfileData> {
-  const userResponse = await fetchWithAuth('/users/me');
+export async function fetchProfileData(): Promise<ProfileData> {
+  const currentUser = getStoredUser();
+  
+  if (!currentUser || !currentUser.id) {
+    throw new Error('Usuario no autenticado en almacenamiento local.');
+  }
+  
+  const userResponse = await fetchWithAuth(`/users/${currentUser.id}`);
   if (!userResponse.ok) {
     throw new Error('No se pudieron obtener los datos del usuario.');
   }
   const userData = (await userResponse.json()).data;
-
-  const racesResponse = await fetchWithAuth('/race-users/my-races');
+  
+  const racesResponse = await fetchWithAuth(
+    `/race-users/by-user?userId=${currentUser.id}`
+  );
   const racesData = (await racesResponse.json()).data || [];
 
   return {
@@ -32,12 +41,12 @@ export async function fetchMyProfile(): Promise<ProfileData> {
   };
 }
 
-
-export async function updateMyProfile(
+export async function updateProfileData(
+  userId: number,
   realName: string,
   email: string
 ): Promise<User> {
-  const response = await fetchWithAuth('/users/me', {
+  const response = await fetchWithAuth(`/users/${userId}`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
@@ -54,14 +63,4 @@ export async function updateMyProfile(
 
   const updatedData = (await response.json()).data;
   return updatedData as User;
-}
-
-// Para admins - ver cualquier usuario
-export async function fetchUserById(userId: number): Promise<User> {
-  const userResponse = await fetchWithAuth(`/users/${userId}`);
-  if (!userResponse.ok) {
-    throw new Error('No se pudieron obtener los datos del usuario.');
-  }
-  const userData = (await userResponse.json()).data;
-  return userData as User;
 }

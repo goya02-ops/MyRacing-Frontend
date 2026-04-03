@@ -1,16 +1,15 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useScrollToElement } from '../../../hooks/useScrollToElement';
 import { Simulator } from '../../../types/entities';
-import { handleSaveEntity as genericHandleSaveEntity } from '../../../utils/GlobalHandlers';
 import { Card } from '../../../components/tremor/TremorComponents';
 
-import { useSimulatorCRUD } from '../hooks/useSimulatorCRUD.ts';
 
-import { SimulatorAdminProvider } from '../../../context/SimulatorAdminContext.tsx';
-
+import { useSimulatorAdmin } from '../hooks/useSimulatorAdmin.ts';
 import { AdminHeader } from '../components/AdminHeader';
-import { SimulatorFormRenderer } from '../components/SimulatorFormRenderer';
-import { SimulatorList } from '../components/SimulatorList';
+import { SimulatorFormRenderer } from '../components/SimulatorFormRenderer'; 
+import { SimulatorList } from '../components/SimulatorList'; 
+
+
 import Spinner from '../../../components/Spinner.tsx';
 
 type ActiveManager = {
@@ -24,68 +23,50 @@ export default function SimulatorAdmin() {
     simulator: null,
   });
 
+ 
   const {
     simulators,
     editingSimulator,
     isCreatingSimulator,
-    loading,
+    loadingSimulators, 
+    isSaving,          
     handleNewSimulator,
     handleEditSimulator,
     handleCancelSimulator,
     handleSaveSimulator,
-  } = useSimulatorCRUD();
-
-  const handleSaveEntity = useCallback(
-    <T extends { id?: number }>(
-      entityClass: new () => T,
-      entity: T,
-      setter: React.Dispatch<React.SetStateAction<T[]>>,
-      onSuccess: () => void,
-      duplicateCheck?: (entity: T) => boolean
-    ): Promise<void> => {
-      return genericHandleSaveEntity(
-        entityClass,
-        entity,
-        setter,
-        onSuccess,
-        duplicateCheck
-      );
-    },
-    [simulators]
-  );
+  } = useSimulatorAdmin();
 
   const formContainerRef = useScrollToElement<HTMLDivElement>(editingSimulator);
 
-  if (loading) {
+  
+  if (loadingSimulators) {
     return <Spinner>Cargando simuladores...</Spinner>;
   }
 
+  
   return (
-    <SimulatorAdminProvider value={{ handleSaveEntity }}>
-      <Card className="text-gray-200">
-        <AdminHeader
-          listLength={simulators.length}
-          onNew={handleNewSimulator}
-        />
-
-        <SimulatorFormRenderer
-          formRef={formContainerRef}
-          editingSimulator={editingSimulator}
-          isCreatingSimulator={isCreatingSimulator}
-          onCancel={handleCancelSimulator}
-          onSave={handleSaveSimulator}
-        />
-
-        <SimulatorList
-          simulators={simulators}
-          editingSimulator={editingSimulator}
-          isCreatingSimulator={isCreatingSimulator}
-          activeManager={activeManager}
-          onEdit={handleEditSimulator}
-          onCancel={handleCancelSimulator}
-          onToggleManager={setActiveManager}
-        />
-      </Card>
-    </SimulatorAdminProvider>
+    <Card className="text-gray-200">
+      <AdminHeader
+        listLength={simulators.length}
+        onNew={handleNewSimulator}
+      />
+      <SimulatorFormRenderer
+        formRef={formContainerRef}
+        editingSimulator={editingSimulator}
+        isCreatingSimulator={isCreatingSimulator}
+        onCancel={handleCancelSimulator}
+        onSave={handleSaveSimulator}
+        isSaving={isSaving} 
+      />
+      <SimulatorList
+        simulators={simulators}
+        editingSimulator={editingSimulator}
+        isCreatingSimulator={isCreatingSimulator}
+        activeManager={activeManager}
+        onEdit={handleEditSimulator}
+        onCancel={handleCancelSimulator}
+        onToggleManager={setActiveManager}
+      />
+    </Card>
   );
 }

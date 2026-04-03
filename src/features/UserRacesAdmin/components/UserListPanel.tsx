@@ -17,7 +17,6 @@ const UserListPanel: React.FC<UserListPanelProps> = ({
   userSearchTerm,
   setUserSearchTerm,
 }) => {
-  // Lógica de filtrado de usuarios
   const filteredUsers = useMemo(() => {
     if (!userSearchTerm) return users;
     const term = userSearchTerm.toLowerCase();

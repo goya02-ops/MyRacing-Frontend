@@ -11,6 +11,7 @@ import {
 const CategoryVersionForm = lazy(() => import('./CategoryVersionForm'));
 const CircuitVersionForm = lazy(() => import('./CircuitVersionForm'));
 
+
 interface VersionFormRendererProps {
   editingVersion: CategoryVersion | CircuitVersion | null;
   isCreatingVersion: boolean;
@@ -21,6 +22,7 @@ interface VersionFormRendererProps {
   onSaveCategoryVersion: (v: CategoryVersion) => void;
   onSaveCircuitVersion: (v: CircuitVersion) => void;
   handleCancelVersion: () => void;
+  isSaving?: boolean; 
 }
 
 export function VersionFormRenderer({
@@ -33,6 +35,7 @@ export function VersionFormRenderer({
   onSaveCategoryVersion,
   onSaveCircuitVersion,
   handleCancelVersion,
+  isSaving, 
 }: VersionFormRendererProps) {
   if (!editingVersion) return null;
 
@@ -50,6 +53,7 @@ export function VersionFormRenderer({
               simulators={[activeManager.simulator!]}
               onSave={onSaveCategoryVersion}
               onCancel={handleCancelVersion}
+              isSaving={isSaving} 
             />
           ) : (
             <CircuitVersionForm
@@ -58,6 +62,7 @@ export function VersionFormRenderer({
               simulators={[activeManager.simulator!]}
               onSave={onSaveCircuitVersion}
               onCancel={handleCancelVersion}
+              isSaving={isSaving} 
             />
           )}
         </div>

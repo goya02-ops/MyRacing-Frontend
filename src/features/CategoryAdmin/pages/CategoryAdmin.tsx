@@ -1,8 +1,5 @@
-import { lazy, Suspense, useState, useCallback } from 'react';
-import { Category } from '../../../types/entities.ts';
-import { useEntityQuery } from '../../../hooks/useEntityQuery.ts';
-import { useEntityMutation } from '../../../hooks/useEntityMutation.ts';
-
+import { lazy, Suspense } from 'react';
+import { useCategoryAdmin } from '../hooks/useCategoryAdmin';
 import {
   Card,
   Button,
@@ -10,53 +7,30 @@ import {
   Divider,
   Table,
   TableHead,
+  TableRow,
   TableHeaderCell,
   TableBody,
-  TableRow,
-} from '../../../components/tremor/TremorComponents.tsx';
-import { useScrollToElement } from '../../../hooks/useScrollToElement.ts';
-import { CategoryRow } from '../components/CategoryRow.tsx';
+} from '../../../components/tremor/TremorComponents';
+import { useScrollToElement } from '../../../hooks/useScrollToElement';
+import { CategoryRow } from '../components/CategoryRow';
 
-const CategoryForm = lazy(() => import('../components/CategoryForm.tsx'));
+const CategoryForm = lazy(() => import('../components/CategoryForm'));
 
 export default function CategoryAdmin() {
-  const { list, isLoading } = useEntityQuery(Category);
+  const {
+    list,
+    editing,
+    isCreating,
+    loading,
+    handleSave,
+    handleCancel,
+    handleNewCategory,
+    handleEditCategory,
+  } = useCategoryAdmin();
 
-  const { saveEntity } = useEntityMutation(Category);
-
-  const [editing, setEditing] = useState<Category | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
   const formContainerRef = useScrollToElement<HTMLDivElement>(editing);
 
-  const handleCancel = useCallback(() => {
-    setEditing(null);
-    setIsCreating(false);
-  }, []);
-
-  const handleSave = useCallback(
-    async (category: Category) => {
-      try {
-        await saveEntity(category);
-        handleCancel();
-      } catch (error: any) {
-        console.error('Error al guardar categoría:', error);
-        alert(`Error al guardar: ${error.message || String(error)}`);
-      }
-    },
-    [saveEntity, handleCancel]
-  );
-
-  const handleNewCategory = useCallback(() => {
-    setEditing(new Category());
-    setIsCreating(true);
-  }, []);
-
-  const handleEditCategory = useCallback((category: Category) => {
-    setEditing({ ...category });
-    setIsCreating(false);
-  }, []);
-
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="flex justify-center items-center py-20">
         <p className="text-gray-400">Cargando categorías...</p>
@@ -66,6 +40,7 @@ export default function CategoryAdmin() {
 
   return (
     <Card className="text-gray-200">
+    
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 sm:gap-0">
         <div className="flex items-center gap-4">
           <h2 className="text-xl font-semibold">Categorías</h2>
@@ -76,14 +51,13 @@ export default function CategoryAdmin() {
         </Button>
       </div>
 
+      {/* FORMULARIO DE CREACIÓN */}
       <div ref={formContainerRef}>
-        {editing && (
+        {isCreating && editing && (
           <div className="mb-6">
             <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
               <h3 className="text-lg font-semibold mb-4 text-orange-400">
-                {isCreating
-                  ? 'Crear Nueva Categoría'
-                  : `Editar Categoría: ${editing.denomination}`}
+                Crear Nueva Categoría
               </h3>
               <Suspense
                 fallback={
@@ -102,6 +76,7 @@ export default function CategoryAdmin() {
         )}
       </div>
 
+      {/* TABLA DE LISTADO */}
       {list.length === 0 ? (
         <div className="text-center py-12 text-gray-400">
           No hay categorías para mostrar
@@ -120,14 +95,15 @@ export default function CategoryAdmin() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {list.map((c) => (
+              {list.map((category) => (
                 <CategoryRow
-                  key={c.id}
-                  category={c}
+                  key={category.id}
+                  category={category}
                   editing={editing}
                   isCreating={isCreating}
                   handleEditCategory={handleEditCategory}
                   handleCancel={handleCancel}
+                  handleSave={handleSave}
                 />
               ))}
             </TableBody>
