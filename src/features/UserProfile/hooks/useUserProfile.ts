@@ -1,8 +1,13 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'; 
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { User } from '../../../types/entities';
 import { fetchProfileData, updateProfileData } from '../../../services/userService';
 import { getStoredUser } from '../../../services/authService.ts';
+
+interface SaveResult {
+  success: boolean;
+  error?: string;
+}
 
 interface RaceUser {
   id?: number;
@@ -13,18 +18,6 @@ interface RaceUser {
   user: any;
 }
 
-interface ProfileData {
-  user: User;
-  results: RaceUser[];
-}
-
-const EMPTY_USER: User = {
-  userName: '',
-  realName: '',
-  email: '',
-  type: 'common',
-} as User;
-
 interface UserProfileData {
   user: User | null;
   results: RaceUser[];
@@ -33,12 +26,18 @@ interface UserProfileData {
   isEditing: boolean;
   saving: boolean;
   stats: { totalRaces: number; victories: number; podiums: number };
-
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
-  handleSave: () => Promise<void>;
+  handleSave: () => Promise<SaveResult>;
   handleCancel: () => void;
 }
+
+const EMPTY_USER: User = {
+  userName: '',
+  realName: '',
+  email: '',
+  type: 'common',
+} as User;
 
 const PROFILE_QUERY_KEY = ['userProfile'];
 
@@ -49,47 +48,33 @@ export function useUserProfile(): UserProfileData {
 
   const [formData, setFormData] = useState<User>(EMPTY_USER);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const { data, isLoading } = useQuery<ProfileData, Error>({
+  const { data, isLoading } = useQuery({
     queryKey: PROFILE_QUERY_KEY,
     queryFn: fetchProfileData,
-    enabled: !!userId, 
+    enabled: !!userId,
   });
 
-  const { mutateAsync: mutateUpdate, isPending: isSaving } = useMutation<
-    User,
-    Error,
-    { id: number; realName: string; email: string }
-  >({
-    mutationFn: ({ id, realName, email }) => updateProfileData(id, realName, email),
-
-    onSuccess: (updatedData) => {
+  const { mutateAsync: mutateUpdate } = useMutation({
+    mutationFn: ({ id, realName, email }: { id: number; realName: string; email: string }) =>
+      updateProfileData(id, realName, email),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEY });
-
-      const storedUser = getStoredUser();
-      if (storedUser) {
-        localStorage.setItem(
-          'user',
-          JSON.stringify({
-            ...storedUser,
-            realName: updatedData.realName,
-            email: updatedData.email,
-          })
-        );
-      }
     },
   });
 
   useEffect(() => {
     if (data?.user) {
-      if (!isEditing) 
-      setFormData({ ...data.user }); 
+      if (!isEditing) {
+        setFormData({ ...data.user });
+      }
     }
-  }, [data]);
+  }, [data, isEditing]);
 
   const user = data?.user || null;
   const results = data?.results || [];
-  const loading = isLoading; 
+  const loading = isLoading;
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -102,13 +87,16 @@ export function useUserProfile(): UserProfileData {
     []
   );
 
-  const handleSave = useCallback(async () => {
-    if (!formData || !formData.id) return;
+  const handleSave = useCallback(async (): Promise<SaveResult> => {
+    if (!formData || !formData.id) {
+      return { success: false, error: 'Datos inválidos' };
+    }
 
     if (!formData.realName.trim() || !formData.email.includes('@')) {
-      alert('Nombre completo y email son obligatorios.');
-      return;
+      return { success: false, error: 'validation' };
     }
+
+    setIsSaving(true);
 
     try {
       await mutateUpdate({
@@ -118,11 +106,25 @@ export function useUserProfile(): UserProfileData {
       });
 
       setIsEditing(false);
-      alert('Perfil actualizado con éxito.');
 
+      const storedUser = getStoredUser();
+      if (storedUser) {
+        localStorage.setItem(
+          'user',
+          JSON.stringify({
+            ...storedUser,
+            realName: formData.realName,
+            email: formData.email,
+          })
+        );
+      }
+
+      return { success: true };
     } catch (error) {
       console.error('Error al guardar el perfil:', error);
-      alert('Error al guardar el perfil.');
+      return { success: false, error: 'Fallo al actualizar el perfil en el servidor.' };
+    } finally {
+      setIsSaving(false);
     }
   }, [formData, mutateUpdate]);
 
@@ -146,7 +148,7 @@ export function useUserProfile(): UserProfileData {
     formData,
     loading,
     isEditing,
-    saving: isSaving, 
+    saving: isSaving,
     stats,
     setIsEditing,
     handleChange,
@@ -154,3 +156,5 @@ export function useUserProfile(): UserProfileData {
     handleCancel,
   };
 }
+
+export type { SaveResult };

@@ -1,10 +1,9 @@
-// import React from 'react';
-import { useUserProfile } from '../hooks/useUserProfile.ts';
-
+import { useUserProfile, type SaveResult } from '../hooks/useUserProfile.ts';
 import { UserStatsCard } from '../components/UserStatsCard.tsx';
 import { UserDataForm } from '../components/UserData.tsx';
 import { UserRaceHistory } from '../components/UserRaceHistory.tsx';
 import Spinner from '../../../components/Spinner.tsx';
+import { toast } from '../../../components/tremor/TremorComponents.tsx';
 
 export default function UserProfile() {
   const {
@@ -32,12 +31,46 @@ export default function UserProfile() {
   }
 
   if (!user || !formData) {
+    toast({
+      title: 'Error de Carga',
+      description: 'No se pudo cargar el perfil de usuario.',
+      variant: 'error',
+    });
     return (
       <div className="flex items-center justify-center min-h-screen text-red-400">
         <p className="text-lg">No se pudo cargar el perfil de usuario.</p>
       </div>
     );
   }
+
+  const onSave = async (): Promise<SaveResult> => {
+    const result = await handleSave();
+
+    if (!result.success) {
+      if (result.error === 'validation') {
+        toast({
+          title: 'Campos Requeridos',
+          description: 'Nombre completo y email son obligatorios.',
+          variant: 'warning',
+        });
+      } else {
+        toast({
+          title: 'Error al Guardar',
+          description: result.error,
+          variant: 'error',
+        });
+      }
+      return result;
+    }
+
+    toast({
+      title: 'Éxito',
+      description: 'Perfil actualizado correctamente.',
+      variant: 'success',
+    });
+
+    return result;
+  };
 
   const lastRaceDate = results[0]?.race?.raceDateTime
     ? new Date(results[0].race.raceDateTime).toLocaleDateString('es-AR')
@@ -57,7 +90,7 @@ export default function UserProfile() {
         isEditing={isEditing}
         saving={saving}
         handleChange={handleChange}
-        handleSave={handleSave}
+        handleSave={onSave}
         handleCancel={handleCancel}
         setIsEditing={setIsEditing}
       />

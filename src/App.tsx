@@ -5,6 +5,7 @@ import { ProtectedRoute } from './components/ProtectedRoute.tsx';
 import { Navbar } from './components/NavBar.tsx';
 import { DecorativeBackground } from './components/DecorativeBackground.tsx';
 import { Footer } from './components/Footer.tsx';
+import { Toaster } from './components/tremor/toast/Toaster.tsx'; 
 
 const AuthPage = lazy(() => import('./features/Auth/pages/AuthPage.tsx'));
 const MembershipPayment = lazy(
@@ -106,6 +107,7 @@ function App() {
   return (
     <BrowserRouter>
       <AppContent />
+      <Toaster />
     </BrowserRouter>
   );
 }

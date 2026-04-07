@@ -16,7 +16,7 @@ interface UserDataFormProps {
   handleChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => void;
-  handleSave: () => Promise<void>;
+  handleSave: () => Promise<{ success: boolean; error?: string }>;
   handleCancel: () => void;
   setIsEditing: (editing: boolean) => void;
 }
