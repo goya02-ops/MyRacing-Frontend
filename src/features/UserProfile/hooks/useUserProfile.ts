@@ -5,7 +5,16 @@ import {
   updateMyProfile,
 } from '../../../services/userService';
 import { getStoredUser } from '../../../services/authService.ts';
-import { useToast } from '../../../context/ToastContext';
+
+interface SaveResult {
+  success: boolean;
+  error?: string;
+}
+
+interface FetchResult {
+  success: boolean;
+  error?: string;
+}
 
 interface RaceUser {
   id?: number;
@@ -28,9 +37,11 @@ interface UserProfileData {
   handleChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => void;
-  handleSave: () => Promise<void>;
+  handleSave: () => Promise<SaveResult>;
   handleCancel: () => void;
 }
+
+export type { SaveResult, FetchResult };
 
 const EMPTY_USER: User = {
   userName: '',
@@ -46,20 +57,19 @@ export function useUserProfile(): UserProfileData {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  
-  const { showToast } = useToast(); 
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchData = async (): Promise<FetchResult> => {
       setLoading(true);
       try {
         const data = await fetchMyProfile();
         setUser(data.user);
         setResults(data.results as RaceUser[]);
         setFormData({ ...data.user });
+        return { success: true };
       } catch (error) {
         console.error('Error al cargar datos del perfil:', error);
-        showToast('Error de Carga', 'No se pudo cargar el perfil de usuario.', 'error');
+        return { success: false, error: 'No se pudo cargar el perfil de usuario.' };
       } finally {
         setLoading(false);
       }
@@ -78,15 +88,14 @@ export function useUserProfile(): UserProfileData {
     []
   );
 
-  const handleSave = useCallback(async () => {
-    if (!formData) return;
+  const handleSave = useCallback(async (): Promise<SaveResult> => {
+    if (!formData) return { success: false, error: 'Datos inválidos' };
 
     setSaving(true);
 
     if (!formData.realName.trim() || !formData.email.includes('@')) {
-      showToast('Campos Requeridos', 'Nombre completo y email son obligatorios.', 'warning');
       setSaving(false);
-      return;
+      return { success: false, error: 'validation' };
     }
 
     try {
@@ -98,8 +107,6 @@ export function useUserProfile(): UserProfileData {
       setUser(updatedData);
       setFormData(updatedData);
       setIsEditing(false);
-      
-      showToast('Éxito', 'Perfil actualizado correctamente.', 'success');
 
       const storedUser = getStoredUser();
       if (storedUser) {
@@ -112,13 +119,15 @@ export function useUserProfile(): UserProfileData {
           })
         );
       }
+
+      return { success: true };
     } catch (error) {
       console.error('Error al guardar el perfil:', error);
-      showToast('Error al Guardar', 'Fallo al actualizar el perfil en el servidor.', 'error');
+      return { success: false, error: 'Fallo al actualizar el perfil en el servidor.' };
     } finally {
       setSaving(false);
     }
-  }, [formData, showToast]);
+  }, [formData]);
 
   const handleCancel = useCallback(() => {
     setIsEditing(false);

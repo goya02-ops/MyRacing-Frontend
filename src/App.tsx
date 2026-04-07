@@ -5,7 +5,7 @@ import { ProtectedRoute } from './components/ProtectedRoute.tsx';
 import { Navbar } from './components/NavBar.tsx';
 import { DecorativeBackground } from './components/DecorativeBackground.tsx';
 import { Footer } from './components/Footer.tsx';
-import { ToastProvider } from './context/ToastContext.tsx'; 
+import { Toaster } from './components/tremor/toast/Toaster.tsx'; 
 
 const AuthPage = lazy(() => import('./features/Auth/pages/AuthPage.tsx'));
 const UserProfile = lazy(
@@ -80,9 +80,8 @@ function AppContent() {
 function App() {
   return (
     <BrowserRouter>
-      <ToastProvider>
-        <AppContent />
-      </ToastProvider>
+      <AppContent />
+      <Toaster />
     </BrowserRouter>
   );
 }
