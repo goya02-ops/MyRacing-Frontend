@@ -1,8 +1,13 @@
 export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
 
 let isRefreshing = false;
 let refreshSubscribers: ((token: string) => void)[] = [];
+// Callback para manejar cuando el refresh token falla
+let authFailureHandler: (() => void) | null = null;
+export function setAuthFailureHandler(handler: () => void) {
+  authFailureHandler = handler;
+}
 
 function onRefreshed(token: string) {
   refreshSubscribers.forEach((callback) => callback(token));
@@ -14,51 +19,51 @@ function addRefreshSubscriber(callback: (token: string) => void) {
 }
 
 async function refreshToken() {
-  const refreshToken = localStorage.getItem('refreshToken');
+  const refreshToken = localStorage.getItem("refreshToken");
   if (!refreshToken) {
-    throw new Error('No refresh token');
+    throw new Error("No refresh token");
   }
 
   const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ refreshToken }),
   });
 
   if (!response.ok) {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
-    window.location.href = '/login';
-    throw new Error('Refresh token expired');
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
+    authFailureHandler?.(); // ← llama al callback, no window.location
+    throw new Error("Refresh token expired");
   }
 
   const data = await response.json();
-  localStorage.setItem('accessToken', data.accessToken);
+  localStorage.setItem("accessToken", data.accessToken);
   return data.accessToken;
 }
 
 //No se usa pero puede ser útil más adelante
 export function getAuthHeaders() {
-  const token = localStorage.getItem('accessToken');
+  const token = localStorage.getItem("accessToken");
   return {
-    'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` })
+    "Content-Type": "application/json",
+    ...(token && { Authorization: `Bearer ${token}` }),
   };
 }
 
 export async function fetchWithAuth(
   url: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
 ): Promise<Response> {
-  const token = localStorage.getItem('accessToken');
+  const token = localStorage.getItem("accessToken");
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
   };
 
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headers["Authorization"] = `Bearer ${token}`;
   }
 
   let response = await fetch(`${API_BASE_URL}${url}`, {
@@ -66,7 +71,7 @@ export async function fetchWithAuth(
     headers,
   });
 
-  if (response.status === 401 || response.status === 403) {
+  if (response.status === 401) {
     if (!isRefreshing) {
       isRefreshing = true;
       try {
@@ -74,7 +79,7 @@ export async function fetchWithAuth(
         isRefreshing = false;
         onRefreshed(newToken);
 
-        headers['Authorization'] = `Bearer ${newToken}`;
+        headers["Authorization"] = `Bearer ${newToken}`;
         response = await fetch(`${API_BASE_URL}${url}`, {
           ...options,
           headers,
@@ -86,7 +91,7 @@ export async function fetchWithAuth(
     } else {
       return new Promise((resolve) => {
         addRefreshSubscriber((token: string) => {
-          headers['Authorization'] = `Bearer ${token}`;
+          headers["Authorization"] = `Bearer ${token}`;
           resolve(fetch(`${API_BASE_URL}${url}`, { ...options, headers }));
         });
       });

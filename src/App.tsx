@@ -1,12 +1,16 @@
 import './index.css';
-import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { lazy, Suspense, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
+import { setAuthFailureHandler } from './services/apiClient';
 import { ProtectedRoute } from './components/ProtectedRoute.tsx';
 import { Navbar } from './components/NavBar.tsx';
 import { DecorativeBackground } from './components/DecorativeBackground.tsx';
 import { Footer } from './components/Footer.tsx';
 
 const AuthPage = lazy(() => import('./features/Auth/pages/AuthPage.tsx'));
+const PasswordRecoveryPage = lazy(
+  () => import('./features/Auth/pages/PasswordRecoveryPage.tsx')
+);
 const MembershipPayment = lazy(
   () => import('./features/MembershipPayment/pages/membershipPayment.tsx')
 );
@@ -28,6 +32,14 @@ const PaymentStatus = lazy(
 );
 
 function AppContent() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    setAuthFailureHandler(() => {
+      navigate('/login');
+    });
+  }, [navigate]);
+
   return (
     <div className="bg-gray-900 min-h-screen relative isolate">
       <DecorativeBackground />
@@ -56,6 +68,7 @@ function AppContent() {
               <Route path="/login-register" element={<AuthPage />} />
               <Route path="/login" element={<AuthPage />} />
               <Route path="/signin" element={<AuthPage />} />
+              <Route path="/password-recovery" element={<PasswordRecoveryPage />} />
 
               <Route
                 path="/my-profile"

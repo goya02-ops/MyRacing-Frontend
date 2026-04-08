@@ -1,6 +1,7 @@
 import type { Constructor } from '../types/entityMeta.ts';
 import { entityMetaByClass } from '../types/entityMeta.ts';
 import { fetchWithAuth } from './apiClient.ts';
+import { normalizeRelations } from '../utils/normalizeEntity.ts';
 
 export async function fetchEntities<T>(cls: Constructor<T>): Promise<T[]> {
   const metadata = entityMetaByClass.get(cls);
@@ -27,20 +28,7 @@ export async function saveEntity<T extends { id?: number }>(
   const metadata = entityMetaByClass.get(cls);
   if (!metadata) throw new Error('Clase no registrada');
 
-  //  Normalizar relaciones: si hay objetos con solo id, convertirlos a { id }
-  const normalized = JSON.parse(
-    JSON.stringify(entity, (_key, value) => {
-      if (
-        value &&
-        typeof value === 'object' &&
-        'id' in value &&
-        Object.keys(value).length === 1
-      ) {
-        return { id: value.id };
-      }
-      return value;
-    })
-  );
+  const normalized = normalizeRelations(entity);
 
   const method = entity.id ? 'PUT' : 'POST';
   const url = entity.id

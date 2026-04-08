@@ -1,6 +1,7 @@
 import { Combination, Race, RaceUser } from '../types/entities.ts';
 import { entityMetaByClass } from '../types/entityMeta.ts';
 import { fetchWithAuth } from './apiClient.ts';
+import { API_ROUTES } from './apiRoutes';
 
 export async function fetchCurrentCombinations(): Promise<Combination[]> {
   const metadata = entityMetaByClass.get(Combination);
@@ -33,7 +34,7 @@ export async function registerUserToRace(
   userId: number,
   raceId: number
 ): Promise<RaceUser> {
-  const res = await fetchWithAuth(`/race-users`, {
+  const res = await fetchWithAuth(API_ROUTES.RACE_USERS.ROOT, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

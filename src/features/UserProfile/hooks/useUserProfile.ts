@@ -1,8 +1,9 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'; 
 import { User } from '../../../types/entities';
-import { fetchProfileData, updateProfileData } from '../../../services/userService';
+import { fetchMyProfile, updateMyProfile } from '../../../services/userService';
 import { getStoredUser } from '../../../services/authService.ts';
+import { QUERY_KEYS } from '../../../utils/queryKeys';
 
 interface RaceUser {
   id?: number;
@@ -40,7 +41,7 @@ interface UserProfileData {
   handleCancel: () => void;
 }
 
-const PROFILE_QUERY_KEY = ['userProfile'];
+const PROFILE_QUERY_KEY = [QUERY_KEYS.PROFILE];
 
 export function useUserProfile(): UserProfileData {
   const queryClient = useQueryClient();
@@ -52,16 +53,16 @@ export function useUserProfile(): UserProfileData {
 
   const { data, isLoading } = useQuery<ProfileData, Error>({
     queryKey: PROFILE_QUERY_KEY,
-    queryFn: fetchProfileData,
+    queryFn: fetchMyProfile,
     enabled: !!userId, 
   });
 
   const { mutateAsync: mutateUpdate, isPending: isSaving } = useMutation<
     User,
     Error,
-    { id: number; realName: string; email: string }
+    { realName: string; email: string }
   >({
-    mutationFn: ({ id, realName, email }) => updateProfileData(id, realName, email),
+    mutationFn: ({ realName, email }) => updateMyProfile(realName, email),
 
     onSuccess: (updatedData) => {
       queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEY });
@@ -112,7 +113,6 @@ export function useUserProfile(): UserProfileData {
 
     try {
       await mutateUpdate({
-        id: formData.id,
         realName: formData.realName,
         email: formData.email,
       });

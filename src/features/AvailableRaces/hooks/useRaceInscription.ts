@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { registerUserToRace } from '../../../services/raceService.ts';
 import { User, Race } from '../../../types/entities';
+import { createRacesForCombinationKey } from '../../../utils/queryKeys';
 
 export function useRaceInscription(user: User | null, race: Race | null) {
   const queryClient = useQueryClient();
@@ -12,9 +13,12 @@ export function useRaceInscription(user: User | null, race: Race | null) {
     },
 
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['racesForCombination', race?.combination?.id],
-      });
+      const combinationId = race?.combination?.id;
+      if (combinationId) {
+        queryClient.invalidateQueries({
+          queryKey: createRacesForCombinationKey(combinationId),
+        });
+      }
     },
 
     onError: (err) => {

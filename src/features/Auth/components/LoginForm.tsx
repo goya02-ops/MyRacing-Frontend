@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { Button, Input } from '../../../components/tremor/TremorComponents.tsx';
 import { useMinimumLoading } from '../../../hooks/useMinimumLoading.ts';
 
@@ -48,6 +49,15 @@ export function LoginForm({
       <Button type="submit" className="mt-4 w-full" isLoading={visibleLoading}>
         {visibleLoading ? 'Cargando...' : 'Iniciar sesión'}
       </Button>
+
+      <div className="text-center mt-4 pt-2">
+        <Link
+          to="/password-recovery"
+          className="text-sm text-gray-400 hover:text-blue-400 transition-colors"
+        >
+          ¿Olvidaste tu contraseña?
+        </Link>
+      </div>
     </form>
   );
 }

@@ -2,6 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import type { CombinationRacesResponse } from '../../../services/raceService.ts';
 import { fetchRacesForCombination } from '../../../services/raceService.ts';
+import { createRacesForCombinationKey } from '../../../utils/queryKeys';
 
 // Límites
 const PREVIOUS_LIMIT = 5;
@@ -13,7 +14,7 @@ const defaultData: CombinationRacesResponse = {
 };
 
 export function useCombinationRaces(combinationId: number | null | undefined) {
-  const queryKey = ['racesForCombination', combinationId];
+  const queryKey = createRacesForCombinationKey(combinationId!);
 
   const { data: racesData = defaultData, isLoading: isLoadingRaces } = useQuery<
     CombinationRacesResponse,

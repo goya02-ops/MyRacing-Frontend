@@ -1,11 +1,12 @@
 import { RaceUser } from '../types/entities.ts';
 import { fetchWithAuth } from './apiClient.ts';
+import { API_ROUTES } from './apiRoutes';
 
 export async function fetchRaceUsersByUserId(
   userId: number
 ): Promise<RaceUser[]> {
   try {
-    const response = await fetchWithAuth(`/race-users/by-user?userId=${userId}`);
+    const response = await fetchWithAuth(API_ROUTES.RACE_USERS.BY_USER(userId));
     
     if (!response.ok) {
       const errorBody = await response.text();
