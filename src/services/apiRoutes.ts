@@ -1,8 +1,3 @@
-/**
- * Constantes centralizadas para las rutas API.
- * Usar estas constantes en lugar de strings hardcodeados para evitar errores
- * y mantener consistencia en toda la aplicación.
- */
 export const API_ROUTES = {
   USERS: {
     ME: '/users/me',
