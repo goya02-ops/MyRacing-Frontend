@@ -21,10 +21,11 @@ type Props = {
 
 export function CombinationCard({ combination, nextRace }: Props) {
   const { user } = useUser();
-  const { loading, success, handleInscription } = useRaceInscription(
-    user,
-    nextRace
-  );
+
+  const canInscribe = !!user && !!nextRace;
+  const { loading, success, handleInscription } = canInscribe
+    ? useRaceInscription(user, nextRace)
+    : { loading: false, success: false, handleInscription: () => {} };
 
   return (
     <Card
@@ -52,8 +53,13 @@ export function CombinationCard({ combination, nextRace }: Props) {
       </div>
 
       {nextRace && (
-        <Button onClick={() => handleInscription} disabled={loading || success}>
-          {loading
+        <Button 
+          onClick={() => canInscribe && handleInscription()} 
+          disabled={loading || success || !canInscribe}
+        >
+          {!canInscribe
+            ? 'Iniciar sesión para inscribirse'
+            : loading
             ? 'Inscribiendo...'
             : success
             ? 'Inscripto ✅'
