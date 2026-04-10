@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { User } from '../../../types/entities';
 import { fetchMyProfile, updateMyProfile } from '../../../services/userService';
-import { getStoredUser } from '../../../services/authService.ts';
+import { useUser } from '../../../context/UserContext.tsx';
 import { QUERY_KEYS } from '../../../utils/queryKeys';
 
 interface SaveResult {
@@ -42,28 +42,34 @@ const EMPTY_USER: User = {
   type: 'common',
 } as User;
 
-const PROFILE_QUERY_KEY = [QUERY_KEYS.PROFILE];
-
 export function useUserProfile(): UserProfileData {
   const queryClient = useQueryClient();
-  const currentUser = getStoredUser();
-  const userId = currentUser?.id;
+  const { user: contextUser } = useUser();
+  const userId = contextUser?.id;
 
   const [formData, setFormData] = useState<User>(EMPTY_USER);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  const { data, isLoading } = useQuery({
-    queryKey: PROFILE_QUERY_KEY,
+  const profileQueryKey = [QUERY_KEYS.PROFILE, userId] as const;
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: profileQueryKey,
     queryFn: fetchMyProfile,
     enabled: !!userId,
+    retry: 1,
   });
+
+  // Log para debugging
+  if (error) {
+    console.error('Error loading profile:', error);
+  }
 
   const { mutateAsync } = useMutation({
     mutationFn: ({ realName, email }: { realName: string; email: string }) =>
       updateMyProfile(realName, email),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: profileQueryKey });
     },
   });
 
@@ -108,16 +114,10 @@ export function useUserProfile(): UserProfileData {
 
       setIsEditing(false);
 
-      const storedUser = getStoredUser();
-      if (storedUser) {
-        localStorage.setItem(
-          'user',
-          JSON.stringify({
-            ...storedUser,
-            realName: formData.realName,
-            email: formData.email,
-          }),
-        );
+      // Update local user in context
+      if (contextUser) {
+        const updatedUser = { ...contextUser, realName: formData.realName, email: formData.email };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
       }
 
       return { success: true };

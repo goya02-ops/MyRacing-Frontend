@@ -6,7 +6,8 @@ export async function fetchRaceUsersByUserId(
   userId: number
 ): Promise<RaceUser[]> {
   try {
-    const response = await fetchWithAuth(API_ROUTES.RACE_USERS.BY_USER(userId));
+    // Use /my-races endpoint which doesn't require admin role
+    const response = await fetchWithAuth(API_ROUTES.RACE_USERS.MY_RACES);
     
     if (!response.ok) {
       const errorBody = await response.text();

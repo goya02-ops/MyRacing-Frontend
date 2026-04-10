@@ -6,6 +6,7 @@ import {
   type ReactNode,
   useEffect,
 } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { User } from '../types/entities';
 
 interface UserContextType {
@@ -17,8 +18,11 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<User | null>(() => {
     const stored = localStorage.getItem('user');
+    const accessToken = localStorage.getItem('accessToken');
+    if (!accessToken) return null;
     return stored ? Object.assign(new User(), JSON.parse(stored)) : null;
   });
 
@@ -31,6 +35,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   const logout = () => {
+    queryClient.clear();
     setUser(null);
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');

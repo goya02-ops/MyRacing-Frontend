@@ -63,7 +63,7 @@ export const UserDataForm: React.FC<UserDataFormProps> = ({
               <Input
                 type="text"
                 name="realName"
-                value={formData.realName}
+                value={isEditing ? formData.realName : user.realName}
                 onChange={handleChange}
                 disabled={!isEditing || saving}
                 required
@@ -74,7 +74,7 @@ export const UserDataForm: React.FC<UserDataFormProps> = ({
               <Input
                 type="email"
                 name="email"
-                value={formData.email}
+                value={isEditing ? formData.email : user.email}
                 onChange={handleChange}
                 required
                 disabled={!isEditing || saving}
