@@ -2,17 +2,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { saveEntity } from '../services/apiService';
 import type { Constructor } from '../types/entityMeta';
 
-function flattenRelations<T>(entity: T): T {
-  const entityToSave: any = { ...entity };
-  for (const key in entityToSave) {
-    const value = entityToSave[key];
-    if (typeof value === 'object' && value !== null && 'id' in value) {
-      entityToSave[key] = (value as any).id;
-    }
-  }
-  return entityToSave as T;
-}
-
 export function useEntityMutation<T extends { id?: number }>(
   cls: Constructor<T>
 ) {
@@ -20,13 +9,8 @@ export function useEntityMutation<T extends { id?: number }>(
   const queryKey = [cls.name];
 
   const { mutateAsync, isPending: isSaving } = useMutation({
-    mutationFn: (entity: T) => {
-      // Aplanamos la entidad ANTES de mandarla al apiService
-      const flatEntity = flattenRelations(entity);
-      return saveEntity(cls, flatEntity);
-    },
+    mutationFn: (entity: T) => saveEntity(cls, entity),
     onSuccess: () => {
-    
       queryClient.invalidateQueries({ queryKey: queryKey });
     },
   });

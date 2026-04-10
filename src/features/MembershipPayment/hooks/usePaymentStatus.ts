@@ -3,6 +3,7 @@ import { useUser } from '../../../context/UserContext.tsx';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { checkPaymentStatus as checkPaymentStatusManual } from '../../../services/membershipService.ts';
+import { createPaymentStatusKey } from '../../../utils/queryKeys';
 
 export function usePaymentStatus() {
   const { setUser } = useUser();
@@ -12,7 +13,7 @@ export function usePaymentStatus() {
   const paymentId = searchParams.get('payment_id');
 
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['paymentStatus', paymentId],
+    queryKey: createPaymentStatusKey(paymentId!),
     queryFn: () => checkPaymentStatusManual(paymentId!),
     enabled: !!paymentId, // Solo se ejecuta si existe un ID
     retry: 2, // en caso de fallo, reintenta 2 veces

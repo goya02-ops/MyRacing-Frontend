@@ -15,10 +15,11 @@ type Props = {
 export function RaceListItem({ race, user }: Props) {
   const now = new Date();
   const isPast = new Date(race.raceDateTime) < now;
-  const { loading, success, handleInscription } = useRaceInscription(
-    user,
-    race
-  );
+  const canInscribe = !!user && !isPast;
+
+  const { loading, success, handleInscription } = canInscribe
+    ? useRaceInscription(user, race)
+    : { loading: false, success: false, handleInscription: () => {} };
 
   return (
     <Card asChild key={race.id} className="border border-gray-800 bg-gray-900">
@@ -54,6 +55,8 @@ export function RaceListItem({ race, user }: Props) {
           <p className="text-sm text-gray-500">ID: {race.id}</p>
           {isPast ? (
             <Button variant="secondary">Ver historial</Button>
+          ) : !user ? (
+            <Button disabled>Iniciar sesión para inscribirse</Button>
           ) : (
             <Button
               onClick={() => handleInscription}

@@ -1,8 +1,9 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { User } from '../../../types/entities';
-import { fetchProfileData, updateProfileData } from '../../../services/userService';
+import { fetchMyProfile, updateMyProfile } from '../../../services/userService';
 import { getStoredUser } from '../../../services/authService.ts';
+import { QUERY_KEYS } from '../../../utils/queryKeys';
 
 interface SaveResult {
   success: boolean;
@@ -39,7 +40,7 @@ const EMPTY_USER: User = {
   type: 'common',
 } as User;
 
-const PROFILE_QUERY_KEY = ['userProfile'];
+const PROFILE_QUERY_KEY = [QUERY_KEYS.PROFILE];
 
 export function useUserProfile(): UserProfileData {
   const queryClient = useQueryClient();
@@ -52,13 +53,13 @@ export function useUserProfile(): UserProfileData {
 
   const { data, isLoading } = useQuery({
     queryKey: PROFILE_QUERY_KEY,
-    queryFn: fetchProfileData,
+    queryFn: fetchMyProfile,
     enabled: !!userId,
   });
 
-  const { mutateAsync: mutateUpdate } = useMutation({
-    mutationFn: ({ id, realName, email }: { id: number; realName: string; email: string }) =>
-      updateProfileData(id, realName, email),
+  const { mutateAsync } = useMutation({
+    mutationFn: ({ realName, email }: { realName: string; email: string }) =>
+      updateMyProfile(realName, email),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEY });
     },
@@ -99,8 +100,7 @@ export function useUserProfile(): UserProfileData {
     setIsSaving(true);
 
     try {
-      await mutateUpdate({
-        id: formData.id,
+      await mutateAsync({
         realName: formData.realName,
         email: formData.email,
       });
@@ -126,7 +126,7 @@ export function useUserProfile(): UserProfileData {
     } finally {
       setIsSaving(false);
     }
-  }, [formData, mutateUpdate]);
+  }, [formData, mutateAsync]);
 
   const handleCancel = useCallback(() => {
     setIsEditing(false);

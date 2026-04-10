@@ -7,6 +7,7 @@ import {
   Simulator,
 } from '../../../types/entities.ts';
 import { useState, useCallback, useMemo } from 'react';
+import { QUERY_KEYS } from '../../../utils/queryKeys';
 
 interface UseCombinationFormProps {
   initial: Combination;
@@ -56,7 +57,7 @@ export function useCombinationForm({
   const [selectedSimulator, setSelectedSimulator] = useState<number | undefined>(initialSimulatorId);
   
   const { data, isLoading: loadingVersions } = useQuery({
-    queryKey: ['simulatorVersions', selectedSimulator],
+    queryKey: [QUERY_KEYS.SIMULATOR_VERSIONS, selectedSimulator],
     queryFn: () => fetchSimulatorDetails(selectedSimulator!), 
     enabled: !!selectedSimulator, 
     staleTime: Infinity, 

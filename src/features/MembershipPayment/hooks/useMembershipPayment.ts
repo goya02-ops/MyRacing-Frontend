@@ -6,6 +6,7 @@ import {
   createPaymentPreference,
   processPayment,
 } from '../../../services/membershipService.ts';
+import { QUERY_KEYS } from '../../../utils/queryKeys';
 
 export function useMembershipPage() {
   const { user } = useUser();
@@ -17,7 +18,7 @@ export function useMembershipPage() {
     isLoading: isLoadingPrice,
     isError,
   } = useQuery({
-    queryKey: ['currentMembership'],
+    queryKey: [QUERY_KEYS.MEMBERSHIP],
     queryFn: fetchCurrentMembership,
     staleTime: 1000 * 60 * 15, // 15 minutos de caché
   });
@@ -37,7 +38,7 @@ export function useMembershipPage() {
   const processPaymentMutation = useMutation({
     mutationFn: processPayment,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['currentMembership'] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.MEMBERSHIP] });
     },
   });
 

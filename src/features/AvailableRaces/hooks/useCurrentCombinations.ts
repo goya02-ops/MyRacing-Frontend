@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Combination, Simulator } from '../../../types/entities.ts';
 import { fetchCurrentCombinations } from '../../../services/raceService.ts';
+import { QUERY_KEYS } from '../../../utils/queryKeys';
 
 const deriveSimulators = (combs: Combination[]): Simulator[] => {
   const simsMap = new Map<number, Simulator>();
@@ -17,7 +18,7 @@ const deriveSimulators = (combs: Combination[]): Simulator[] => {
 };
 
 export function useCurrentCombinations() {
-  const queryKey = ['currentCombinations'];
+  const queryKey = [QUERY_KEYS.COMBINATIONS];
 
   const { data: allCombinations = [], isLoading: isLoadingCombinations } =
     useQuery<Combination[], Error>({

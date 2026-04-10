@@ -17,7 +17,7 @@ interface AuthFormPanelProps {
 }
 
 const formPanelBaseClasses =
-  'absolute top-0 h-full w-1/2 flex flex-col items-center justify-center px-10 bg-gray-950/20 backdrop-blur-lg border border-gray-700/50 transition-all duration-600 ease-in-out';
+  'absolute top-0 h-full w-1/2 flex flex-col items-center px-10 py-12 bg-gray-950/20 backdrop-blur-lg border border-gray-700/50 transition-all duration-600 ease-in-out overflow-y-auto';
 
 export const AuthFormPanel: React.FC<AuthFormPanelProps> = ({
   type,

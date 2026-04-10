@@ -1,20 +1,20 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { registerUserToRace } from '../../../services/raceService.ts';
 import { User, Race } from '../../../types/entities';
+import { createRacesForCombinationKey } from '../../../utils/queryKeys';
 
-export function useRaceInscription(user: User | null, race: Race | null) {
+export function useRaceInscription(user: User, race: Race) {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: () => {
-      if (!user || !race) throw new Error('Usuario o carrera no definidos');
-      return registerUserToRace(user.id!, race.id!);
-    },
+    mutationFn: () => registerUserToRace(user.id!, race.id!),
 
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['racesForCombination', race?.combination?.id],
-      });
+      if (race.combination?.id) {
+        queryClient.invalidateQueries({
+          queryKey: createRacesForCombinationKey(race.combination.id),
+        });
+      }
     },
 
     onError: (err) => {
