@@ -18,7 +18,7 @@ interface UserDataFormProps {
   ) => void;
   handleSave: () => Promise<{ success: boolean; error?: string }>;
   handleCancel: () => void;
-  setIsEditing: (editing: boolean) => void;
+  handleStartEdit: () => void;
 }
 
 export const UserDataForm: React.FC<UserDataFormProps> = ({
@@ -29,7 +29,7 @@ export const UserDataForm: React.FC<UserDataFormProps> = ({
   handleChange,
   handleSave,
   handleCancel,
-  setIsEditing,
+  handleStartEdit,
 }) => {
   return (
     <div className="max-w-lg mx-auto space-y-6">
@@ -86,7 +86,7 @@ export const UserDataForm: React.FC<UserDataFormProps> = ({
         <Divider />
         <div className="flex gap-2 justify-end">
           {!isEditing ? (
-            <Button onClick={() => setIsEditing(true)} variant="secondary">
+            <Button onClick={handleStartEdit} variant="secondary">
               Editar Perfil
             </Button>
           ) : (

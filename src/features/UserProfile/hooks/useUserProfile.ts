@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { User } from '../../../types/entities';
 import { fetchMyProfile, updateMyProfile } from '../../../services/userService';
@@ -27,8 +27,10 @@ interface UserProfileData {
   isEditing: boolean;
   saving: boolean;
   stats: { totalRaces: number; victories: number; podiums: number };
-  setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
-  handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+  handleStartEdit: () => void;
+  handleChange: (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => void;
   handleSave: () => Promise<SaveResult>;
   handleCancel: () => void;
 }
@@ -65,17 +67,16 @@ export function useUserProfile(): UserProfileData {
     },
   });
 
-  useEffect(() => {
-    if (data?.user) {
-      if (!isEditing) {
-        setFormData({ ...data.user });
-      }
-    }
-  }, [data, isEditing]);
-
   const user = data?.user || null;
   const results = data?.results || [];
   const loading = isLoading;
+
+  const handleStartEdit = useCallback(() => {
+    if (data?.user) {
+      setFormData({ ...data.user });
+    }
+    setIsEditing(true);
+  }, [data]);
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -85,7 +86,7 @@ export function useUserProfile(): UserProfileData {
         [name]: value,
       }));
     },
-    []
+    [],
   );
 
   const handleSave = useCallback(async (): Promise<SaveResult> => {
@@ -115,14 +116,17 @@ export function useUserProfile(): UserProfileData {
             ...storedUser,
             realName: formData.realName,
             email: formData.email,
-          })
+          }),
         );
       }
 
       return { success: true };
     } catch (error) {
       console.error('Error al guardar el perfil:', error);
-      return { success: false, error: 'Fallo al actualizar el perfil en el servidor.' };
+      return {
+        success: false,
+        error: 'Fallo al actualizar el perfil en el servidor.',
+      };
     } finally {
       setIsSaving(false);
     }
@@ -150,7 +154,7 @@ export function useUserProfile(): UserProfileData {
     isEditing,
     saving: isSaving,
     stats,
-    setIsEditing,
+    handleStartEdit,
     handleChange,
     handleSave,
     handleCancel,

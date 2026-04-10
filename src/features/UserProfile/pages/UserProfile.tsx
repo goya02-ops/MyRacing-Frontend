@@ -14,7 +14,7 @@ export default function UserProfile() {
     isEditing,
     saving,
     stats,
-    setIsEditing,
+    handleStartEdit,
     handleChange,
     handleSave,
     handleCancel,
@@ -92,7 +92,7 @@ export default function UserProfile() {
         handleChange={handleChange}
         handleSave={onSave}
         handleCancel={handleCancel}
-        setIsEditing={setIsEditing}
+        handleStartEdit={handleStartEdit}
       />
 
       <UserRaceHistory results={results} />
