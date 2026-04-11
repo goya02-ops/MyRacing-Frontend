@@ -11,6 +11,9 @@ const AuthPage = lazy(() => import('./features/Auth/pages/AuthPage.tsx'));
 const PasswordRecoveryPage = lazy(
   () => import('./features/Auth/pages/PasswordRecoveryPage.tsx')
 );
+const ResetPasswordPage = lazy(
+  () => import('./features/Auth/pages/ResetPasswordPage.tsx')
+);
 const MembershipPayment = lazy(
   () => import('./features/MembershipPayment/pages/membershipPayment.tsx')
 );
@@ -69,6 +72,7 @@ function AppContent() {
               <Route path="/login" element={<AuthPage />} />
               <Route path="/signin" element={<AuthPage />} />
               <Route path="/password-recovery" element={<PasswordRecoveryPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
 
               <Route
                 path="/my-profile"

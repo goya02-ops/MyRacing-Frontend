@@ -1,6 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { Button, Input, Card } from '../../../components/tremor/TremorComponents.tsx';
+import { Button, Input } from '../../../components/tremor/TremorComponents.tsx';
+import { API_BASE_URL } from '../../../services/apiClient.ts';
 
 export default function PasswordRecoveryPage() {
   const [email, setEmail] = useState('');
@@ -14,7 +15,18 @@ export default function PasswordRecoveryPage() {
     setError('');
 
     try {
-      console.log('Solicitud de recuperación para:', email);
+      const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        setError(data.message || 'Error al procesar la solicitud');
+        return;
+      }
+
       setSuccess(true);
     } catch (err) {
       setError('Error al procesar la solicitud. Intenta nuevamente.');
