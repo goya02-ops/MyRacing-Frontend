@@ -26,9 +26,14 @@ interface ProfileData {
 
 export async function fetchMyProfile(): Promise<ProfileData> {
   const userResponse = await fetchWithAuth(API_ROUTES.USERS.ME);
+  
   if (!userResponse.ok) {
-    throw new Error('Error al obtener los datos del usuario.');
+    const status = userResponse.status;
+    const errorText = await userResponse.text();
+    console.error('Error fetching profile:', status, errorText);
+    throw new Error(`Error al obtener los datos del usuario. Status: ${status}`);
   }
+  
   const userData = (await userResponse.json()).data;
   const userId = userData.id;
 

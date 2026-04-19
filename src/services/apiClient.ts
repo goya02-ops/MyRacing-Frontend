@@ -56,7 +56,8 @@ export async function fetchWithAuth(
   url: string,
   options: RequestInit = {},
 ): Promise<Response> {
-  const token = localStorage.getItem("accessToken");
+  let token = localStorage.getItem("accessToken");
+  
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
@@ -75,11 +76,11 @@ export async function fetchWithAuth(
     if (!isRefreshing) {
       isRefreshing = true;
       try {
-        const newToken = await refreshToken();
+        token = await refreshToken();
         isRefreshing = false;
-        onRefreshed(newToken);
+        onRefreshed(token);
 
-        headers["Authorization"] = `Bearer ${newToken}`;
+        headers["Authorization"] = `Bearer ${token}`;
         response = await fetch(`${API_BASE_URL}${url}`, {
           ...options,
           headers,
