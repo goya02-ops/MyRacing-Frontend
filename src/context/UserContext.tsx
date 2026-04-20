@@ -22,8 +22,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(() => {
     const stored = localStorage.getItem('user');
     const accessToken = localStorage.getItem('accessToken');
-    if (!accessToken) return null;
-    return stored ? Object.assign(new User(), JSON.parse(stored)) : null;
+    if (!accessToken || !stored || stored === 'undefined') return null;
+    try {
+      return Object.assign(new User(), JSON.parse(stored));
+    } catch {
+      return null;
+    }
   });
 
   useEffect(() => {
