@@ -33,10 +33,10 @@ export function useAuthPageLogic(): AuthPageLogic {
     setLoading: setLoginLoading,
     setError: setLoginError,
     onSuccess: (data: any) => {
-      localStorage.setItem('user', JSON.stringify(data.data));
+      localStorage.setItem('user', JSON.stringify(data.user));
       localStorage.setItem('accessToken', data.accessToken);
       localStorage.setItem('refreshToken', data.refreshToken);
-      setUser(data.data);
+      setUser(data.user);
       navigate('/');
     },
   });
