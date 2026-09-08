@@ -1,0 +1,24 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Deploy frontend
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy checklist
+        run: |
+          echo "El CI pasó (lint, build, unit y e2e full-stack): este job solo corre si todo terminó con éxito."
+          echo "PLATAFORMA: Railway/Render con buildpack estático (sin Docker)."
+          echo "CREDENCIALES: definir como secrets del repo las variables del frontend:"
+          echo "  VITE_API_BASE_URL, VITE_MP_PUBLIC_KEY"
+          echo "Deploy manual inicial pendiente: configurar el servicio conectado a este repo (placeholder)."
