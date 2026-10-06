@@ -21,6 +21,16 @@ export default defineConfig({
         'src/**/*.{test,spec}.{ts,tsx}',
         'src/main.tsx',
       ],
+      // Gate de producción: cobertura TOTAL ≥80%.
+      // Solo se evalúa cuando corre con --coverage (pnpm test:coverage),
+      // que el CI ejecuta únicamente en PRs/pushes a main. En develop
+      // corre pnpm test (sin coverage) y no bloquea.
+      thresholds: {
+        lines: 80,
+        functions: 80,
+        branches: 80,
+        statements: 80,
+      },
     },
   },
   server: {
