@@ -10,15 +10,43 @@ jobs:
   deploy:
     name: Deploy frontend
     runs-on: ubuntu-latest
+    # Gate automático de producción (sin aprobación humana):
+    # 1. Este workflow solo corre si el CI completo pasó en main
+    #    (Lint, Build, Unit tests, E2E full-stack y Coverage total ≥80%).
+    # 2. El paso "SonarCloud Quality Gate" aborta si el QG del proyecto no es OK.
+    # Si algo falla, NO hay deploy a producción.
     if: github.event.workflow_run.conclusion == 'success'
     environment: production
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - name: Deploy checklist
+      - name: SonarCloud Quality Gate (bloquea el deploy si falla)
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          echo "El CI pasó (lint, build, unit y e2e full-stack): este job solo corre si todo terminó con éxito."
-          echo "PLATAFORMA: Railway/Render con buildpack estático (sin Docker)."
-          echo "CREDENCIALES: definir como secrets del repo las variables del frontend:"
-          echo "  VITE_API_BASE_URL, VITE_MP_PUBLIC_KEY"
-          echo "Deploy manual inicial pendiente: configurar el servicio conectado a este repo (placeholder)."
+          if [ -z "$SONAR_TOKEN" ]; then
+            echo "Falta el secret SONAR_TOKEN: no se puede verificar el Quality Gate, deploy abortado."
+            exit 1
+          fi
+          status=$(curl -s -u "$SONAR_TOKEN:" "https://sonarcloud.io/api/qualitygates/project_status?projectKey=goya02-ops_MyRacing-Frontend" | jq -r '.projectStatus.status')
+          echo "Quality Gate: $status"
+          if [ "$status" != "OK" ]; then
+            echo "Quality Gate NO OK: deploy a producción abortado."
+            exit 1
+          fi
+
+      - name: Deploy a producción (Vercel)
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_ORG_ID" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
+            echo "Faltan los secrets VERCEL_TOKEN / VERCEL_ORG_ID / VERCEL_PROJECT_ID: deploy abortado."
+            echo "Ver docs/deploy.md para configurarlos."
+            exit 1
+          fi
+          npm install -g --ignore-scripts vercel@62.5.0
+          vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+          vercel build --prod --token="$VERCEL_TOKEN"
+          vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"

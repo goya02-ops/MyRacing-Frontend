@@ -13,11 +13,15 @@ node_modules
 # Build output
 dist
 dist-ssr
+coverage
 
 # Environment files (never commit real env values)
 .env
 .env.local
 .env.*.local
+
+# Vercel CLI link (project/org ids + tokens)
+.vercel
 
 # Editor directories and files
 .vscode/*
