@@ -14,6 +14,8 @@ React 19 + Vite 7 + TypeScript + Tailwind 3/Tremor + TanStack Query. pnpm 10, No
 
 Verificación estándar: `pnpm lint && pnpm build && pnpm test`.
 
+**Branch protection**: merge a `develop` se bloquea si fallan los tests. Merge a `main` exige además cobertura ≥80% (vitest coverage thresholds) y Quality Gate de SonarCloud verde.
+
 ## Gotchas
 
 - La API se configura con `VITE_API_BASE_URL` en `.env.local` (default `http://localhost:3000/api`). El README puede decir `.env` pero el código usa `import.meta.env`.
