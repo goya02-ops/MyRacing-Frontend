@@ -13,6 +13,7 @@ node_modules
 # Build output
 dist
 dist-ssr
+coverage
 
 # Environment files (never commit real env values)
 .env
