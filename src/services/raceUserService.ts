@@ -5,6 +5,7 @@ import { API_ROUTES } from './apiRoutes';
 export async function fetchRaceUsersByUserId(
   userId: number
 ): Promise<RaceUser[]> {
+  void userId;
   try {
     // Use /my-races endpoint which doesn't require admin role
     const response = await fetchWithAuth(API_ROUTES.RACE_USERS.MY_RACES);

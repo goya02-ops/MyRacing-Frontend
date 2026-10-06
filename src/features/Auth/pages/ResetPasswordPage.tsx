@@ -3,7 +3,6 @@ import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import {
   Button,
   Input,
-  Card,
 } from "../../../components/tremor/TremorComponents.tsx";
 import { fetchWithAuth } from "../../../services/apiClient.ts";
 
@@ -68,7 +67,7 @@ export default function ResetPasswordPage() {
 
       setSuccess(true);
       setTimeout(() => navigate("/login"), 3000);
-    } catch (err) {
+    } catch {
       setError("Error al procesar la solicitud. Intenta nuevamente.");
     } finally {
       setLoading(false);

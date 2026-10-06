@@ -76,7 +76,7 @@ export async function fetchWithAuth(
     if (!isRefreshing) {
       isRefreshing = true;
       try {
-        token = await refreshToken();
+        token = await refreshToken(); if (!token) throw new Error("No refresh token");
         isRefreshing = false;
         onRefreshed(token);
 

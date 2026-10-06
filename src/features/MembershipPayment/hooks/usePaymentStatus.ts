@@ -23,7 +23,7 @@ export function usePaymentStatus() {
 
   useEffect(() => {
     if (data?.status === 'approved' && data?.user) {
-      setUser(data.user);
+      setUser(data.user as unknown as import("../../../types/entities.ts").User);
       console.log(
         '✅ Usuario actualizado a Premium exitosamente (React Query).'
       );
