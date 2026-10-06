@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "echo 'E2E not implemented yet'"
   },
   "dependencies": {
     "@mercadopago/sdk-react": "^1.0.6",

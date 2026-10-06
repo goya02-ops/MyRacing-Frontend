@@ -28,7 +28,7 @@ export default function PasswordRecoveryPage() {
       }
 
       setSuccess(true);
-    } catch (err) {
+    } catch {
       setError("Error al procesar la solicitud. Intenta nuevamente.");
     } finally {
       setLoading(false);
