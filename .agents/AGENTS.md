@@ -4,7 +4,7 @@
 
 Sistema de inscripción a carreras de simuladores con usuarios comunes, premium y administradores.
 
-**Tech Stack:** React 19, Vite 7, TypeScript 5.9, Vitest, Tailwind CSS, Radix UI, Tremor, TanStack Query, pnpm.
+**Tech Stack:** React 19, Vite 7, TypeScript 5.9, Vitest, Tailwind CSS 3, Radix UI, Tremor, TanStack Query, pnpm.
 
 ---
 
@@ -18,15 +18,15 @@ pnpm preview         # Preview del build
 # Build y Lint
 pnpm build           # tsc -b && vite build
 pnpm lint            # ESLint
-pnpm lint --fix      # ESLint con auto-fix
 
-# Testing
+# Testing (TDD: test en rojo -> codigo minimo -> refactor)
 pnpm test            # vitest run (una vez)
 pnpm test:watch     # vitest (modo watch)
-pnpm test:coverage  # Coverage en coverage/index.html
+pnpm test:coverage  # Coverage (gate de main: total >=80%)
 pnpm test src/lib/utils.test.ts  # Un solo archivo
-pnpm test -- -t "pattern"       # Filtrar por nombre
 ```
+
+Verificación estándar: `pnpm lint && pnpm build && pnpm test`.
 
 ---
 
@@ -41,38 +41,48 @@ pnpm test -- -t "pattern"       # Filtrar por nombre
 
 ```
 src/
-├── components/        # Componentes reusable
-│   └── tremor/       # Componentes Tremor
-├── pages/           # Páginas principales
-├── hooks/           # Hooks custom
-├── lib/utils.ts     # Utilidades
-├── types/           # Tipos globales
-├── context/         # React Contexts
-├── utils/           # Utilidades por dominio
-├── test/           # Setup de testing
-└── App.tsx         # Entry point
+├── features/<Feature>/   # Cada feature: components/, hooks/, pages/
+├── components/           # Componentes compartidos
+│   └── tremor/           # Componentes vendor Tremor (no modificar salvo issue propio)
+├── hooks/                # Hooks compartidos
+├── services/             # apiClient + servicios (via fetchWithAuth)
+├── contexts/             # React Contexts
+├── types/                # Tipos y entidades
+├── lib/utils.ts          # Utilidades
+├── test/                 # Setup de testing (happy-dom)
+└── App.tsx               # Entry point
 ```
+
+Tests colocados como `src/**/*.{test,spec}.*`; config de Vitest en `vite.config.ts`.
 
 ---
 
 ## Convenciones
 
+- **Componentes y archivos:** PascalCase (`CategoryForm.tsx`), exports nombrados
 - **Imports:** Relativos (`../../../components/...`)
-- **Archivos:** kebab-case (`login-form.tsx`)
-- **Componentes:** PascalCase, exports nombrados
-- **Estilos:** Tailwind con `clsx`/`tw` para condicionales
-- **API:** TanStack Query (`useQuery`, `useMutation`)
-- **No commits:** Prohibido `git commit`, `git push`, PRs
+- **API:** TanStack Query (`useQuery`, `useMutation`); servicios via `src/services/apiClient.ts` (fetchWithAuth + refresh). No hacer `fetch` ad-hoc salvo `authService`
+- **Errores:** validar `res.ok` en servicios; no usar `alert()` para errores
+- **React 19:** `ref` como prop, no `forwardRef` (deprecado)
+
+---
+
+## Gitflow (un issue = una rama = un PR)
+
+- Rama por issue: `feature/<id-tema>` → PR a `develop` → PR a `main` (+tag)
+- Commits atómicos por paso lógico, mensaje convencional (`feat:`/`fix:`/`test:`/`refactor:`/`chore:`)
+- Los gates deciden (sin aprobación humana): a `develop` solo entra con tests verdes; a `main` además con coverage ≥80% y Quality Gate verde
 
 ---
 
 ## Skills
 
-Cargar solo cuando aplique:
+Cargar solo cuando aplique (ver `.agents/SKILLS.md`):
 
-- `frontend-design` - UI/layout
-- `component-refactoring` - Si complexity > 50 o 300+ líneas
-- `docker-expert` / `multi-stage-dockerfile`
-- `mysql` / `neon-postgres`
-- `vitest`
-- `typescript-advanced-types`
+- `vitest` - Testing (siempre en issues de tests)
+- `typescript-advanced-types` - Tipos complejos
+
+## Subagentes
+
+Definiciones de referencia en `.opencode/agents/` (programador/tester/juez).
+Flujo TDD y protocolo en el `AGENTS.md` raíz de DevOps.

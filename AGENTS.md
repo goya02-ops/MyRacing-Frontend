@@ -22,7 +22,9 @@ Verificación estándar: `pnpm lint && pnpm build && pnpm test`.
 - Vitest está configurado dentro de `vite.config.ts` (happy-dom, setup `src/test/setup.ts`, tests colocados `src/**/*.{test,spec}.*`, coverage v8 con thresholds).
 - Los servicios deben usar `src/services/apiClient.ts` (fetchWithAuth + refresh token). No hacer `fetch` ad-hoc salvo `authService`.
 - Manejo de errores: validar `res.ok` en los servicios (issue FE-15); evitar `alert()` para errores (evaluar toast, FE-16).
-- Skills: el proyecto usa **Vitest**, no Jest — la skill de testing recomendada en SKILLS.md debe alinearse (FE-18).
+- Skills: testing con **Vitest** (ver `.agents/SKILLS.md`); no usar Jest (FE-18).
+  Subagentes de referencia en `.opencode/agents/` (programador/tester/juez;
+  flujo TDD en el `AGENTS.md` raíz de DevOps).
 
 ## Estructura
 
