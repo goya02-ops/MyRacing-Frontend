@@ -29,12 +29,6 @@ npx skills add <skill> -g -y
 - **Use**: TypeScript patterns, type safety, generics
 - **URL**: https://skills.sh/wshobson/agents/typescript-advanced-types
 
-### JavaScript/TypeScript Testing
-- **Skill**: `github/awesome-copilot@javascript-typescript-jest`
-- **Installs**: 8.4K
-- **Use**: Testing patterns, Jest configuration, test writing
-- **URL**: https://skills.sh/github/awesome-copilot/javascript-typescript-jest
-
 ## UI & Styling
 
 ### Tailwind Design System
@@ -48,12 +42,6 @@ npx skills add <skill> -g -y
 - **Installs**: 4.5K
 - **Use**: Complex layouts, grid systems, responsive design
 - **URL**: https://skills.sh/josiahsiegel/claude-plugin-marketplace/tailwindcss-advanced-layouts
-
-### Tailwind v4 + shadcn/ui
-- **Skill**: `jezweb/claude-skills@tailwind-v4-shadcn`
-- **Installs**: 2.7K
-- **Use**: shadcn/ui components, Tailwind v4 migration
-- **URL**: https://skills.sh/jezweb/claude-skills/tailwind-v4-shadcn
 
 ### Web Design Guidelines
 - **Skill**: `vercel-labs/agent-skills@web-design-guidelines`
@@ -74,12 +62,6 @@ npx skills add <skill> -g -y
 - **Installs**: 26.1K
 - **Use**: React component patterns, composition, best practices
 - **URL**: https://skills.sh/google-labs-code/stitch-skills/react:components
-
-### Create Component (Convex)
-- **Skill**: `get-convex/agent-skills@convex-create-component`
-- **Installs**: 10.4K
-- **Use**: Component scaffolding, structure patterns
-- **URL**: https://skills.sh/get-convex/agent-skills/convex-create-component
 
 ## Testing
 
