@@ -13,29 +13,35 @@ export function useVersionDependencies(activeManager: ActiveManager) {
   const [loadingDependencies, setLoadingDependencies] = useState(false);
 
   useEffect(() => {
-    // Solo busca dependencias si un manager está abierto Y no las cargamos todavía
-    const shouldFetch =
-      activeManager.type !== null &&
-      (categories.length === 0 || circuits.length === 0);
-    if (!shouldFetch) return;
-
-    setLoadingDependencies(true);
+    let cancelled = false;
     const fetchFormData = async () => {
+      // Solo busca dependencias si un manager está abierto Y no las cargamos todavía
+      const shouldFetch =
+        activeManager.type !== null &&
+        (categories.length === 0 || circuits.length === 0);
+      if (!shouldFetch) return;
+
+      setLoadingDependencies(true);
       try {
         // Usamos Promise.all para cargarlas en paralelo
         const [cats, circs] = await Promise.all([
           fetchEntities(Category),
           fetchEntities(Circuit),
         ]);
+        if (cancelled) return;
         setCategories(cats || []);
         setCircuits(circs || []);
       } catch (error) {
+        if (cancelled) return;
         console.error('Error fetching form data:', error);
       } finally {
-        setLoadingDependencies(false);
+        if (!cancelled) setLoadingDependencies(false);
       }
     };
     fetchFormData();
+    return () => {
+      cancelled = true;
+    };
   }, [activeManager.type, categories.length, circuits.length]);
 
   return { categories, circuits, loadingDependencies };

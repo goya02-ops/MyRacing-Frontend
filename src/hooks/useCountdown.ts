@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 export function useCountdown(targetDate: Date | null) {
-  const [timeLeft, setTimeLeft] = useState(getTimeRemaining(targetDate));
+  const [timeLeft, setTimeLeft] = useState(() => getTimeRemaining(targetDate));
 
   useEffect(() => {
     if (!targetDate) return;
