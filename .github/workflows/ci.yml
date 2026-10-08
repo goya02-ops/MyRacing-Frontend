@@ -147,6 +147,11 @@ jobs:
         env:
           VITE_API_BASE_URL: http://127.0.0.1:3000/api
 
+      # pnpm exec (no npx): usa el binario lockeado de devDependencies
+      # (Sonar S6505/S8543: npx instalaría on-demand sin versión fijada).
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
       - name: Run E2E tests (Playwright, full stack)
         run: pnpm test:e2e
 
