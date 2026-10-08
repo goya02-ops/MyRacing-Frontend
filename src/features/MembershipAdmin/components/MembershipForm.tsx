@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Membership } from '../../../types/entities.ts';
 import {
   Button,
@@ -18,13 +18,6 @@ export default function MembershipForm({ initial, onSave, onCancel }: Props) {
     ...initial,
     price: initial.price ?? '',
   });
-
-  useEffect(() => {
-    setForm({
-      ...initial,
-      price: initial.price ?? '',
-    });
-  }, [initial]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

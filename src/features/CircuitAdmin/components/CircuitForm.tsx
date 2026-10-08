@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Circuit } from '../../../types/entities';
 import {
   Button,
@@ -15,12 +15,6 @@ interface Props {
 
 export default function CircuitForm({ initial, onSave, onCancel }: Props) {
   const [form, setForm] = useState<Circuit>(initial);
-
-  useEffect(() => {
-    // Sincroniza el formulario si el 'initial' prop cambia
-    // (por ejemplo, al seleccionar otra entidad para editar)
-    setForm(initial);
-  }, [initial]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

@@ -56,6 +56,7 @@ export default function RaceAdmin() {
               {editing.id ? 'Editar' : 'Crear'} Carrera
             </h3>
             <RaceForm
+              key={editing?.id ?? 'new'}
               initial={editing}
               combinations={combinations}
               onSave={handleSave}

@@ -65,6 +65,7 @@ export default function CategoryAdmin() {
                 }
               >
                 <CategoryForm
+                  key={editing?.id ?? 'new'}
                   initial={editing}
                   onCancel={handleCancel}
                   onSave={handleSave}
