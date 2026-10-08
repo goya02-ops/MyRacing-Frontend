@@ -36,53 +36,43 @@ export function Navbar() {
           <div className="hidden md:flex justify-center">
             <TabNavigation>
               <TabNavigationLink
-                asChild
                 data-active={location.pathname === '/' ? '' : undefined}
+                onClick={() => handleNavigate('/')}
               >
-                <button onClick={() => handleNavigate('/')}>
-                  Carreras Disponibles
-                </button>
+                Carreras Disponibles
               </TabNavigationLink>
 
               {user && (
                 <>
                   <TabNavigationLink
-                    asChild
                     data-active={
                       location.pathname === '/my-profile' ? '' : undefined
                     }
+                    onClick={() => handleNavigate('/my-profile')}
                   >
-                    <button onClick={() => handleNavigate('/my-profile')}>
-                      Mi Perfil
-                    </button>
+                    Mi Perfil
                   </TabNavigationLink>
                   <TabNavigationLink
-                    asChild
                     data-active={
                       location.pathname === '/membership-payment'
                         ? ''
                         : undefined
                     }
+                    onClick={() => handleNavigate('/membership-payment')}
                   >
-                    <button
-                      onClick={() => handleNavigate('/membership-payment')}
-                    >
-                      Pagar membresía
-                    </button>
+                    Pagar membresía
                   </TabNavigationLink>
                 </>
               )}
 
               {user?.type === 'admin' && (
                 <TabNavigationLink
-                  asChild
                   data-active={
                     location.pathname === '/admin-dashboard' ? '' : undefined
                   }
+                  onClick={() => handleNavigate('/admin-dashboard')}
                 >
-                  <button onClick={() => handleNavigate('/admin-dashboard')}>
-                    Panel de Administración
-                  </button>
+                  Panel de Administración
                 </TabNavigationLink>
               )}
             </TabNavigation>
