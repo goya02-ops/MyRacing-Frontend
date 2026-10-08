@@ -1,26 +1,7 @@
 // Tremor TabNavigation [v1.0.0]
-import React from 'react';
+import * as React from 'react';
 import * as NavigationMenuPrimitives from '@radix-ui/react-navigation-menu';
 import { cx, focusRing } from '../../lib/utils';
-
-function getSubtree(
-  options: { asChild: boolean | undefined; children: React.ReactNode },
-  content: React.ReactNode | ((children: React.ReactNode) => React.ReactNode)
-) {
-  const { asChild, children } = options;
-  if (!asChild)
-    return typeof content === 'function' ? content(children) : content;
-
-  const firstChild = React.Children.only(children) as React.ReactElement<{
-    children?: React.ReactNode;
-  }>;
-  return React.cloneElement(firstChild, {
-    children:
-      typeof content === 'function'
-        ? content(firstChild.props.children)
-        : content,
-  });
-}
 
 const TabNavigation = ({
   ref: forwardedRef,
@@ -59,18 +40,19 @@ TabNavigation.displayName = 'TabNavigation';
 
 const TabNavigationLink = ({
   ref: forwardedRef,
-  asChild,
   disabled,
   className,
   children,
+  onClick,
   ...props
 }: Omit<
   React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitives.Link>,
-  'onSelect'
+  'onSelect' | 'asChild'
 > & { disabled?: boolean } & {
   ref?: React.RefObject<React.ElementRef<
     typeof NavigationMenuPrimitives.Link
   > | null>;
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
 }) => (
   <NavigationMenuPrimitives.Item className="flex" aria-disabled={disabled}>
     <NavigationMenuPrimitives.Link
@@ -81,10 +63,10 @@ const TabNavigationLink = ({
       )}
       ref={forwardedRef}
       onSelect={() => {}}
-      asChild={asChild}
+      asChild
       {...props}
     >
-      {getSubtree({ asChild, children }, (children) => (
+      <button type="button" onClick={onClick}>
         <span
           className={cx(
             // base
@@ -114,7 +96,7 @@ const TabNavigationLink = ({
         >
           {children}
         </span>
-      ))}
+      </button>
     </NavigationMenuPrimitives.Link>
   </NavigationMenuPrimitives.Item>
 );

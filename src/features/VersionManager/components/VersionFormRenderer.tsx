@@ -48,6 +48,7 @@ export function VersionFormRenderer({
           </h4>
           {isCategory ? (
             <CategoryVersionForm
+              key={editingVersion?.id ?? 'new'}
               initial={editingVersion as CategoryVersion}
               categories={categories}
               simulators={[activeManager.simulator!]}
@@ -57,6 +58,7 @@ export function VersionFormRenderer({
             />
           ) : (
             <CircuitVersionForm
+              key={editingVersion?.id ?? 'new'}
               initial={editingVersion as CircuitVersion}
               circuits={circuits}
               simulators={[activeManager.simulator!]}

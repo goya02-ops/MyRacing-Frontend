@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Category } from '../../../types/entities.ts';
 import {
   Button,
@@ -15,11 +15,6 @@ interface Props {
 
 export default function CategoryForm({ initial, onSave, onCancel }: Props) {
   const [form, setForm] = useState<Category>(initial);
-
-  useEffect(() => {
-    // Sincroniza el formulario si el 'initial' prop cambia
-    setForm(initial);
-  }, [initial]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

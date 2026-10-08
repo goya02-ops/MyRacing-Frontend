@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 // Importamos la clase base Race
 import { Race, Combination } from '../../../types/entities';
 
@@ -23,12 +23,8 @@ export default function RaceForm({
   onCancel,
 }: RaceFormProps) {
   // 3. Inicialización del estado con el tipo correcto (RaceWithId)
+  // El remount por `key` en el call site reinicia el estado al cambiar de entidad
   const [form, setForm] = useState<RaceWithId>(initial);
-
-  // Asegura que el estado se actualice cuando la prop 'initial' cambia (para edición)
-  useEffect(() => {
-    setForm(initial);
-  }, [initial]);
 
   // Maneja cambios en campos de texto/número/fecha
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Simulator } from '../../../types/entities.ts';
 import {
   Button,
@@ -27,11 +27,6 @@ export default function SimulatorForm({
   isSaving, 
 }: Props) {
   const [form, setForm] = useState<Simulator>(initial);
-
-  useEffect(() => {
-  
-    setForm(initial);
-  }, [initial]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>

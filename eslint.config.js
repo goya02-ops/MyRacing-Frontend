@@ -5,6 +5,10 @@ import tseslint from "typescript-eslint";
 
 export default defineConfig([
   {
+    // Artefactos generados: no se lintean (FE-21)
+    ignores: ["coverage/**", "dist/**"],
+  },
+  {
     files: ["**/*.ts", "**/*.tsx"],
 
     // Extend recommended rule sets from:

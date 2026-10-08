@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { CircuitVersion, Circuit, Simulator } from '../../../types/entities';
 import {
   Button,
@@ -29,10 +29,6 @@ export default function CircuitVersionForm({
   isSaving, 
 }: Props) {
   const [form, setForm] = useState<CircuitVersion>(initial);
-
-  useEffect(() => {
-    setForm(initial);
-  }, [initial]);
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;

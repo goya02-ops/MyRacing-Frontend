@@ -104,6 +104,7 @@ export default function CircuitAdmin() {
                 }
               >
                 <CircuitForm
+                  key={editing?.id ?? 'new'}
                   initial={editing!}
                   onSave={handleSave}
                   onCancel={handleCancel}

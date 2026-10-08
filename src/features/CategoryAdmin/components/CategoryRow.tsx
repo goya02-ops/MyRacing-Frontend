@@ -64,6 +64,7 @@ export function CategoryRow({
                 }
               >
                 <CategoryForm
+                  key={editing?.id ?? 'new'}
                   initial={editing as Category}
                   onSave={handleSave}
                   onCancel={handleCancel}

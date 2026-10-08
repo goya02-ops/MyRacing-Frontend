@@ -112,6 +112,7 @@ export default function MembershipAdmin() {
               Establecer Nuevo Valor
             </h3>
             <MembershipForm
+              key={editing?.id ?? 'new'}
               initial={editing}
               onCancel={handleCancel}
               onSave={handleSave}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { CategoryVersion, Category, Simulator } from '../../../types/entities';
 import {
   Button,
@@ -29,10 +29,6 @@ export default function CategoryVersionForm({
   isSaving, 
 }: CategoryVersionFormProps) {
   const [form, setForm] = useState<CategoryVersion>(initial);
-
-  useEffect(() => {
-    setForm(initial);
-  }, [initial]);
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;

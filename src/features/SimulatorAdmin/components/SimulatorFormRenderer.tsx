@@ -37,6 +37,7 @@ export function SimulatorFormRenderer({
             fallback={<div className="text-center p-4">Cargando...</div>}
           >
             <SimulatorForm
+              key={editingSimulator.id ?? 'new'}
               initial={editingSimulator}
               onCancel={onCancel}
               onSave={onSave}
