@@ -3,10 +3,24 @@ import { entityMetaByClass } from '../types/entityMeta.ts';
 import { fetchWithAuth } from './apiClient.ts';
 import { normalizeRelations } from '../utils/normalizeEntity.ts';
 
+async function throwIfNotOk(res: Response, fallback: string): Promise<void> {
+  if (res.ok) return;
+
+  let message = fallback;
+  try {
+    const body = (await res.json()) as { message?: string };
+    if (body?.message) message = body.message;
+  } catch {
+    // El body de error no es JSON parseable: se conserva el mensaje por defecto.
+  }
+  throw new Error(message);
+}
+
 export async function fetchEntities<T>(cls: Constructor<T>): Promise<T[]> {
   const metadata = entityMetaByClass.get(cls);
   if (!metadata) throw new Error('Clase no registrada');
   const res = await fetchWithAuth(`${metadata.endpoint}`);
+  await throwIfNotOk(res, 'Error al obtener la lista');
   const json = await res.json();
   return json.data;
 }
@@ -18,6 +32,7 @@ export async function fetchOne<T extends { id?: number }>(
   const metadata = entityMetaByClass.get(cls);
   if (!metadata) throw new Error('Clase no registrada');
   const res = await fetchWithAuth(`${metadata.endpoint}/${entity.id}`);
+  await throwIfNotOk(res, 'Error al obtener la entidad');
   const json = await res.json();
   return json.data;
 }
@@ -39,6 +54,7 @@ export async function saveEntity<T extends { id?: number }>(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(normalized),
   });
+  await throwIfNotOk(res, 'Error al guardar la entidad');
   const json = await res.json();
   return json.data;
 }
