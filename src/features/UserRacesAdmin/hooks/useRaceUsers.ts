@@ -28,7 +28,7 @@ export const useRaceUsers = () => {
         if (!cancelled) setLoadingUsers(false);
       }
     };
-    loadUsers();
+    void loadUsers();
     return () => {
       cancelled = true;
     };
@@ -55,7 +55,7 @@ export const useRaceUsers = () => {
         if (!cancelled) setLoadingRaces(false);
       }
     };
-    loadRaces();
+    void loadRaces();
     return () => {
       cancelled = true;
     };

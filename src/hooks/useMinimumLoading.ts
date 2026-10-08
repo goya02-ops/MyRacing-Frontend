@@ -18,7 +18,7 @@ export function useMinimumLoading(loading: boolean, minDuration = 300) {
       // mantenemos el loading hasta cumplir el mínimo, de forma diferida
       timer = setTimeout(
         () => setVisibleLoading(false),
-        remaining > 0 ? remaining : 0
+        Math.max(remaining, 0)
       );
     }
 
