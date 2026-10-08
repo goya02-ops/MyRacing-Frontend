@@ -11,11 +11,11 @@ export default defineConfig({
     baseURL,
   },
   // Levanta el dev server de Vite si no hay uno corriendo.
-  // En dev reusa el servidor existente; en CI levanta uno propio.
+  // Siempre reusa el existente: el CI ya levanta Vite en un step previo.
   webServer: {
     command: 'pnpm dev --port 5173',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
+    url: baseURL,
+    reuseExistingServer: true,
     timeout: 120_000,
   },
 });
