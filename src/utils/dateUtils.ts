@@ -4,7 +4,7 @@ export const formatDateTime = (
   if (!value) return 'N/A';
   try {
     const date = new Date(value);
-    if (isNaN(date.getTime())) {
+    if (Number.isNaN(date.getTime())) {
       return 'Fecha inválida';
     }
     return date.toLocaleString('es-AR', {
