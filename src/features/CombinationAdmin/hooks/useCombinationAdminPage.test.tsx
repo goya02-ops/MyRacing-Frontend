@@ -42,13 +42,10 @@ describe('useCombinationAdminPage.handleSave (contrato FE-16)', () => {
   beforeEach(() => {
     mocks.genericHandleSave.mockReset();
     mockToast.mockReset();
-    // happy-dom no define alert; se stubea el global que usa la producción.
-    vi.stubGlobal('alert', vi.fn());
   });
 
   afterEach(() => {
     cleanup();
-    vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
 

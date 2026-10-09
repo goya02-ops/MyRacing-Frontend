@@ -44,13 +44,10 @@ describe('useRaceInscription (contrato FE-16: toast en lugar de alert)', () => {
   beforeEach(() => {
     mockRegister.mockReset();
     mockToast.mockReset();
-    // happy-dom no define alert; se stubea el global que usa la producción.
-    vi.stubGlobal('alert', vi.fn());
   });
 
   afterEach(() => {
     cleanup();
-    vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
 

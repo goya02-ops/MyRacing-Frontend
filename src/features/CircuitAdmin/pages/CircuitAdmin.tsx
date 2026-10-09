@@ -44,7 +44,7 @@ export default function CircuitAdmin() {
       try {
         await saveEntity(circuit);
         handleCancel();
-      } catch (error: any) {
+      } catch (error) {
         console.error('Error al guardar circuito:', error);
         toast({
           variant: 'error',
