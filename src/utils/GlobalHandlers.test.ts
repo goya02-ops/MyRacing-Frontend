@@ -27,9 +27,8 @@ describe('handleSaveEntity (contrato FE-16: toast en lugar de alert)', () => {
   beforeEach(() => {
     mockSaveEntity.mockReset();
     mockToast.mockReset();
-    // La implementación actual usa alert(); se silencia para que el rojo del
-    // test sea por el toast ausente y no por el diálogo nativo (happy-dom no
-    // define window.alert, por eso se stubea el global).
+    // Se stubea el diálogo nativo por compatibilidad con happy-dom, que no
+    // define window.alert; la notificación esperada es el toast.
     vi.stubGlobal('alert', vi.fn());
   });
 

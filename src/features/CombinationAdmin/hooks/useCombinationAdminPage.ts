@@ -5,6 +5,7 @@ import { useCombinationFilters } from './useCombinationFilters.ts';
 import { useScrollToElement } from '../../../hooks/useScrollToElement.ts';
 import { isDuplicateCombination } from '../../../utils/combination/duplicate.ts';
 import { normalizeCombination } from '../../../utils/combination/normalize.ts';
+import { toast } from '../../../components/tremor/toast/hook/useToast';
 
 export function useCombinationAdminPage() {
   // Hook CRUD
@@ -34,7 +35,11 @@ export function useCombinationAdminPage() {
     async (combination: Combination) => {
       const normalized = normalizeCombination(combination);
       if (isDuplicateCombination(list, normalized)) {
-        alert('Esta combinación ya existe con las mismas fechas.');
+        toast({
+          variant: 'warning',
+          title: 'Combinación duplicada',
+          description: 'Esta combinación ya existe con las mismas fechas.',
+        });
         return;
       }
       await genericHandleSave(normalized);

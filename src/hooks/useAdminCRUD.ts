@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchEntities, saveEntity } from '../services/apiService';
 import type { Constructor } from '../types/entityMeta';
+import { toast } from '../components/tremor/toast/hook/useToast';
 
 interface AdminCRUDLogic<T> {
   list: T[];
@@ -47,11 +48,11 @@ export function useAdminCRUD<T extends { id?: number }>(
         setIsCreating(false);
       } catch (error) {
         console.error(`Error guardando ${cls.name}:`, error);
-        alert(
-          `Error al guardar: ${
-            error instanceof Error ? error.message : String(error)
-          }`
-        );
+        toast({
+          variant: 'error',
+          title: 'Error al guardar',
+          description: error instanceof Error ? error.message : String(error),
+        });
       }
     },
     [cls.name, saveMutation, queryClient, queryKey]
