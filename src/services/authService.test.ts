@@ -1,13 +1,18 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { API_BASE_URL } from './apiClient';
 
-// Mockeamos fetch global
+// Mockeamos fetch global. El stub se instala en cada test (beforeEach)
+// porque el afterEach hace unstubAllGlobals() y de lo contrario los
+// tests 2+ usarían el fetch real (ECONNREFUSED a localhost:3000).
 const mockFetch = vi.fn();
-vi.stubGlobal('fetch', mockFetch);
 
 describe('authService', () => {
-  afterEach(() => {
+  beforeEach(() => {
     mockFetch.mockReset();
+    vi.stubGlobal('fetch', mockFetch);
+  });
+
+  afterEach(() => {
     vi.unstubAllGlobals();
   });
 

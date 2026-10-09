@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
+import { cleanup } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
 // Mock de authService: reexportamos real para no romper build, pero sobrescribimos forgotPassword
@@ -23,6 +24,9 @@ let waitFor: typeof import('@testing-library/react')['waitFor'];
 
 describe('PasswordRecoveryPage', () => {
   afterEach(() => {
+    // Desmonta los renders acumulados entre tests (evita el error de
+    // "Found multiple elements" al reutilizar queries de screen).
+    cleanup();
     vi.clearAllMocks();
   });
 
