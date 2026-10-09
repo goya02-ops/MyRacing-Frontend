@@ -65,6 +65,8 @@ npx skills add <skill> -g -y
 
 ## Testing
 
+> Este proyecto usa **Vitest** (no Jest). Cargar la skill `vitest` en cualquier issue que toque tests.
+
 ### WebApp Testing
 - **Skill**: `anthropics/skills@webapp-testing`
 - **Installs**: 36.5K
@@ -92,6 +94,7 @@ npx skills add wshobson/agents@tailwind-design-system -g -y
 npx skills add vercel-labs/agent-skills@web-design-guidelines -g -y
 npx skills add supercent-io/skills-template@ui-component-patterns -g -y
 npx skills add antfu/skills@vite -g -y
+npx skills add onmax/nuxt-skills@vitest -g -y
 ```
 
 ## Browse More Skills
