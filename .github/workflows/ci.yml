@@ -76,14 +76,14 @@ jobs:
       mysql:
         image: mysql:8.0
         env:
-          MYSQL_ROOT_PASSWORD: root_password_segura
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
           MYSQL_DATABASE: myracing
           MYSQL_USER: admin
-          MYSQL_PASSWORD: MiR@cing_2025!
+          MYSQL_PASSWORD: ${{ secrets.DB_PASSWORD }}
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1 -u admin -pMiR@cing_2025!"
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -u admin -p${{ secrets.DB_PASSWORD }}"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=10
@@ -92,7 +92,7 @@ jobs:
       DB_PORT: 3306
       DB_NAME: myracing
       DB_USER: admin
-      DB_PASSWORD: MiR@cing_2025!
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       JWT_SECRET: ci_secret_for_tests
       JWT_REFRESH_SECRET: ci_refresh_secret_for_tests
       MERCADOPAGO_ACCESS_TOKEN: ci_mp_access_token
@@ -133,7 +133,7 @@ jobs:
           DB_PORT: 3306
           DB_NAME: myracing
           DB_USER: admin
-          DB_PASSWORD: MiR@cing_2025!
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           JWT_SECRET: ci_secret_for_tests
           JWT_REFRESH_SECRET: ci_refresh_secret_for_tests
           MERCADOPAGO_ACCESS_TOKEN: ci_mp_access_token
