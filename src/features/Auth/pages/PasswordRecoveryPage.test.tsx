@@ -22,6 +22,20 @@ vi.mock('../../../services/authService', async () => {
 import * as authService from '../../../services/authService';
 import PasswordRecoveryPage from './PasswordRecoveryPage';
 
+async function renderAndSubmit(email: string): Promise<void> {
+  render(
+    <MemoryRouter>
+      <PasswordRecoveryPage />
+    </MemoryRouter>
+  );
+  fireEvent.change(screen.getByPlaceholderText('tu@email.com'), {
+    target: { value: email },
+  });
+  fireEvent.click(
+    screen.getByRole('button', { name: /enviar instrucciones/i })
+  );
+}
+
 describe('PasswordRecoveryPage', () => {
   afterEach(() => {
     // Desmonta los renders acumulados entre tests (evita el error de
@@ -33,17 +47,7 @@ describe('PasswordRecoveryPage', () => {
   it('al escribir email y submit, llama a forgotPassword con ese email', async () => {
     vi.mocked(authService.forgotPassword).mockResolvedValue({ message: 'ok' });
 
-    render(
-      <MemoryRouter>
-        <PasswordRecoveryPage />
-      </MemoryRouter>
-    );
-
-    const input = screen.getByPlaceholderText('tu@email.com');
-    const button = screen.getByRole('button', { name: /enviar instrucciones/i });
-
-    fireEvent.change(input, { target: { value: 'test@example.com' } });
-    fireEvent.click(button);
+    await renderAndSubmit('test@example.com');
 
     await waitFor(() => {
       expect(authService.forgotPassword).toHaveBeenCalledWith('test@example.com');
@@ -53,17 +57,7 @@ describe('PasswordRecoveryPage', () => {
   it('si forgotPassword lanza error, muestra el mensaje de error', async () => {
     vi.mocked(authService.forgotPassword).mockRejectedValue(new Error('X'));
 
-    render(
-      <MemoryRouter>
-        <PasswordRecoveryPage />
-      </MemoryRouter>
-    );
-
-    const input = screen.getByPlaceholderText('tu@email.com');
-    const button = screen.getByRole('button', { name: /enviar instrucciones/i });
-
-    fireEvent.change(input, { target: { value: 'test@example.com' } });
-    fireEvent.click(button);
+    await renderAndSubmit('test@example.com');
 
     await waitFor(() => {
       expect(screen.getByText('X')).toBeInTheDocument();
@@ -73,17 +67,7 @@ describe('PasswordRecoveryPage', () => {
   it('si forgotPassword resuelve, muestra la vista de éxito "Email enviado"', async () => {
     vi.mocked(authService.forgotPassword).mockResolvedValue({ message: 'ok' });
 
-    render(
-      <MemoryRouter>
-        <PasswordRecoveryPage />
-      </MemoryRouter>
-    );
-
-    const input = screen.getByPlaceholderText('tu@email.com');
-    const button = screen.getByRole('button', { name: /enviar instrucciones/i });
-
-    fireEvent.change(input, { target: { value: 'test@example.com' } });
-    fireEvent.click(button);
+    await renderAndSubmit('test@example.com');
 
     await waitFor(() => {
       expect(screen.getByText('Email enviado')).toBeInTheDocument();
