@@ -2,6 +2,7 @@ import { useMemo, useCallback } from 'react';
 import { useEntityQuery } from '../../../hooks/useEntityQuery.ts'; 
 import { useEntityMutation } from '../../../hooks/useEntityMutation.ts'; 
 import { User } from '../../../types/entities';
+import { toast } from '../../../components/tremor/toast/hook/useToast';
 
 interface UserAdminLogic {
   list: User[];
@@ -27,7 +28,11 @@ export function useUserAdminData(): UserAdminLogic {
       await mutateSave(user);
     } catch (error) {
       console.error('Save error:', error);
-      alert('Error al guardar el usuario.');
+      toast({
+        variant: 'error',
+        title: 'Error al guardar',
+        description: 'No se pudo guardar el usuario.',
+      });
     }
   }, [mutateSave]);
   

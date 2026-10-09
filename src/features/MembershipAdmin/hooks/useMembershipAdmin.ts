@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useEntityQuery } from '../../../hooks/useEntityQuery.ts';
 import { useEntityMutation } from '../../../hooks/useEntityMutation.ts';
 import { Membership } from '../../../types/entities.ts';
+import { toast } from '../../../components/tremor/toast/hook/useToast';
 
 interface MembershipWithId extends Membership {
   id?: number;
@@ -28,7 +29,11 @@ export function useMembershipAdmin() {
       setEditing(null);
     } catch (error) {
       console.error('Mutation error:', error);
-      alert('Error al guardar el valor de membresía.');
+      toast({
+        variant: 'error',
+        title: 'Error al guardar',
+        description: 'No se pudo guardar el valor de membresía.',
+      });
     }
   }, [mutateSave]);
 

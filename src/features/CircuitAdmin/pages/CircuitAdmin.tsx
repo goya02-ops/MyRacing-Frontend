@@ -20,6 +20,7 @@ import {
 import { useScrollToElement } from '../../../hooks/useScrollToElement.ts';
 import { CircuitRow } from '../components/CircuitRow.tsx';
 import Spinner from '../../../components/Spinner.tsx';
+import { toast } from '../../../components/tremor/toast/hook/useToast';
 
 const CircuitForm = lazy(() => import('../components/CircuitForm'));
 
@@ -43,9 +44,13 @@ export default function CircuitAdmin() {
       try {
         await saveEntity(circuit);
         handleCancel();
-      } catch (error: any) {
+      } catch (error) {
         console.error('Error al guardar circuito:', error);
-        alert(`Error al guardar: ${error.message || String(error)}`);
+        toast({
+          variant: 'error',
+          title: 'Error al guardar',
+          description: error instanceof Error ? error.message : String(error),
+        });
       }
     },
     [saveEntity, handleCancel]
