@@ -15,6 +15,10 @@ dist
 dist-ssr
 coverage
 
+# Playwright (reporte HTML + artefactos de runs locales)
+playwright-report
+test-results
+
 # Environment files (never commit real env values)
 .env
 .env.local
