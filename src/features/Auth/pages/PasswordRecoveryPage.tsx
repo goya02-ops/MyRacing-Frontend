@@ -17,8 +17,12 @@ export default function PasswordRecoveryPage() {
     try {
       await forgotPassword(email);
       setSuccess(true);
-    } catch {
-      setError("Error al procesar la solicitud. Intenta nuevamente.");
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Error al procesar la solicitud. Intenta nuevamente."
+      );
     } finally {
       setLoading(false);
     }
