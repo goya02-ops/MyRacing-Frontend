@@ -32,6 +32,20 @@ export async function signIn(payload: {
   return data;
 }
 
+export async function forgotPassword(email: string) {
+  const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || 'Error al enviar el email de recuperación');
+  }
+  return data;
+}
+
 export function getStoredUser() {
   const userStr = localStorage.getItem('user');
   return userStr ? JSON.parse(userStr) : null;
