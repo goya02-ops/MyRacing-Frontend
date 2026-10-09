@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { cleanup } from '@testing-library/react';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  cleanup,
+} from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
 // Mock de authService: reexportamos real para no romper build, pero sobrescribimos forgotPassword
@@ -16,12 +22,6 @@ vi.mock('../../../services/authService', async () => {
 import * as authService from '../../../services/authService';
 import PasswordRecoveryPage from './PasswordRecoveryPage';
 
-// En este entorno @testing-library/react está instalado (16.3.2). Intentamos renderizar.
-let render: typeof import('@testing-library/react')['render'];
-let screen: typeof import('@testing-library/react')['screen'];
-let fireEvent: typeof import('@testing-library/react')['fireEvent'];
-let waitFor: typeof import('@testing-library/react')['waitFor'];
-
 describe('PasswordRecoveryPage', () => {
   afterEach(() => {
     // Desmonta los renders acumulados entre tests (evita el error de
@@ -31,16 +31,7 @@ describe('PasswordRecoveryPage', () => {
   });
 
   it('al escribir email y submit, llama a forgotPassword con ese email', async () => {
-    // Carga dinámica de RTL
-    const rtl = await import('@testing-library/react');
-    render = rtl.render;
-    screen = rtl.screen;
-    fireEvent = rtl.fireEvent;
-    waitFor = rtl.waitFor;
-
-    (authService.forgotPassword as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
-      { message: 'ok' }
-    );
+    vi.mocked(authService.forgotPassword).mockResolvedValue({ message: 'ok' });
 
     render(
       <MemoryRouter>
@@ -60,15 +51,7 @@ describe('PasswordRecoveryPage', () => {
   });
 
   it('si forgotPassword lanza error, muestra el mensaje de error', async () => {
-    const rtl = await import('@testing-library/react');
-    render = rtl.render;
-    screen = rtl.screen;
-    fireEvent = rtl.fireEvent;
-    waitFor = rtl.waitFor;
-
-    (authService.forgotPassword as unknown as ReturnType<typeof vi.fn>).mockRejectedValue(
-      new Error('X')
-    );
+    vi.mocked(authService.forgotPassword).mockRejectedValue(new Error('X'));
 
     render(
       <MemoryRouter>
@@ -88,15 +71,7 @@ describe('PasswordRecoveryPage', () => {
   });
 
   it('si forgotPassword resuelve, muestra la vista de éxito "Email enviado"', async () => {
-    const rtl = await import('@testing-library/react');
-    render = rtl.render;
-    screen = rtl.screen;
-    fireEvent = rtl.fireEvent;
-    waitFor = rtl.waitFor;
-
-    (authService.forgotPassword as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
-      { message: 'ok' }
-    );
+    vi.mocked(authService.forgotPassword).mockResolvedValue({ message: 'ok' });
 
     render(
       <MemoryRouter>
