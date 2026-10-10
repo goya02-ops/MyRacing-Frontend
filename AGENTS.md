@@ -21,8 +21,8 @@ Verificación estándar: `pnpm lint && pnpm build && pnpm test`.
 - La API se configura con `VITE_API_BASE_URL` en `.env.local` (default `http://localhost:3000/api`). El README puede decir `.env` pero el código usa `import.meta.env`.
 - Vitest está configurado dentro de `vite.config.ts` (happy-dom, setup `src/test/setup.ts`, tests colocados `src/**/*.{test,spec}.*`, coverage v8 con thresholds).
 - Los servicios deben usar `src/services/apiClient.ts` (fetchWithAuth + refresh token). No hacer `fetch` ad-hoc salvo `authService`.
-- Manejo de errores: validar `res.ok` en los servicios (issue FE-15); evitar `alert()` para errores (evaluar toast, FE-16).
-- Skills: testing con **Vitest** (ver `.agents/SKILLS.md`); no usar Jest (FE-18).
+- Manejo de errores: validar `res.ok` en los servicios; errores de UX via toasts (no `alert()`).
+- Skills: testing con **Vitest** (ver `.agents/SKILLS.md`); no usar Jest.
   Subagentes de referencia en `.opencode/agents/` (programador/tester/juez;
   flujo TDD en el `AGENTS.md` raíz de DevOps).
 

@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { registerUserToRace } from '../../../services/raceService.ts';
 import { User, Race } from '../../../types/entities';
 import { createRacesForCombinationKey } from '../../../utils/queryKeys';
+import { toast } from '../../../components/tremor/toast/hook/useToast';
 
 export function useRaceInscription(user: User, race: Race) {
   const queryClient = useQueryClient();
@@ -19,7 +20,11 @@ export function useRaceInscription(user: User, race: Race) {
 
     onError: (err) => {
       console.error('Error al inscribirse:', err);
-      alert('No se pudo inscribir, intente nuevamente');
+      toast({
+        variant: 'error',
+        title: 'Error al inscribirse',
+        description: 'No se pudo inscribir, intente nuevamente.',
+      });
     },
   });
 

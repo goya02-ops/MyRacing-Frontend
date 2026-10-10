@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { useEntityQuery } from '../../../hooks/useEntityQuery.ts';
 import { useEntityMutation } from '../../../hooks/useEntityMutation.ts';
 import { getRelationId } from '../../../utils/GlobalHandlers';
+import { toast } from '../../../components/tremor/toast/hook/useToast';
 import {
   Simulator,
   CategoryVersion,
@@ -94,7 +95,11 @@ export function useVersionManagerLogic(activeManager: ActiveManager) {
   const onSaveCategoryVersion = useCallback(
     async (v: CategoryVersion) => {
       if (isDuplicate(v, 'category')) {
-        alert('Error: Ya existe una versión para esa categoría.');
+        toast({
+          variant: 'warning',
+          title: 'Versión duplicada',
+          description: 'Ya existe una versión para esa categoría.',
+        });
         return;
       }
       try {
@@ -102,7 +107,11 @@ export function useVersionManagerLogic(activeManager: ActiveManager) {
         handleCancelVersion(); // Cerramos el form al éxito
       } catch (error) {
         console.error('Error saving CategoryVersion:', error);
-        alert('Error al guardar la categoría.');
+        toast({
+          variant: 'error',
+          title: 'Error al guardar',
+          description: 'No se pudo guardar la categoría.',
+        });
       }
     },
     [saveCategory, handleCancelVersion, isDuplicate]
@@ -111,7 +120,11 @@ export function useVersionManagerLogic(activeManager: ActiveManager) {
   const onSaveCircuitVersion = useCallback(
     async (v: CircuitVersion) => {
       if (isDuplicate(v, 'circuit')) {
-        alert('Error: Ya existe una versión para ese circuito.');
+        toast({
+          variant: 'warning',
+          title: 'Versión duplicada',
+          description: 'Ya existe una versión para ese circuito.',
+        });
         return;
       }
       try {
@@ -119,7 +132,11 @@ export function useVersionManagerLogic(activeManager: ActiveManager) {
         handleCancelVersion(); // Cerramos el form al éxito
       } catch (error) {
         console.error('Error saving CircuitVersion:', error);
-        alert('Error al guardar el circuito.');
+        toast({
+          variant: 'error',
+          title: 'Error al guardar',
+          description: 'No se pudo guardar el circuito.',
+        });
       }
     },
     [saveCircuit, handleCancelVersion, isDuplicate]

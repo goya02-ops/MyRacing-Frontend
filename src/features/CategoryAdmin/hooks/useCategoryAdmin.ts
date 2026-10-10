@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { Category } from '../../../types/entities';
 import { useEntityQuery } from '../../../hooks/useEntityQuery';
 import { useEntityMutation } from '../../../hooks/useEntityMutation';
+import { toast } from '../../../components/tremor/toast/hook/useToast';
 
 interface CategoryAdminLogic {
   list: Category[];
@@ -37,7 +38,11 @@ export function useCategoryAdmin(): CategoryAdminLogic {
         setIsCreating(false);
       } catch (error) {
         console.error('Error al guardar la categoría:', error);
-        alert('Error al guardar la categoría.');
+        toast({
+          variant: 'error',
+          title: 'Error al guardar',
+          description: 'No se pudo guardar la categoría.',
+        });
       }
     },
     [saveCategory]

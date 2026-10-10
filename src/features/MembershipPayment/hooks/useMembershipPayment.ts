@@ -7,6 +7,7 @@ import {
   processPayment,
 } from '../../../services/membershipService.ts';
 import { QUERY_KEYS } from '../../../utils/queryKeys';
+import { toast } from '../../../components/tremor/toast/hook/useToast';
 
 export function useMembershipPage() {
   const { user } = useUser();
@@ -31,7 +32,11 @@ export function useMembershipPage() {
       },
       onError: (err) => {
         console.error('Error al crear preferencia:', err);
-        alert(`Error al iniciar el pago: ${err.message}`);
+        toast({
+          variant: 'error',
+          title: 'Error al iniciar el pago',
+          description: err instanceof Error ? err.message : String(err),
+        });
       },
     });
 

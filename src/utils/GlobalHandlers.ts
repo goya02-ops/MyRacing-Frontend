@@ -1,4 +1,5 @@
 import { saveEntity } from '../services/apiService';
+import { toast } from '../components/tremor/toast/hook/useToast';
 
 export const getRelationId = (
   entity: any,
@@ -17,7 +18,11 @@ export const handleSaveEntity = async <T extends { id?: number }>(
   duplicateCheck?: (entity: T) => boolean
 ) => {
   if (duplicateCheck && duplicateCheck(entity)) {
-    alert(`Duplicated: ${entityClass}`);
+    toast({
+      variant: 'warning',
+      title: 'Elemento duplicado',
+      description: 'Ya existe ese elemento en la lista.',
+    });
     return;
   }
 
@@ -46,6 +51,10 @@ export const handleSaveEntity = async <T extends { id?: number }>(
     onSuccess();
   } catch (error) {
     console.error('Error guardando:', error);
-    alert(`Error al guardar: ${error}`);
+    toast({
+      variant: 'error',
+      title: 'Error al guardar',
+      description: error instanceof Error ? error.message : String(error),
+    });
   }
 };

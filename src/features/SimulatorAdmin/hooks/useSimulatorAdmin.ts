@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useEntityQuery } from '../../../hooks/useEntityQuery.ts';
 import { useEntityMutation } from '../../../hooks/useEntityMutation.ts';
 import { Simulator } from '../../../types/entities.ts'; 
+import { toast } from '../../../components/tremor/toast/hook/useToast';
 
 interface SimulatorWithId extends Simulator {
   id?: number;
@@ -33,7 +34,11 @@ export function useSimulatorAdmin() {
         setEditingSimulator(null); 
       } catch (error) {
         console.error('Mutation error:', error);
-        alert('Error al guardar el simulador.');
+        toast({
+          variant: 'error',
+          title: 'Error al guardar',
+          description: 'No se pudo guardar el simulador.',
+        });
       }
     },
     [mutateSave]
