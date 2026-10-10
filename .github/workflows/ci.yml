@@ -72,21 +72,6 @@ jobs:
   e2e:
     name: E2E (full stack)
     runs-on: ubuntu-latest
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
-          MYSQL_DATABASE: myracing
-          MYSQL_USER: admin
-          MYSQL_PASSWORD: ${{ secrets.DB_PASSWORD }}
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1 -u admin -p${{ secrets.DB_PASSWORD }}"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
     env:
       DB_HOST: 127.0.0.1
       DB_PORT: 3306
@@ -99,6 +84,26 @@ jobs:
       URL_FRONTEND: http://localhost:5173
       URL_BACKEND: http://localhost:3000
     steps:
+      - name: Start MySQL (ephemeral, CI only)
+        run: |
+          docker run -d --name mysql \
+            -e MYSQL_ROOT_PASSWORD="${{ secrets.MYSQL_ROOT_PASSWORD }}" \
+            -e MYSQL_DATABASE=myracing \
+            -e MYSQL_USER=admin \
+            -e MYSQL_PASSWORD="${{ secrets.DB_PASSWORD }}" \
+            -p 3306:3306 \
+            --health-cmd='mysqladmin ping -h 127.0.0.1 -u admin -p"$MYSQL_PASSWORD"' \
+            --health-interval=10s --health-timeout=5s --health-retries=10 \
+            mysql:8.0
+
+      - name: Wait for MySQL
+        run: |
+          for i in $(seq 1 30); do
+            docker exec mysql mysqladmin ping -h 127.0.0.1 -u admin -p"${{ secrets.DB_PASSWORD }}" && break
+            sleep 2
+          done
+          docker exec mysql mysqladmin ping -h 127.0.0.1 -u admin -p"${{ secrets.DB_PASSWORD }}"
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - uses: pnpm/action-setup@d9184bf108216479bc5a137cc391f4d7b14c870b # v6.1.0
