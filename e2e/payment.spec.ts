@@ -84,9 +84,9 @@ let adminToken = '';
 // (0 registros) sin quemar cuota del limiter. Distintos por test para que
 // los 2 workers no colisionen entre sí; el admin compartido se resuelve
 // con lock simple (register 400-existe → login).
-const ADMIN_EMAIL = 'fe12_admin@test.local';
-const APROBADO_EMAIL = 'fe12_aprobado@test.local';
-const RECHAZADO_EMAIL = 'fe12_rechazado@test.local';
+const ADMIN_EMAIL = 'fe12_admin@test.com';
+const APROBADO_EMAIL = 'fe12_aprobado@test.com';
+const RECHAZADO_EMAIL = 'fe12_rechazado@test.com';
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
