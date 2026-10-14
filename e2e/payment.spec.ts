@@ -243,12 +243,26 @@ async function fillSecureField(
   value: string,
   description: string,
 ): Promise<void> {
-  const input = page
-    .frameLocator('iframe')
-    .locator(`input[name="${inputName}"]:visible`);
+  // Poll sobre conteo (no toBeVisible): el Brick re-renderiza los iframes y
+  // los nodos se detachean durante la espera, lo que hace fallar
+  // toBeVisible por strict-mode aunque el campo YA exista visible.
+  // `count()` no dispara strict-mode ni sufre detaches. Scope a
+  // `src*="secure-fields"` para achicar el conjunto. El locator se
+  // re-resuelve justo antes del fill, sin guardar handles entre pasos.
+  const countVisible = async (): Promise<number> =>
+    page
+      .frameLocator('iframe[src*="secure-fields"]')
+      .locator(`input[name="${inputName}"]:visible`)
+      .count();
   try {
-    await expect(input).toBeVisible({ timeout: BRICK_TIMEOUT });
-    await input.fill(value, { timeout: BRICK_TIMEOUT });
+    await expect
+      .poll(countVisible, { timeout: BRICK_TIMEOUT, intervals: [1000] })
+      .toBeGreaterThan(0);
+    await page
+      .frameLocator('iframe[src*="secure-fields"]')
+      .locator(`input[name="${inputName}"]:visible`)
+      .first()
+      .fill(value, { timeout: BRICK_TIMEOUT });
   } catch (error) {
     throw new Error(
       `Brick: campo seguro "${description}" (input[name="${inputName}"] en ` +
@@ -392,9 +406,15 @@ async function openBrickWallet(page: Page): Promise<void> {
   // intentos (el Brick a veces necesita un segundo nudge).
   try {
     const wallet = page.locator('#wallet_container');
-    const cardNumber = page
-      .frameLocator('iframe')
-      .locator('input[name="cardNumber"]:visible');
+    // Poll sobre conteo (no toBeVisible): al re-renderizar, el Brick deja N
+    // iframes con el input y los nodos se detachean durante la espera, lo
+    // que rompe toBeVisible por strict-mode aunque cardNumber YA esté
+    // visible. `count()` no dispara strict-mode ni sufre detaches.
+    const countCardNumber = async (): Promise<number> =>
+      page
+        .frameLocator('iframe[src*="secure-fields"]')
+        .locator('input[name="cardNumber"]:visible')
+        .count();
     const dumpSecureFields = async (): Promise<string> => {
       const states: string[] = [];
       for (const frame of page.frames()) {
@@ -509,7 +529,9 @@ async function openBrickWallet(page: Page): Promise<void> {
         }
       }
       try {
-        await expect(cardNumber).toBeVisible({ timeout: 15000 });
+        await expect
+          .poll(countCardNumber, { timeout: 15000, intervals: [1000] })
+          .toBeGreaterThan(0);
         cardReady = true;
       } catch {
         lastCause =
