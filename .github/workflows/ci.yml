@@ -83,6 +83,7 @@ jobs:
       MERCADOPAGO_ACCESS_TOKEN: ${{ secrets.MERCADOPAGO_ACCESS_TOKEN }}
       URL_FRONTEND: http://localhost:5173
       URL_BACKEND: http://localhost:3000
+      URL_WEBHOOK_MP: http://127.0.0.1:3000/api/payment/wh-mp
     steps:
       - name: Start MySQL (ephemeral, CI only)
         # Secrets por env (Sonar S7636: nunca expandir secrets en run).
@@ -148,6 +149,7 @@ jobs:
           JWT_SECRET: ci_secret_for_tests
           JWT_REFRESH_SECRET: ci_refresh_secret_for_tests
           MERCADOPAGO_ACCESS_TOKEN: ${{ secrets.MERCADOPAGO_ACCESS_TOKEN }}
+          URL_WEBHOOK_MP: http://127.0.0.1:3000/api/payment/wh-mp
 
       - run: pnpm install --frozen-lockfile
 
@@ -166,6 +168,14 @@ jobs:
 
       - name: Run E2E tests (Playwright, full stack)
         run: pnpm test:e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-report
+          path: playwright-report/
+          if-no-files-found: ignore
 
   coverage:
     name: Coverage
