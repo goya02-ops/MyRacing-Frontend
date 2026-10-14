@@ -377,6 +377,44 @@ async function appendSecureChunk(
   );
 }
 
+async function retypeSecureTail(
+  page: Page,
+  inputName: 'cardNumber' | 'expirationDate' | 'securityCode',
+  tail: string,
+  description: string,
+): Promise<void> {
+  // Re-fetch forzado de cuotas: con el número COMPLETO ya tipeado y el logo
+  // VISA visible, el fetch temprano de installments ya salió con
+  // `payment_type_id` vacío y el Brick no lo reintenta (select vacío para
+  // siempre). Borrar los últimos 4 (Backspace x4, NO select-all: eso
+  // borraría todo) y re-tipearlos genera eventos de cambio con el tipo ya
+  // resuelto y dispara un nuevo fetch con `payment_type_id` correcto.
+  let lastCause = 'sin intentos de tipeo';
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      const target = await findVisibleSecureInput(page, inputName);
+      if (!target) {
+        throw new Error('input visible no resuelto en ningún frame secure-fields');
+      }
+      for (let i = 0; i < 4; i += 1) {
+        await target.press('Backspace', { timeout: BRICK_TIMEOUT });
+      }
+      await target.pressSequentially(tail, {
+        delay: 30,
+        timeout: BRICK_TIMEOUT,
+      });
+      return;
+    } catch (error) {
+      lastCause = `intento ${attempt}: ${(error as Error).message.split('\n')[0]}`;
+    }
+  }
+  throw new Error(
+    `Brick: re-tipeo "${description}" (input[name="${inputName}"] en ` +
+      `iframe secure-fields) no tipeable en ${BRICK_TIMEOUT}ms tras 3 intentos. ` +
+      `Última causa: ${lastCause}`,
+  );
+}
+
 async function waitForBinResolution(page: Page): Promise<void> {
   // Punto MEDIO del tipeo del número (no gate previo a cuotas): se llama ENTRE
   // las dos tandas (BIN ya tipeado, resto pendiente). Causa raíz CI (trace:
@@ -440,20 +478,30 @@ async function fillBrickCard(
   // el request `payment_methods/installments` salía con `payment_type_id=`
   // vacío (BIN aún sin resolver) → MP responde sin options → el select queda
   // en "Elegir opción" para siempre → submit incompleto. En local rápido el
-  // BIN ya había resuelto y por eso funcionaba. Recién tras el número completo:
-  // poll de cuotas + select + verificación de persistencia, y después el resto.
+  // BIN ya había resuelto y por eso funcionaba. Evidencia CI posterior: con el
+  // número COMPLETO tipeado el logo VISA SÍ aparece, pero el fetch de cuotas
+  // ya salió antes con `payment_type_id` vacío y el Brick no lo reintenta →
+  // select vacío para siempre. Por eso, tras el número completo y el logo
+  // VISA, se fuerza un re-fetch RE-tipeando los últimos 4 dígitos (Backspace
+  // x4 + pressSequentially de los mismos 4): genera cambios con el tipo ya
+  // resuelto y dispara un nuevo fetch con `payment_type_id` correcto. Recién
+  // después: poll de cuotas + select + verificación de persistencia.
   // Tipeo REAL con pressSequentially (`.fill()` no dispara los handlers del
   // Brick y reporta `incomplete_fields` sin requests).
   const binFirstHalf = TEST_CARD.number.slice(0, 8); // 45099535: BIN de la Visa test
   const cardRemainder = TEST_CARD.number.slice(8); // 66233704: resto
+  const cardTail = TEST_CARD.number.slice(-4); // 3704: cola para re-fetch
   await fillSecureField(page, 'cardNumber', binFirstHalf, 'número de tarjeta (BIN, 1/2)');
   // Punto medio del tipeo: ÚNICA espera de logo (sin gate separado previo a
   // cuotas; el poll de options de cuotas viene después).
   await waitForBinResolution(page);
   await appendSecureChunk(page, 'cardNumber', cardRemainder, 'número de tarjeta (resto, 2/2)');
+  // Número completo + VISA visible: forzar re-fetch de cuotas re-tipeando la
+  // cola (el fetch temprano ya salió sin payment_type_id y no se reintenta solo).
+  await retypeSecureTail(page, 'cardNumber', cardTail, 'número de tarjeta (cola, re-fetch)');
   // Cuotas OBLIGATORIAS: el Brick exige cuotas seleccionadas (sin cuotas →
   // `incomplete_fields` → nunca sale `card_tokens`). El select se puebla async
-  // tras detectar el BIN, así que se espera hasta 30s a que el 2º select tenga
+  // tras el re-fetch, así que se espera hasta 60s a que el 2º select tenga
   // options con valores. Si no se puebla: error explícito, no seguir.
   const selects = page.locator('select');
   const installmentSelect = selects.nth(1);
@@ -476,15 +524,15 @@ async function fillBrickCard(
   try {
     await expect
       .poll(countInstallmentValues, {
-        timeout: 30000,
+        timeout: 60000,
         intervals: [1000],
       })
       .toBeGreaterThan(0);
   } catch (error) {
     throw new Error(
-      `Brick: cuotas no se poblaron tras detectar BIN (el 2º select no tiene ` +
-        `options con valores 30s después de tipear el número; sin ` +
-        `issuer/cuotas el submit saldría como incomplete_fields). ` +
+      `Brick: cuotas no se poblaron tras re-tipeo de la cola (el 2º select no tiene ` +
+        `options con valores 60s después del re-fetch forzado con payment_type_id ` +
+        `resuelto; sin issuer/cuotas el submit saldría como incomplete_fields). ` +
         `Causa: ${(error as Error).message.split('\n')[0]}`,
     );
   }
