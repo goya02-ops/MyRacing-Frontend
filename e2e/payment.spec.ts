@@ -344,6 +344,98 @@ async function fillMainField(
   }
 }
 
+async function waitForBinResolution(page: Page): Promise<void> {
+  // Causa raíz CI (create-preference 201 OK pero Brick reporta TODO faltante
+  // al submitear): en runner lento el test tocaba cuotas/resto ANTES de que
+  // el Brick terminara la detección del BIN; al resolver, el Brick
+  // reconstruye el form y borra lo tipeado/seleccionado. En local rápido el
+  // BIN ya había resuelto y por eso funcionaba. Por eso se espera aquí,
+  // justo tras tipear el número y ANTES de tocar cuotas.
+  // Señal de red (no requisito): el BIN dispara payment_methods con el BIN;
+  // si la URL exacta difiere, se ignora y mandan las señales DOM/red de abajo.
+  try {
+    await page.waitForResponse(
+      /payment_methods\/(search|installments).*bin|bin.*payment_methods/i,
+      { timeout: 60000 },
+    );
+  } catch {
+    // Señal, no requisito: seguir a la señal primaria (logo).
+  }
+  // Señal PRIMARIA y obligatoria: logo de la marca en el campo (poll hasta
+  // 60s de un img/svg con alt o aria-label /visa/i dentro del Brick o de un
+  // iframe visible). Se usa count() por frame (no strict-mode).
+  const countVisaLogo = async (): Promise<number> => {
+    let total = 0;
+    try {
+      total += await page
+        .locator(
+          'img[alt*="visa" i]:visible, img[aria-label*="visa" i]:visible, svg[aria-label*="visa" i]:visible',
+        )
+        .count();
+    } catch {
+      // Seguir con los frames.
+    }
+    for (const frame of page.frames()) {
+      try {
+        total += await frame
+          .locator(
+            'img[alt*="visa" i]:visible, img[aria-label*="visa" i]:visible, svg[aria-label*="visa" i]:visible',
+          )
+          .count();
+        if (total > 0) return total;
+      } catch {
+        continue;
+      }
+    }
+    return total;
+  };
+  try {
+    await expect
+      .poll(countVisaLogo, { timeout: 60000, intervals: [1000] })
+      .toBeGreaterThan(0);
+    // Señal usada: logo VISA visible (primaria).
+    return;
+  } catch {
+    // Sin logo: alternativa aceptada = select de cuotas con options con
+    // valores Y un segundo payment_methods que responda 200.
+  }
+  const hasInstallmentValues = async (): Promise<boolean> => {
+    try {
+      const selects = page.locator('select');
+      if ((await selects.count()) < 2) return false;
+      const values = await selects
+        .nth(1)
+        .locator('option')
+        .evaluateAll((options) =>
+          options
+            .map((option) => (option as unknown as { value: string }).value)
+            .filter((value) => value !== ''),
+        )
+        .catch(() => [] as string[]);
+      return values.length > 0;
+    } catch {
+      return false;
+    }
+  };
+  let methodsOk = false;
+  try {
+    const response = await page.waitForResponse(/payment_methods/i, {
+      timeout: 60000,
+    });
+    methodsOk = response.ok();
+  } catch {
+    methodsOk = false;
+  }
+  if (methodsOk && (await hasInstallmentValues())) {
+    // Señal usada: ALTERNATIVA (sin logo; cuotas con valores + payment_methods 200).
+    return;
+  }
+  throw new Error(
+    'BIN no resolvió tras tipear número (sin logo VISA ni métodos), ' +
+      'el Brick reconstruiría el form',
+  );
+}
+
 async function fillBrickCard(
   page: Page,
   holderName: 'APRO' | 'OTHE',
@@ -355,6 +447,9 @@ async function fillBrickCard(
   // Si se tipeaba todo de corrido con `.fill()`, el Brick nunca detectaba el
   // BIN y reportaba `incomplete_fields` sin emitir ningún request.
   await fillSecureField(page, 'cardNumber', TEST_CARD.number, 'número de tarjeta');
+  // Esperar a que el BIN resuelva ANTES de tocar cuotas/resto: si se
+  // interactúa antes, el Brick reconstruye el form al resolver y borra todo.
+  await waitForBinResolution(page);
   // Cuotas OBLIGATORIAS: el Brick exige cuotas seleccionadas (sin cuotas →
   // `incomplete_fields` → nunca sale `card_tokens`). El select se puebla async
   // tras detectar el BIN, así que se espera hasta 30s a que el 2º select tenga
