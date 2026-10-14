@@ -381,26 +381,164 @@ async function openBrickWallet(page: Page): Promise<void> {
         `Causa: ${(error as Error).message.split('\n')[0]}`,
     );
   }
-  // Paso 3: click en "Tarjeta de crédito" → RECIÉN AHÍ aparecen los 3 iframes
-  // secure-fields con UN input visible cada uno (cardNumber, expirationDate
-  // MM/AA, securityCode; los demás inputs del iframe tienen clase `hide`).
+  // Paso 3: seleccionar "Tarjeta de crédito" POR ROL (no por texto) → RECIÉN
+  // AHÍ aparecen los 3 iframes secure-fields con UN input visible cada uno
+  // (cardNumber, expirationDate MM/AA, securityCode; los demás inputs del
+  // iframe tienen clase `hide`).
+  // Evidencia CI decisiva: clickear el texto pintaba el radio como
+  // seleccionado pero NO activaba el método (todos los inputs del iframe
+  // conservaban class="hide", incluido cardNumber). Por eso se hace
+  // check()/click por rol + verificación real con toBeChecked() + hasta 3
+  // intentos (el Brick a veces necesita un segundo nudge).
   try {
-    await page
-      .getByText(/tarjeta de crédito/i)
-      .first()
-      .click({ timeout: 15000 });
-    await expect(
-      page
-        .frameLocator('iframe')
-        .locator('input[name="cardNumber"]:visible'),
-    ).toBeVisible({ timeout: STEP_TIMEOUT });
+    const wallet = page.locator('#wallet_container');
+    const cardNumber = page
+      .frameLocator('iframe')
+      .locator('input[name="cardNumber"]:visible');
+    const dumpSecureFields = async (): Promise<string> => {
+      const states: string[] = [];
+      for (const frame of page.frames()) {
+        const inputs = await frame
+          .locator('input[name]')
+          .evaluateAll((elements) =>
+            elements.map((element) => {
+              const input = element as unknown as {
+                getAttribute: (name: string) => string | null;
+                getBoundingClientRect: () => { width: number; height: number };
+                disabled: boolean;
+              };
+              const rect = input.getBoundingClientRect();
+              return {
+                name: input.getAttribute('name') ?? '',
+                className: input.getAttribute('class') ?? '',
+                visible: rect.width > 0 && rect.height > 0 && !input.disabled,
+              };
+            }),
+          )
+          .catch(() => [] as Array<{ name: string; className: string; visible: boolean }>);
+        if (inputs.length > 0) {
+          states.push(
+            `${frame.url()} :: ${inputs
+              .map(
+                (item) =>
+                  `${item.name}[class="${item.className}" visible=${item.visible}]`,
+              )
+              .join(', ')}`,
+          );
+        }
+      }
+      return states.length > 0 ? states.join('\n') : '(sin inputs en iframes)';
+    };
+    let cardReady = false;
+    let lastCause = 'sin intentos';
+    for (let attempt = 1; attempt <= 3 && !cardReady; attempt += 1) {
+      // Localizar la opción por rol (más fiel al Brick que el texto), con
+      // fallbacks: input[type="radio"] asociado o fila clickeable contenedora.
+      let target = wallet
+        .getByRole('radio', { name: /tarjeta de crédito/i })
+        .first();
+      if ((await target.count()) === 0) {
+        const labelled = wallet
+          .locator('label', { hasText: /tarjeta de crédito/i })
+          .first();
+        if ((await labelled.count()) > 0) {
+          const innerRadio = labelled
+            .locator('input[type="radio"], input[type="checkbox"]')
+            .first();
+          target =
+            (await innerRadio.count()) > 0 ? innerRadio : labelled;
+        } else {
+          const innerInputs = wallet.locator('input[type="radio"]');
+          const total = await innerInputs.count();
+          let found = false;
+          for (let i = 0; i < total; i += 1) {
+            const candidate = innerInputs.nth(i);
+            const labelText = await candidate
+              .evaluate((element) => {
+                const input = element as unknown as {
+                  closest: (selector: string) => { textContent: string | null } | null;
+                  getAttribute: (name: string) => string | null;
+                };
+                const label =
+                  input.closest('label')?.textContent ?? '';
+                const aria = input.getAttribute('aria-label') ?? '';
+                return `${label} ${aria}`;
+              })
+              .catch(() => '');
+            if (/tarjeta de crédito/i.test(labelText)) {
+              target = candidate;
+              found = true;
+              break;
+            }
+          }
+          if (!found) {
+            target = wallet
+              .getByText(/tarjeta de crédito/i)
+              .first();
+          }
+        }
+      }
+      await expect(target).toBeVisible({ timeout: STEP_TIMEOUT });
+      const tag = await target
+        .evaluate((el) => (el as unknown as { tagName: string }).tagName)
+        .catch(() => '');
+      const inputType = await target
+        .evaluate((el) => (el as unknown as { type?: string }).type ?? '')
+        .catch(() => '');
+      if (tag === 'INPUT' && (inputType === 'radio' || inputType === 'checkbox')) {
+        await target.check({ timeout: 15000 });
+      } else {
+        try {
+          await target.check({ timeout: 5000 });
+        } catch {
+          await target.click({ timeout: 15000 });
+        }
+      }
+      // VERIFICAR selección real: el click al texto pintaba el radio sin
+      // activar el método, así que se exige toBeChecked().
+      try {
+        await expect(target).toBeChecked({ timeout: 15000 });
+      } catch {
+        const ariaChecked = await target
+          .getAttribute('aria-checked')
+          .catch(() => null);
+        if (ariaChecked !== 'true') {
+          lastCause =
+            `intento ${attempt}: la opción no quedó checked tras check()/click`;
+          continue;
+        }
+      }
+      try {
+        await expect(cardNumber).toBeVisible({ timeout: 15000 });
+        cardReady = true;
+      } catch {
+        lastCause =
+          `intento ${attempt}: opción seleccionada pero ` +
+          `input[name="cardNumber"]:visible ausente tras 15s`;
+      }
+    }
+    if (!cardReady) {
+      const dump = await dumpSecureFields();
+      console.log(
+        `Brick wallet paso 3/3: estado secure-fields tras 3 intentos:\n${dump}`,
+      );
+      throw new Error(
+        `Brick wallet paso 3/3: tras seleccionar "Tarjeta de crédito" por rol ` +
+          `(3 intentos con toBeChecked) no apareció ` +
+          `input[name="cardNumber"]:visible en 15s por intento. ` +
+          `Última causa: ${lastCause}. Estado secure-fields:\n${dump}`,
+      );
+    }
   } catch (error) {
+    const message = (error as Error).message;
+    if (message.includes('Estado secure-fields:')) throw error as Error;
     throw new Error(
       `Brick wallet paso 3/3: se esperaba la opción "Tarjeta de crédito" ` +
-        `del selector de medios que al clickear monte los 3 iframes ` +
+        `del selector de medios que al seleccionarla por rol (check + ` +
+        `toBeChecked, 3 intentos) monte los 3 iframes ` +
         `secure-fields con input[name="cardNumber"] visible ` +
         `en ${STEP_TIMEOUT}ms. ` +
-        `Causa: ${(error as Error).message.split('\n')[0]}`,
+        `Causa: ${message.split('\n')[0]}`,
     );
   }
 }
