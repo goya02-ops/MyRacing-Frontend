@@ -12,8 +12,12 @@ import {
 //
 // DECISIONES (tester):
 // - Seed en beforeAll vía API REST contra el backend REAL que levanta el CI
-//   (VITE_API_BASE_URL o http://localhost:3000): admin + usuario común por
-//   test + membresía $1500. DB CI efímera y vacía (lección de BE-11).
+//   (VITE_API_BASE_URL o http://localhost:3000): UN solo admin compartido
+//   (creado una vez en beforeAll; si ya existe → login) + membresía $1500 +
+//   un usuario común fresco por test (aislamiento premium). DB CI efímera y
+//   vacía (lección de BE-11). registerOrLogin reintenta con backoff ante 429
+//   del rate limiter (hasta 3 intentos, 5s/10s); si persiste falla con mensaje
+//   explícito de rate-limit (no bug del flujo de pago).
 // - Sesión vía API (register/login) inyectada en localStorage con
 //   addInitScript ANTES del goto. Se evita el login UI: AuthPage tiene
 //   overlay animado con paneles login/signup (isActive) y es frágil para
@@ -70,6 +74,13 @@ interface Session {
 let api: APIRequestContext;
 let adminToken = '';
 
+const REGISTER_MAX_ATTEMPTS = 3;
+const REGISTER_RETRY_DELAYS_MS = [5000, 10000];
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function uniqueEmail(tag: string): string {
   const suffix = `${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
   return `fe12_${tag}_${suffix}@test.local`;
@@ -79,22 +90,41 @@ async function registerOrLogin(
   ctx: APIRequestContext,
   data: Record<string, string>,
 ): Promise<Session> {
-  const reg = await ctx.post(`${API_BASE}/auth/register`, { data });
-  if (reg.ok()) {
-    const body = await reg.json();
-    return {
-      user: body.user,
-      accessToken: body.accessToken,
-      refreshToken: body.refreshToken,
-    };
+  let lastRegisterStatus = 0;
+  for (let attempt = 1; attempt <= REGISTER_MAX_ATTEMPTS; attempt++) {
+    const reg = await ctx.post(`${API_BASE}/auth/register`, { data });
+    if (reg.ok()) {
+      const body = await reg.json();
+      return {
+        user: body.user,
+        accessToken: body.accessToken,
+        refreshToken: body.refreshToken,
+      };
+    }
+    lastRegisterStatus = reg.status();
+    // Rate limiter del backend (5 req/15min por IP en register): reintentar
+    // con backoff en lugar de caer al login (que daría 401 espurio porque el
+    // usuario nunca se creó). Emails únicos por test, así que reintentar con
+    // los mismos datos es seguro.
+    if (lastRegisterStatus === 429 && attempt < REGISTER_MAX_ATTEMPTS) {
+      await sleep(REGISTER_RETRY_DELAYS_MS[attempt - 1] ?? 10000);
+      continue;
+    }
+    if (lastRegisterStatus === 429) {
+      throw new Error(
+        `Seed: rate-limit del backend (429 en register tras ${REGISTER_MAX_ATTEMPTS} intentos) para ${data.email}. ` +
+          `Es rate-limit, no bug del flujo de pago. Reintentar el job más tarde.`,
+      );
+    }
+    // Re-ejecución: el usuario ya existe → login (register devuelve 400).
+    break;
   }
-  // Re-ejecución: el usuario ya existe → login (register devuelve 400).
   const login = await ctx.post(`${API_BASE}/auth/login`, {
     data: { emailOrUsername: data.email, password: data.password },
   });
   if (!login.ok()) {
     throw new Error(
-      `Seed: register (${reg.status()}) y login (${login.status()}) fallaron para ${data.email}`,
+      `Seed: register (${lastRegisterStatus}) y login (${login.status()}) fallaron para ${data.email}`,
     );
   }
   const body = await login.json();
