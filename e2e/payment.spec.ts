@@ -500,12 +500,13 @@ async function openBrickWallet(page: Page): Promise<void> {
         `Causa: ${(error as Error).message.split('\n')[0]}`,
     );
   }
-  // Paso 3: clickear "Tarjeta de crédito" POR TEXTO (selector verificado,
-  // funciona en local) en loop de hasta 4 rondas: click → poll corto (15s)
-  // de cardNumber visible con conteo (misma técnica anti strict-mode) → si
-  // aparece, salir; si no, re-clickear. Hipótesis CI: en el runner (más
-  // lento) el click cae mientras el Brick aún inicializa y se pierde, así
-  // que un solo click no basta aunque el texto sea visible.
+  // Paso 3: UN SOLO click a "Tarjeta de crédito" POR TEXTO (selector
+  // verificado, funciona en local) + UN SOLO poll largo (180s) de cardNumber
+  // visible con conteo (misma técnica anti strict-mode). Sin re-clicks: cada
+  // click re-selecciona el método y reinicia el formulario del Brick,
+  // borrando lo ya montado/tipeado (evidencia CI: wallet reseteada a
+  // selección de método, prístina). El timeout de test es 300s, así que el
+  // poll de 180s entra.
   try {
     // Poll sobre conteo con UN solo frame (findVisibleSecureInput): el Brick
     // re-renderiza los iframes y `frameLocator('iframe...')` resuelve a 3
@@ -548,33 +549,23 @@ async function openBrickWallet(page: Page): Promise<void> {
       }
       return states.length > 0 ? states.join('\n') : '(sin inputs en iframes)';
     };
-    let cardReady = false;
-    let lastCause = 'sin intentos';
-    for (let attempt = 1; attempt <= 4 && !cardReady; attempt += 1) {
-      const creditOption = page.getByText(/tarjeta de crédito/i).first();
-      await expect(creditOption).toBeVisible({ timeout: STEP_TIMEOUT });
-      await creditOption.click({ timeout: 15000 });
-      try {
-        await expect
-          .poll(countCardNumber, { timeout: 15000, intervals: [1000] })
-          .toBeGreaterThan(0);
-        cardReady = true;
-      } catch {
-        lastCause =
-          `intento ${attempt}: click registrado pero ` +
-          `input[name="cardNumber"]:visible ausente tras 15s`;
-      }
-    }
-    if (!cardReady) {
+    const creditOption = page.getByText(/tarjeta de crédito/i).first();
+    await expect(creditOption).toBeVisible({ timeout: STEP_TIMEOUT });
+    await creditOption.click({ timeout: 15000 });
+    try {
+      await expect
+        .poll(countCardNumber, { timeout: 180000, intervals: [1000] })
+        .toBeGreaterThan(0);
+    } catch {
       const dump = await dumpSecureFields();
       console.log(
-        `Brick wallet paso 3/3: estado secure-fields tras 4 intentos:\n${dump}`,
+        `Brick wallet paso 3/3: estado secure-fields tras poll único de 180s:\n${dump}`,
       );
       throw new Error(
-        `Brick wallet paso 3/3: tras clickear "Tarjeta de crédito" por texto ` +
-          `(4 rondas con poll de 15s) no apareció ` +
+        `Brick wallet paso 3/3: tras UN click a "Tarjeta de crédito" por texto ` +
+          `(poll único de 180s) no apareció ` +
           `input[name="cardNumber"]:visible. ` +
-          `Última causa: ${lastCause}. Estado secure-fields:\n${dump}`,
+          `Estado secure-fields:\n${dump}`,
       );
     }
   } catch (error) {
@@ -582,8 +573,8 @@ async function openBrickWallet(page: Page): Promise<void> {
     if (message.includes('Estado secure-fields:')) throw error as Error;
     throw new Error(
       `Brick wallet paso 3/3: se esperaba la opción "Tarjeta de crédito" ` +
-        `del selector de medios que al clickearla por texto (hasta 4 rondas ` +
-        `con poll de 15s) monte los 3 iframes ` +
+        `del selector de medios que al clickearla por texto (UN click + poll ` +
+        `único de 180s) monte los 3 iframes ` +
         `secure-fields con input[name="cardNumber"] visible ` +
         `en ${STEP_TIMEOUT}ms. ` +
         `Causa: ${message.split('\n')[0]}`,
