@@ -9,6 +9,8 @@ export default defineConfig({
   testDir: './e2e',
   use: {
     baseURL,
+    trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
   },
   // Levanta el dev server de Vite si no hay uno corriendo.
   // Siempre reusa el existente: el CI ya levanta Vite en un step previo.
