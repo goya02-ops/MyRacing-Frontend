@@ -344,39 +344,6 @@ async function fillMainField(
   }
 }
 
-async function appendSecureChunk(
-  page: Page,
-  inputName: 'cardNumber' | 'expirationDate' | 'securityCode',
-  chunk: string,
-  description: string,
-): Promise<void> {
-  // Segunda tanda del número: SOLO append (sin click previo, sin clear). El
-  // click recolocaría el caret y podría partir el valor; aquí el foco ya está
-  // en el input tras la primera tanda + espera de BIN. Re-resuelve el frame
-  // (el Brick puede re-montar iframes al resolver el BIN) y reintenta 3 veces.
-  let lastCause = 'sin intentos de tipeo';
-  for (let attempt = 1; attempt <= 3; attempt += 1) {
-    try {
-      const target = await findVisibleSecureInput(page, inputName);
-      if (!target) {
-        throw new Error('input visible no resuelto en ningún frame secure-fields');
-      }
-      await target.pressSequentially(chunk, {
-        delay: 30,
-        timeout: BRICK_TIMEOUT,
-      });
-      return;
-    } catch (error) {
-      lastCause = `intento ${attempt}: ${(error as Error).message.split('\n')[0]}`;
-    }
-  }
-  throw new Error(
-    `Brick: segunda tanda "${description}" (input[name="${inputName}"] en ` +
-      `iframe secure-fields) no tipeable en ${BRICK_TIMEOUT}ms tras 3 intentos. ` +
-      `Última causa: ${lastCause}`,
-  );
-}
-
 async function retypeSecureTail(
   page: Page,
   inputName: 'cardNumber' | 'expirationDate' | 'securityCode',
@@ -416,13 +383,15 @@ async function retypeSecureTail(
 }
 
 async function waitForBinResolution(page: Page): Promise<void> {
-  // Punto MEDIO del tipeo del número (no gate previo a cuotas): se llama ENTRE
-  // las dos tandas (BIN ya tipeado, resto pendiente). Causa raíz CI (trace:
-  // `payment_methods/installments` con `payment_type_id=` vacío porque el
-  // Brick disparó cuotas antes de que el BIN resolviera el tipo en runner
-  // lento → MP responde sin options → select en "Elegir opción" para siempre).
-  // Al tipear el BIN primero y esperar aquí su resolución, el request de cuotas
-  // que dispara el número completo ya lleva el tipo resuelto.
+  // DESPUÉS del número completo (no entre tandas): se llama con los 16
+  // dígitos ya tipeados. Causa raíz CI (run 38617172422: con solo 8 dígitos
+  // tipeados el logo VISA no aparece en 60s; en CI la detección del BIN
+  // necesita el número completo, el screenshot con logo lo mostraba con los
+  // 16 dígitos). Tipear todo de una tampoco alcanza solo: el fetch temprano
+  // de installments ya salió con `payment_type_id` vacío y el Brick no lo
+  // reintenta (select vacío para siempre). Por eso la secuencia es número
+  // completo → espera de logo aquí → re-tipeo de la cola (re-fetch con tipo
+  // resuelto, en fillBrickCard).
   // ÚNICA espera aquí: logo VISA visible (poll 60s de img/svg con alt o
   // aria-label /visa/i en página o iframes). Sin fallback a cuotas: el poll de
   // options de cuotas vive DESPUÉS (en fillBrickCard) y duplicarlo aquí
@@ -459,8 +428,8 @@ async function waitForBinResolution(page: Page): Promise<void> {
     return;
   } catch (error) {
     throw new Error(
-      'BIN no resolvió entre tandas del número (sin logo VISA visible 60s ' +
-        `tras tipear el BIN; el request de cuotas saldría sin payment_type_id). ` +
+      'BIN no resolvió tras número completo (sin logo VISA visible 60s ' +
+        `tras tipear los 16 dígitos; el re-fetch de cuotas saldría sin payment_type_id). ` +
         `Causa: ${(error as Error).message.split('\n')[0]}`,
     );
   }
@@ -471,31 +440,25 @@ async function fillBrickCard(
   holderName: 'APRO' | 'OTHE',
   email: string,
 ): Promise<void> {
-  // Orden con dependencias del Brick: el número se tipea en DOS tandas. La
-  // 1ª tanda (BIN, 8 dígitos) dispara la detección por keystrokes; se espera
-  // el logo VISA (BIN resuelto, payment_type_id conocido) y RECIÉN la 2ª tanda
-  // (8 restantes). Si se tipeaba el número completo de corrido, en runner lento
-  // el request `payment_methods/installments` salía con `payment_type_id=`
-  // vacío (BIN aún sin resolver) → MP responde sin options → el select queda
-  // en "Elegir opción" para siempre → submit incompleto. En local rápido el
-  // BIN ya había resuelto y por eso funcionaba. Evidencia CI posterior: con el
-  // número COMPLETO tipeado el logo VISA SÍ aparece, pero el fetch de cuotas
-  // ya salió antes con `payment_type_id` vacío y el Brick no lo reintenta →
-  // select vacío para siempre. Por eso, tras el número completo y el logo
-  // VISA, se fuerza un re-fetch RE-tipeando los últimos 4 dígitos (Backspace
-  // x4 + pressSequentially de los mismos 4): genera cambios con el tipo ya
-  // resuelto y dispara un nuevo fetch con `payment_type_id` correcto. Recién
-  // después: poll de cuotas + select + verificación de persistencia.
+  // Orden con dependencias del Brick: número COMPLETO de una → espera de
+  // logo VISA (BIN resuelto, payment_type_id conocido) → re-tipeo de la cola
+  // para forzar re-fetch de cuotas. Evidencia CI run 38617172422: con solo 8
+  // dígitos tipeados el logo VISA no aparece en 60s (en CI la detección del
+  // BIN necesita el número completo). Pero tipear todo de una tampoco alcanza
+  // solo: el fetch temprano de installments ya salió con `payment_type_id`
+  // vacío y el Brick no lo reintenta → select vacío para siempre. Por eso,
+  // tras el número completo y el logo VISA, se fuerza un re-fetch RE-tipeando
+  // los últimos 4 dígitos (Backspace x4 + pressSequentially de los mismos 4):
+  // genera cambios con el tipo ya resuelto y dispara un nuevo fetch con
+  // `payment_type_id` correcto. Recién después: poll de cuotas + select +
+  // verificación de persistencia.
   // Tipeo REAL con pressSequentially (`.fill()` no dispara los handlers del
   // Brick y reporta `incomplete_fields` sin requests).
-  const binFirstHalf = TEST_CARD.number.slice(0, 8); // 45099535: BIN de la Visa test
-  const cardRemainder = TEST_CARD.number.slice(8); // 66233704: resto
   const cardTail = TEST_CARD.number.slice(-4); // 3704: cola para re-fetch
-  await fillSecureField(page, 'cardNumber', binFirstHalf, 'número de tarjeta (BIN, 1/2)');
-  // Punto medio del tipeo: ÚNICA espera de logo (sin gate separado previo a
+  await fillSecureField(page, 'cardNumber', TEST_CARD.number, 'número de tarjeta (completo)');
+  // Número completo tipeado: ÚNICA espera de logo (sin gate separado previo a
   // cuotas; el poll de options de cuotas viene después).
   await waitForBinResolution(page);
-  await appendSecureChunk(page, 'cardNumber', cardRemainder, 'número de tarjeta (resto, 2/2)');
   // Número completo + VISA visible: forzar re-fetch de cuotas re-tipeando la
   // cola (el fetch temprano ya salió sin payment_type_id y no se reintenta solo).
   await retypeSecureTail(page, 'cardNumber', cardTail, 'número de tarjeta (cola, re-fetch)');
