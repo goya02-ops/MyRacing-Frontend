@@ -167,9 +167,7 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run E2E tests (Playwright, full stack)
-        # Un solo worker: el runner compartido (backend+mysql+vite+bricks)
-        # muere de CPU y el JS del Brick pierde sincronía con 2 workers.
-        run: pnpm test:e2e -- --workers=1
+        run: pnpm test:e2e
 
       - name: Upload Playwright report
         if: failure()
