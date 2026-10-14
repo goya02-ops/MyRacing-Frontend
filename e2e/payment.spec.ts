@@ -6,7 +6,7 @@ import {
   type Page,
 } from '@playwright/test';
 
-// FE-12 (#13): E2E de pago REAL contra el sandbox de Mercado Pago.
+// E2E de pago REAL contra el sandbox de Mercado Pago.
 // Estrategia PIVOT (orquestador + usuario, ronda 6): NO se tipea más dentro
 // de los iframes secure-fields del Brick wallet. Causa raíz: carrera interna
 // del widget de MP (mapeo BIN→tipo por red vs fetch de cuotas) que en el
@@ -364,7 +364,7 @@ test.afterAll(async () => {
 });
 
 test(
-  'FE-12 (a): pago aprobado con tarjeta test → /payment-status?payment_id= + estado aprobado y usuario premium',
+  'pago aprobado con tarjeta test → /payment-status?payment_id= + estado aprobado y usuario premium',
   async ({ page }) => {
     test.setTimeout(180000);
     const session = await getSeedCommonUser(APROBADO_EMAIL, 'aprobado');
@@ -398,7 +398,7 @@ test(
 );
 
 test(
-  'FE-12 (b): pago rechazado (titular OTHE) → 400 rejected, sigue común, /membership-payment muestra botón de pago',
+  'pago rechazado (titular OTHE) → 400 rejected, sigue común, /membership-payment muestra botón de pago',
   async ({ page }) => {
     test.setTimeout(180000);
     const session = await getSeedCommonUser(RECHAZADO_EMAIL, 'rechazado');

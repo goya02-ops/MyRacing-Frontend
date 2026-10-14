@@ -38,7 +38,7 @@ vi.mock('../../../components/tremor/toast/hook/useToast', () => ({
 
 const mockToast = vi.mocked(toast);
 
-describe('useCombinationAdminPage.handleSave (contrato FE-16)', () => {
+describe('useCombinationAdminPage.handleSave (contrato: toast en lugar de alert)', () => {
   beforeEach(() => {
     mocks.genericHandleSave.mockReset();
     mockToast.mockReset();

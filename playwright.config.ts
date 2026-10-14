@@ -1,6 +1,6 @@
 import { defineConfig } from '@playwright/test';
 
-// FE-1: smoke E2E mínimo. Solo chromium (liviano).
+// Smoke E2E mínimo. Solo chromium (liviano).
 // Base URL configurable para CI/preview: PLAYWRIGHT_BASE_URL.
 const baseURL =
   process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:5173';
