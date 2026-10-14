@@ -43,9 +43,14 @@ import {
 // - MP_PUBLIC_KEY por env: membershipPayment.tsx usa
 //   `VITE_MP_PUBLIC_KEY` como paymentStatus.tsx (FE-12, programador;
 //   documentada en `.env.example`). Si falta, el guard muestra Callout.
-// - Selectores VERIFICADOS del Brick cardPayment (locale es-AR, sonda local
-//   contra el SDK con la misma public key TEST, sin backend): los 3 campos
-//   seguros viven en iframes `https://secure-fields.mercadopago.com/`, UNO
+// - Selectores VERIFICADOS del Brick wallet (locale es-AR, sonda local
+//   contra el SDK con la misma public key TEST, flujo completo reproducido):
+//   1) botón app "Pagar y convertirme en Premium" → #wallet_container con UN
+//   botón "Pagar" del Brick (sin campos todavía); 2) click en ese botón
+//   (dentro de #wallet_container, primero) → selector de medios (Mercado
+//   Pago, Crédito de Mercado Pago, Tarjeta de crédito, Tarjeta de débito,
+//   Efectivo); 3) click en "Tarjeta de crédito" → RECIÉN AHÍ los 3 campos
+//   seguros en iframes `https://secure-fields.mercadopago.com/`, UNO
 //   visible por iframe (los demás tienen clase `hide`). Se buscan global
 //   (`page.frameLocator('iframe')`, sin filtrar por `#wallet_container`:
 //   los iframes son del SDK) con `input[name="cardNumber"]:visible`,
@@ -329,19 +334,75 @@ async function fillBrickCard(
 }
 
 async function openBrickWallet(page: Page): Promise<void> {
-  await page.goto('/membership-payment');
-  await expect(
-    page.getByRole('heading', { name: /membresía premium/i }),
-  ).toBeVisible({ timeout: 30000 });
-  await page
-    .getByRole('button', { name: /pagar y convertirme en premium/i })
-    .click();
-  await expect(page.locator('#wallet_container')).toBeVisible({
-    timeout: 60000,
-  });
-  await expect(
-    page.locator('#wallet_container iframe').first(),
-  ).toBeAttached({ timeout: 60000 });
+  // FE-12: secuencia VERIFICADA del Brick wallet (sonda contra el SDK con la
+  // misma public key TEST, flujo completo reproducido). El Brick wallet tiene
+  // pasos intermedios: sin ellos no existen los iframes secure-fields.
+  const STEP_TIMEOUT = 60000;
+  // Paso 1: botón de la app → se crea la preferencia → aparece
+  // #wallet_container con UN botón "Pagar" del Brick (sin campos todavía).
+  try {
+    await page.goto('/membership-payment');
+    await expect(
+      page.getByRole('heading', { name: /membresía premium/i }),
+    ).toBeVisible({ timeout: 30000 });
+    await page
+      .getByRole('button', { name: /pagar y convertirme en premium/i })
+      .click();
+    await expect(page.locator('#wallet_container')).toBeVisible({
+      timeout: STEP_TIMEOUT,
+    });
+  } catch (error) {
+    throw new Error(
+      `Brick wallet paso 1/3: se esperaba /membership-payment con heading ` +
+        `"Membresía Premium" + botón app "Pagar y convertirme en Premium" ` +
+        `que monte #wallet_container visible en ${STEP_TIMEOUT}ms. ` +
+        `Causa: ${(error as Error).message.split('\n')[0]}`,
+    );
+  }
+  // Paso 2: click en el botón "Pagar" del Brick dentro de #wallet_container
+  // (el primero) → aparece el selector de medios (Mercado Pago, Crédito de
+  // Mercado Pago, Tarjeta de crédito, Tarjeta de débito, Efectivo).
+  try {
+    const walletPay = page
+      .locator('#wallet_container')
+      .getByRole('button', { name: /pagar/i })
+      .first();
+    await expect(walletPay).toBeVisible({ timeout: STEP_TIMEOUT });
+    await walletPay.click({ timeout: 15000 });
+    await expect(
+      page.getByText(/tarjeta de crédito/i).first(),
+    ).toBeVisible({ timeout: STEP_TIMEOUT });
+  } catch (error) {
+    throw new Error(
+      `Brick wallet paso 2/3: se esperaba UN botón "Pagar" del Brick dentro ` +
+        `de #wallet_container que al clickear muestre el selector de medios ` +
+        `(Mercado Pago, Tarjeta de crédito, Tarjeta de débito, Efectivo) ` +
+        `en ${STEP_TIMEOUT}ms. ` +
+        `Causa: ${(error as Error).message.split('\n')[0]}`,
+    );
+  }
+  // Paso 3: click en "Tarjeta de crédito" → RECIÉN AHÍ aparecen los 3 iframes
+  // secure-fields con UN input visible cada uno (cardNumber, expirationDate
+  // MM/AA, securityCode; los demás inputs del iframe tienen clase `hide`).
+  try {
+    await page
+      .getByText(/tarjeta de crédito/i)
+      .first()
+      .click({ timeout: 15000 });
+    await expect(
+      page
+        .frameLocator('iframe')
+        .locator('input[name="cardNumber"]:visible'),
+    ).toBeVisible({ timeout: STEP_TIMEOUT });
+  } catch (error) {
+    throw new Error(
+      `Brick wallet paso 3/3: se esperaba la opción "Tarjeta de crédito" ` +
+        `del selector de medios que al clickear monte los 3 iframes ` +
+        `secure-fields con input[name="cardNumber"] visible ` +
+        `en ${STEP_TIMEOUT}ms. ` +
+        `Causa: ${(error as Error).message.split('\n')[0]}`,
+    );
+  }
 }
 
 async function submitBrick(page: Page): Promise<void> {
