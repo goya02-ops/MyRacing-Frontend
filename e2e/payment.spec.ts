@@ -274,6 +274,7 @@ async function fillSecureField(
   inputName: 'cardNumber' | 'expirationDate' | 'securityCode',
   value: string,
   description: string,
+  delayMs = 30,
 ): Promise<void> {
   // Poll sobre conteo (0/1) con la misma técnica: resuelve el input visible
   // en UN solo frame; `count()` no dispara strict-mode ni sufre detaches.
@@ -305,7 +306,7 @@ async function fillSecureField(
       }
       await target.click({ timeout: BRICK_TIMEOUT });
       await target.pressSequentially(value, {
-        delay: 30,
+        delay: delayMs,
         timeout: BRICK_TIMEOUT,
       });
       return;
@@ -433,7 +434,21 @@ async function fillBrickCard(
   // Tipeo REAL con pressSequentially (`.fill()` no dispara los handlers del
   // Brick y reporta `incomplete_fields` sin requests).
   const cardTail = TEST_CARD.number.slice(-4); // 3704: cola para re-fetch
-  await fillSecureField(page, 'cardNumber', TEST_CARD.number, 'número de tarjeta (completo)');
+  // El número se tipea LENTO (500ms/caracter, ~8s total) para dar tiempo al
+  // mapeo BIN→tipo por red (GET payment_methods/search) ANTES de que el
+  // Brick dispare el fetch de cuotas al completar el número. Causa raíz
+  // (evidencia CI): el logo VISA aparece por detección LOCAL rápida, pero el
+  // tipo tarda por red; el fetch de cuotas sale antes con payment_type_id
+  // vacío y el Brick no lo reintenta. En local rápido el mapeo gana la
+  // carrera y por eso funciona. Solo el número va lento; el resto mantiene
+  // delay 30ms.
+  await fillSecureField(
+    page,
+    'cardNumber',
+    TEST_CARD.number,
+    'número de tarjeta (completo)',
+    500,
+  );
   // Número completo + re-tipeo de la cola (el fetch temprano ya salió sin
   // payment_type_id y no se reintenta solo): fuerza un fetch nuevo con tipo.
   await retypeSecureTail(page, 'cardNumber', cardTail, 'número de tarjeta (cola, re-fetch)');
