@@ -393,37 +393,73 @@ async function fillBrickCard(
     );
   }
   let chosenInstallment = '';
-  try {
-    const values = await installmentSelect
-      .locator('option')
-      .evaluateAll((options) =>
-        options
-          .map((option) => (option as unknown as { value: string }).value)
-          .filter((value) => value !== ''),
-      );
-    chosenInstallment = values.includes('1') ? '1' : values[0];
-    await installmentSelect.selectOption(chosenInstallment, {
-      timeout: BRICK_TIMEOUT,
-    });
-  } catch (error) {
-    throw new Error(
-      `Brick: no se pudo elegir ${chosenInstallment || '1'} cuota(s) en el select de installments. ` +
-        `Causa: ${(error as Error).message.split('\n')[0]}`,
-    );
-  }
-  try {
-    const selected = await installmentSelect.inputValue();
-    if (selected !== chosenInstallment) {
+  let persistedInstallment = false;
+  for (let round = 1; round <= 3 && !persistedInstallment; round += 1) {
+    try {
+      const values = await installmentSelect
+        .locator('option')
+        .evaluateAll((options) =>
+          options
+            .map((option) => (option as unknown as { value: string }).value)
+            .filter((value) => value !== ''),
+        );
+      chosenInstallment = values.includes('1') ? '1' : values[0];
+      await installmentSelect.selectOption(chosenInstallment, {
+        timeout: BRICK_TIMEOUT,
+      });
+    } catch (error) {
       throw new Error(
-        `se esperaba "${chosenInstallment}" pero quedó "${selected}"`,
+        `Brick: no se pudo elegir ${chosenInstallment || '1'} cuota(s) en el select de installments. ` +
+          `Causa: ${(error as Error).message.split('\n')[0]}`,
       );
     }
-  } catch (error) {
-    throw new Error(
-      `Brick: la cuota elegida no quedó seleccionada (verificación ` +
-        `inputValue() falló para "${chosenInstallment}"). ` +
-        `Causa: ${(error as Error).message.split('\n')[0]}`,
-    );
+    // PERSISTENCIA: en CI lento las options aparecen ANTES de que termine
+    // la detección del BIN; elegir '1' sobre options transitorias se pierde
+    // en silencio cuando el Brick recarga las definitivas (el inputValue()
+    // verificado era del select viejo) → submit sin cuotas →
+    // `incomplete_fields`. Por eso se exige que el valor siga siendo '1' en
+    // 3 lecturas seguidas separadas 2s (poll hasta 20s); si se pierde se
+    // re-selecciona, hasta 3 rondas.
+    const readInstallment = async (): Promise<string> => {
+      try {
+        return await installmentSelect.inputValue();
+      } catch {
+        return '__unresolved__';
+      }
+    };
+    try {
+      await expect
+        .poll(readInstallment, { timeout: 20000, intervals: [1000] })
+        .toBe(chosenInstallment);
+    } catch (error) {
+      if (round === 3) {
+        throw new Error(
+          `Brick: cuotas no persisten tras detección BIN (ronda ${round}/3: ` +
+            `inputValue() no volvió a "${chosenInstallment}" en 20s). ` +
+            `Causa: ${(error as Error).message.split('\n')[0]}`,
+        );
+      }
+      continue;
+    }
+    let stable = true;
+    for (let read = 0; read < 3; read += 1) {
+      await sleep(2000);
+      const selected = await readInstallment();
+      if (selected !== chosenInstallment) {
+        stable = false;
+        break;
+      }
+    }
+    if (stable) {
+      persistedInstallment = true;
+    } else if (round === 3) {
+      throw new Error(
+        `Brick: cuotas no persisten tras detección BIN (la selección ` +
+          `"${chosenInstallment}" se perdió en 3 lecturas seguidas separadas ` +
+          `2s tras 3 rondas de re-selección; el Brick recargó las options ` +
+          `definitivas y el submit saldría como incomplete_fields).`,
+      );
+    }
   }
   await fillSecureField(
     page,
