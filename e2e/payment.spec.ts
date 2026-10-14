@@ -20,13 +20,13 @@ import {
 //   E2E. UserContext lee `user`+`accessToken` de localStorage al iniciar,
 //   así que la inyección es equivalente (mismas keys que setea el login UI).
 // - Ruta success REAL: el código navega a `/payment-success`
-//   (membershipPayment.tsx:50,57) pero el router (App.tsx) solo define
-//   `/payment-status`. NO existe ruta `/payment-success`: la URL cambia pero
-//   no renderiza página. La aserción es sobre la URL + estado premium vía
-//   API. HALLAZGO para el programador: alinear ruta o agregar redirect.
-// - MP_PUBLIC_KEY HARDCODEADA en membershipPayment.tsx:18 (TEST-...); la
-//   hermana paymentStatus.tsx sí usa VITE_MP_PUBLIC_KEY. HALLAZGO: pasarla
-//   a env (misma key TEST ya existe en .env).
+//   (membershipPayment.tsx:50,57) y el router (App.tsx) define el alias
+//   `/payment-success` → `PaymentStatus` existente (FE-12, programador).
+//   La aserción es sobre la URL + estado premium vía API (éxito real,
+//   no solo URL).
+// - MP_PUBLIC_KEY por env: membershipPayment.tsx usa
+//   `VITE_MP_PUBLIC_KEY` como paymentStatus.tsx (FE-12, programador;
+//   documentada en `.env.example`). Si falta, el guard muestra Callout.
 // - Selectores de Bricks: el formulario de tarjeta corre en iframes del
 //   SDK dentro de #wallet_container. Los selectores de fillBrickField son
 //   PROVISORIOS (best-effort) hasta inspeccionar el DOM real con el flujo
@@ -282,8 +282,8 @@ test('FE-12 (a): pago aprobado con tarjeta test → /payment-success y usuario p
   await fillBrickCard(page, 'APRO');
   await submitBrick(page);
 
-  // El código navega a /payment-success (ruta sin componente en el router:
-  // ver hallazgo en el header). Se asevera URL + estado real vía API.
+  // El código navega a /payment-success (alias → PaymentStatus en App.tsx).
+  // Se asevera URL + estado real vía API (éxito real, no solo URL).
   await expect(page).toHaveURL(/payment-success/, { timeout: 90000 });
   await expect(await getMyType(session.accessToken)).toBe('premium');
 });
