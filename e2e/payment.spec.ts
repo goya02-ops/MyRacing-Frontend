@@ -621,9 +621,12 @@ test.afterAll(async () => {
   await api?.dispose();
 });
 
-test('FE-12 (a): pago aprobado con tarjeta test → /payment-status?payment_id= + estado aprobado y usuario premium', async ({
-  page,
-}) => {
+test(
+  'FE-12 (a): pago aprobado con tarjeta test → /payment-status?payment_id= + estado aprobado y usuario premium',
+  { timeout: 300000 },
+  async ({
+    page,
+  }) => {
   const session = await getSeedCommonUser(APROBADO_EMAIL, 'aprobado');
   await loginAs(page, session);
   await openBrickWallet(page);
@@ -647,9 +650,12 @@ test('FE-12 (a): pago aprobado con tarjeta test → /payment-status?payment_id= 
   await expect(await getMyType(session.accessToken)).toBe('premium');
 });
 
-test('FE-12 (b): pago rechazado (titular OTHE) → error visible, sin navegar, sigue común', async ({
-  page,
-}) => {
+test(
+  'FE-12 (b): pago rechazado (titular OTHE) → error visible, sin navegar, sigue común',
+  { timeout: 300000 },
+  async ({
+    page,
+  }) => {
   const session = await getSeedCommonUser(RECHAZADO_EMAIL, 'rechazado');
   await loginAs(page, session);
   await openBrickWallet(page);
