@@ -80,7 +80,8 @@ const MEMBERSHIP_PRICE = 1500;
 
 const TEST_CARD = {
   number: '4509953566233704',
-  expiration: '11/30',
+  // Crudo sin barra: la máscara MM/AA la pone el Brick; el `/` literal puede romperla.
+  expiration: '1130',
   cvv: '123',
   docNumber: '12345678',
 } as const;
@@ -354,14 +355,16 @@ async function fillBrickCard(
   // Si se tipeaba todo de corrido con `.fill()`, el Brick nunca detectaba el
   // BIN y reportaba `incomplete_fields` sin emitir ningún request.
   await fillSecureField(page, 'cardNumber', TEST_CARD.number, 'número de tarjeta');
-  // Cuotas: OBLIGATORIO que el 2º select tenga options con valores (BIN
-  // detectado). Si no aparecen, error explícito: no seguir a ciegas.
+  // Cuotas OBLIGATORIAS: el Brick exige cuotas seleccionadas (sin cuotas →
+  // `incomplete_fields` → nunca sale `card_tokens`). El select se puebla async
+  // tras detectar el BIN, así que se espera hasta 30s a que el 2º select tenga
+  // options con valores. Si no se puebla: error explícito, no seguir.
   const selects = page.locator('select');
+  const installmentSelect = selects.nth(1);
   const countInstallmentValues = async (): Promise<number> => {
     try {
       if ((await selects.count()) < 2) return 0;
-      const values = await selects
-        .nth(1)
+      const values = await installmentSelect
         .locator('option')
         .evaluateAll((options) =>
           options
@@ -377,32 +380,48 @@ async function fillBrickCard(
   try {
     await expect
       .poll(countInstallmentValues, {
-        timeout: BRICK_TIMEOUT,
+        timeout: 30000,
         intervals: [1000],
       })
       .toBeGreaterThan(0);
   } catch (error) {
     throw new Error(
-      `Brick: el select de installments no se pobló tras tipear el número ` +
-        `de tarjeta en ${BRICK_TIMEOUT}ms (el Brick no detectó el BIN; sin ` +
+      `Brick: cuotas no se poblaron tras detectar BIN (el 2º select no tiene ` +
+        `options con valores 30s después de tipear el número; sin ` +
         `issuer/cuotas el submit saldría como incomplete_fields). ` +
         `Causa: ${(error as Error).message.split('\n')[0]}`,
     );
   }
+  let chosenInstallment = '';
   try {
-    const values = await selects
-      .nth(1)
+    const values = await installmentSelect
       .locator('option')
       .evaluateAll((options) =>
         options
           .map((option) => (option as unknown as { value: string }).value)
           .filter((value) => value !== ''),
       );
-    const target = values.includes('1') ? '1' : values[0];
-    await selects.nth(1).selectOption(target, { timeout: BRICK_TIMEOUT });
+    chosenInstallment = values.includes('1') ? '1' : values[0];
+    await installmentSelect.selectOption(chosenInstallment, {
+      timeout: BRICK_TIMEOUT,
+    });
   } catch (error) {
     throw new Error(
-      `Brick: no se pudo elegir 1 cuota en el select de installments. ` +
+      `Brick: no se pudo elegir ${chosenInstallment || '1'} cuota(s) en el select de installments. ` +
+        `Causa: ${(error as Error).message.split('\n')[0]}`,
+    );
+  }
+  try {
+    const selected = await installmentSelect.inputValue();
+    if (selected !== chosenInstallment) {
+      throw new Error(
+        `se esperaba "${chosenInstallment}" pero quedó "${selected}"`,
+      );
+    }
+  } catch (error) {
+    throw new Error(
+      `Brick: la cuota elegida no quedó seleccionada (verificación ` +
+        `inputValue() falló para "${chosenInstallment}"). ` +
         `Causa: ${(error as Error).message.split('\n')[0]}`,
     );
   }
