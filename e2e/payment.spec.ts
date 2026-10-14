@@ -3,6 +3,7 @@ import {
   expect,
   request as baseRequest,
   type APIRequestContext,
+  type Locator,
   type Page,
 } from '@playwright/test';
 
@@ -237,25 +238,46 @@ async function getMyType(token: string): Promise<string> {
 
 const BRICK_TIMEOUT = 30000;
 
+// Evidencia CI run 38596698871: `frameLocator('iframe[src*="secure-fields"]')`
+// resuelve a 3 frames (mismo src) y el strict-mode falla A NIVEL FRAME en el
+// `fill`, así que ningún `.first()` sobre el input interno lo evita. Por eso
+// se itera `page.frames()` en JS, se filtra por
+// `frame.url().includes('secure-fields')` y en cada frame se evalúa
+// `frame.locator('input[name="X"]:visible').count()` (`count()` no dispara
+// strict-mode). Se retorna `frame.locator(...).first()` del PRIMER frame con
+// count > 0 (hay exactamente uno visible por vez: los demás tienen clase
+// `hide`). Operar vía ese `frame.locator` es scope de un solo frame, donde
+// el strict a nivel frame es imposible.
+async function findVisibleSecureInput(
+  page: Page,
+  inputName: string,
+): Promise<Locator | null> {
+  for (const frame of page.frames()) {
+    try {
+      if (!frame.url().includes('secure-fields')) continue;
+      const visible = await frame
+        .locator(`input[name="${inputName}"]:visible`)
+        .count();
+      if (visible > 0) {
+        return frame.locator(`input[name="${inputName}"]:visible`).first();
+      }
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
 async function fillSecureField(
   page: Page,
   inputName: 'cardNumber' | 'expirationDate' | 'securityCode',
   value: string,
   description: string,
 ): Promise<void> {
-  // Poll sobre conteo (no toBeVisible): el Brick re-renderiza los iframes y
-  // los nodos se detachean durante la espera, lo que hace fallar
-  // toBeVisible por strict-mode aunque el campo YA exista visible.
-  // `count()` no dispara strict-mode ni sufre detaches. Scope a
-  // `src*="secure-fields"` para achicar el conjunto. El fill resuelve a UN
-  // solo elemento (`.first()` determinístico: hay UN `input[name]` visible
-  // por vez, los demás con clase `hide`) y reintenta hasta 3 veces con
-  // locator fresco: el Brick re-renderiza entre poll y fill (detach/strict).
+  // Poll sobre conteo (0/1) con la misma técnica: resuelve el input visible
+  // en UN solo frame; `count()` no dispara strict-mode ni sufre detaches.
   const countVisible = async (): Promise<number> =>
-    page
-      .frameLocator('iframe[src*="secure-fields"]')
-      .locator(`input[name="${inputName}"]:visible`)
-      .count();
+    (await findVisibleSecureInput(page, inputName)) === null ? 0 : 1;
   try {
     await expect
       .poll(countVisible, { timeout: BRICK_TIMEOUT, intervals: [1000] })
@@ -267,14 +289,16 @@ async function fillSecureField(
         `Causa: ${(error as Error).message.split('\n')[0]}`,
     );
   }
+  // El Brick re-monta los iframes entre poll y fill: re-resolver el frame en
+  // cada intento y reintentar hasta 3 veces ante detach.
   let lastFillCause = 'sin intentos de fill';
   for (let attempt = 1; attempt <= 3; attempt += 1) {
     try {
-      await page
-        .frameLocator('iframe[src*="secure-fields"]')
-        .locator(`input[name="${inputName}"]:visible`)
-        .first()
-        .fill(value, { timeout: BRICK_TIMEOUT });
+      const target = await findVisibleSecureInput(page, inputName);
+      if (!target) {
+        throw new Error('input visible no resuelto en ningún frame secure-fields');
+      }
+      await target.fill(value, { timeout: BRICK_TIMEOUT });
       return;
     } catch (error) {
       lastFillCause = `intento ${attempt}: ${(error as Error).message.split('\n')[0]}`;
@@ -421,15 +445,13 @@ async function openBrickWallet(page: Page): Promise<void> {
   // intentos (el Brick a veces necesita un segundo nudge).
   try {
     const wallet = page.locator('#wallet_container');
-    // Poll sobre conteo (no toBeVisible): al re-renderizar, el Brick deja N
-    // iframes con el input y los nodos se detachean durante la espera, lo
-    // que rompe toBeVisible por strict-mode aunque cardNumber YA esté
-    // visible. `count()` no dispara strict-mode ni sufre detaches.
+    // Poll sobre conteo con UN solo frame (findVisibleSecureInput): el Brick
+    // re-renderiza los iframes y `frameLocator('iframe...')` resuelve a 3
+    // frames con el mismo src, lo que rompe por strict-mode A NIVEL FRAME
+    // aunque cardNumber YA esté visible. `count()` dentro de cada frame no
+    // dispara strict-mode ni sufre detaches.
     const countCardNumber = async (): Promise<number> =>
-      page
-        .frameLocator('iframe[src*="secure-fields"]')
-        .locator('input[name="cardNumber"]:visible')
-        .count();
+      (await findVisibleSecureInput(page, 'cardNumber')) === null ? 0 : 1;
     const dumpSecureFields = async (): Promise<string> => {
       const states: string[] = [];
       for (const frame of page.frames()) {
