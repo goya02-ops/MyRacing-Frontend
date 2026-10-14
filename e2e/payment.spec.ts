@@ -10,14 +10,20 @@ import {
 // Estrategia OPCIÓN A: nada mockeado en red. El ambiente test ES el mock
 // (tarjetas de prueba oficiales de MP, determinístico y gratis).
 //
-// DECISIONES (tester):
+// DECISIONES (tester, ronda 4/5 — login-first):
 // - Seed en beforeAll vía API REST contra el backend REAL que levanta el CI
 //   (VITE_API_BASE_URL o http://localhost:3000): UN solo admin compartido
-//   (creado una vez en beforeAll; si ya existe → login) + membresía $1500 +
-//   un usuario común fresco por test (aislamiento premium). DB CI efímera y
-//   vacía (lección de BE-11). registerOrLogin reintenta con backoff ante 429
-//   del rate limiter (hasta 3 intentos, 5s/10s); si persiste falla con mensaje
-//   explícito de rate-limit (no bug del flujo de pago).
+//   con email FIJO + membresía $1500 + un usuario común con email FIJO por
+//   test (aislamiento premium). DB CI efímera y vacía (lección de BE-11).
+// - LOGIN-FIRST (evidencia CI run 38586896354): el limiter es 5 req/15min/IP
+//   con IP de egress compartida entre runs, y cada reintento de register
+//   consume cuota. Por eso se intenta `login` PRIMERO y solo si da 401/404
+//   se hace UN `register`. Re-runs: todo login (0 registros). Primer run:
+//   3 registros < 5. Si register da 400 (carrera entre los 2 workers por el
+//   admin compartido) → login. Si register da 429 → esperar 60s UNA vez y
+//   reintentar login (el usuario puede existir ya); si sigue 429, fallar con
+//   mensaje rate-limit explícito (no bug del flujo de pago). Sin reintentos
+//   ciegos: queman cuota y el segundo test arrancaba ya bloqueado.
 // - Sesión vía API (register/login) inyectada en localStorage con
 //   addInitScript ANTES del goto. Se evita el login UI: AuthPage tiene
 //   overlay animado con paneles login/signup (isActive) y es frágil para
@@ -74,65 +80,90 @@ interface Session {
 let api: APIRequestContext;
 let adminToken = '';
 
-const REGISTER_MAX_ATTEMPTS = 3;
-const REGISTER_RETRY_DELAYS_MS = [5000, 10000];
+// Emails FIJOS por test (login-first): re-runs resuelven todo con login
+// (0 registros) sin quemar cuota del limiter. Distintos por test para que
+// los 2 workers no colisionen entre sí; el admin compartido se resuelve
+// con lock simple (register 400-existe → login).
+const ADMIN_EMAIL = 'fe12_admin@test.local';
+const APROBADO_EMAIL = 'fe12_aprobado@test.local';
+const RECHAZADO_EMAIL = 'fe12_rechazado@test.local';
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function uniqueEmail(tag: string): string {
-  const suffix = `${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
-  return `fe12_${tag}_${suffix}@test.local`;
+async function tryLogin(
+  ctx: APIRequestContext,
+  email: string,
+): Promise<Session | null> {
+  const login = await ctx.post(`${API_BASE}/auth/login`, {
+    data: { emailOrUsername: email, password: TEST_PASSWORD },
+  });
+  if (login.ok()) {
+    const body = await login.json();
+    return {
+      user: body.user,
+      accessToken: body.accessToken,
+      refreshToken: body.refreshToken,
+    };
+  }
+  if (login.status() === 401 || login.status() === 404) return null;
+  if (login.status() === 429) {
+    throw new Error(
+      `Seed: rate-limit del backend (429 en login) para ${email}. ` +
+        `Es rate-limit, no bug del flujo de pago. Reintentar el job más tarde.`,
+    );
+  }
+  throw new Error(
+    `Seed: login falló (${login.status()}) para ${email}: ${await login.text()}`,
+  );
 }
 
-async function registerOrLogin(
+// Login-first: login → (solo si 401/404) un register → 400-existe se
+// resuelve con login, 429 espera 60s UNA vez y reintenta login.
+async function ensureSeedUser(
   ctx: APIRequestContext,
   data: Record<string, string>,
 ): Promise<Session> {
-  let lastRegisterStatus = 0;
-  for (let attempt = 1; attempt <= REGISTER_MAX_ATTEMPTS; attempt++) {
-    const reg = await ctx.post(`${API_BASE}/auth/register`, { data });
-    if (reg.ok()) {
-      const body = await reg.json();
-      return {
-        user: body.user,
-        accessToken: body.accessToken,
-        refreshToken: body.refreshToken,
-      };
-    }
-    lastRegisterStatus = reg.status();
-    // Rate limiter del backend (5 req/15min por IP en register): reintentar
-    // con backoff en lugar de caer al login (que daría 401 espurio porque el
-    // usuario nunca se creó). Emails únicos por test, así que reintentar con
-    // los mismos datos es seguro.
-    if (lastRegisterStatus === 429 && attempt < REGISTER_MAX_ATTEMPTS) {
-      await sleep(REGISTER_RETRY_DELAYS_MS[attempt - 1] ?? 10000);
-      continue;
-    }
-    if (lastRegisterStatus === 429) {
-      throw new Error(
-        `Seed: rate-limit del backend (429 en register tras ${REGISTER_MAX_ATTEMPTS} intentos) para ${data.email}. ` +
-          `Es rate-limit, no bug del flujo de pago. Reintentar el job más tarde.`,
-      );
-    }
-    // Re-ejecución: el usuario ya existe → login (register devuelve 400).
-    break;
+  const existing = await tryLogin(ctx, data.email);
+  if (existing) return existing;
+  const reg = await ctx.post(`${API_BASE}/auth/register`, { data });
+  if (reg.ok()) {
+    const body = await reg.json();
+    return {
+      user: body.user,
+      accessToken: body.accessToken,
+      refreshToken: body.refreshToken,
+    };
   }
-  const login = await ctx.post(`${API_BASE}/auth/login`, {
-    data: { emailOrUsername: data.email, password: data.password },
-  });
-  if (!login.ok()) {
+  if (reg.status() === 400) {
+    // Carrera entre workers (admin compartido) o usuario ya creado:
+    // existe → login.
+    const retry = await tryLogin(ctx, data.email);
+    if (retry) return retry;
     throw new Error(
-      `Seed: register (${lastRegisterStatus}) y login (${login.status()}) fallaron para ${data.email}`,
+      `Seed: register dio 400 pero login posterior no encontró a ${data.email}`,
     );
   }
-  const body = await login.json();
-  return {
-    user: body.user,
-    accessToken: body.accessToken,
-    refreshToken: body.refreshToken,
-  };
+  if (reg.status() === 429) {
+    await sleep(60_000);
+    try {
+      const retry = await tryLogin(ctx, data.email);
+      if (retry) return retry;
+    } catch (error) {
+      throw new Error(
+        `Seed: rate-limit del backend (429 en register para ${data.email}, persiste tras esperar 60s). ` +
+          `Es rate-limit, no bug del flujo de pago. Reintentar el job más tarde. Causa: ${(error as Error).message}`,
+      );
+    }
+    throw new Error(
+      `Seed: rate-limit del backend (429 en register para ${data.email}, tras esperar 60s el usuario sigue sin existir). ` +
+        `Es rate-limit, no bug del flujo de pago. Reintentar el job más tarde.`,
+    );
+  }
+  throw new Error(
+    `Seed: register falló (${reg.status()}) para ${data.email}: ${await reg.text()}`,
+  );
 }
 
 async function ensureMembership(ctx: APIRequestContext): Promise<void> {
@@ -155,10 +186,9 @@ async function ensureMembership(ctx: APIRequestContext): Promise<void> {
   }
 }
 
-async function createFreshCommonUser(tag: string): Promise<Session> {
-  const email = uniqueEmail(tag);
-  return registerOrLogin(api, {
-    userName: `fe12_${tag}_${Date.now()}`,
+async function getSeedCommonUser(email: string, tag: string): Promise<Session> {
+  return ensureSeedUser(api, {
+    userName: `fe12_${tag}`,
     realName: 'FE12 E2E User',
     email,
     password: TEST_PASSWORD,
@@ -296,10 +326,10 @@ async function submitBrick(page: Page): Promise<void> {
 
 test.beforeAll(async () => {
   api = await baseRequest.newContext();
-  const admin = await registerOrLogin(api, {
-    userName: `fe12_admin_${Date.now()}`,
+  const admin = await ensureSeedUser(api, {
+    userName: 'fe12_admin',
     realName: 'FE12 Admin',
-    email: uniqueEmail('admin'),
+    email: ADMIN_EMAIL,
     password: TEST_PASSWORD,
     type: 'admin',
   });
@@ -314,7 +344,7 @@ test.afterAll(async () => {
 test('FE-12 (a): pago aprobado con tarjeta test → /payment-status?payment_id= + estado aprobado y usuario premium', async ({
   page,
 }) => {
-  const session = await createFreshCommonUser('aprobado');
+  const session = await getSeedCommonUser(APROBADO_EMAIL, 'aprobado');
   await loginAs(page, session);
   await openBrickWallet(page);
 
@@ -340,7 +370,7 @@ test('FE-12 (a): pago aprobado con tarjeta test → /payment-status?payment_id= 
 test('FE-12 (b): pago rechazado (titular OTHE) → error visible, sin navegar, sigue común', async ({
   page,
 }) => {
-  const session = await createFreshCommonUser('rechazado');
+  const session = await getSeedCommonUser(RECHAZADO_EMAIL, 'rechazado');
   await loginAs(page, session);
   await openBrickWallet(page);
 
