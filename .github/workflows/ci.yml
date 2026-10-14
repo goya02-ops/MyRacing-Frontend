@@ -168,6 +168,8 @@ jobs:
 
       - name: Run E2E tests (Playwright, full stack)
         run: pnpm test:e2e
+        env:
+          VITE_MP_PUBLIC_KEY: ${{ secrets.VITE_MP_PUBLIC_KEY }}
 
       - name: Upload Playwright report
         if: failure()
