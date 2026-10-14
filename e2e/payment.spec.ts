@@ -289,25 +289,33 @@ async function fillSecureField(
         `Causa: ${(error as Error).message.split('\n')[0]}`,
     );
   }
-  // El Brick re-monta los iframes entre poll y fill: re-resolver el frame en
-  // cada intento y reintentar hasta 3 veces ante detach.
-  let lastFillCause = 'sin intentos de fill';
+  // El Brick re-monta los iframes entre poll y tipeo: re-resolver el frame
+  // en cada intento y reintentar hasta 3 veces ante detach. Tipeo REAL
+  // (click + pressSequentially): el `.fill()` programático pone el valor en
+  // el DOM pero NO dispara los handlers JS del Brick (detección de BIN por
+  // keystrokes → issuer + cuotas), así que el Brick veía los campos vacíos
+  // (`incomplete_fields`, sin requests card_tokens/process-payment).
+  let lastTypeCause = 'sin intentos de tipeo';
   for (let attempt = 1; attempt <= 3; attempt += 1) {
     try {
       const target = await findVisibleSecureInput(page, inputName);
       if (!target) {
         throw new Error('input visible no resuelto en ningún frame secure-fields');
       }
-      await target.fill(value, { timeout: BRICK_TIMEOUT });
+      await target.click({ timeout: BRICK_TIMEOUT });
+      await target.pressSequentially(value, {
+        delay: 30,
+        timeout: BRICK_TIMEOUT,
+      });
       return;
     } catch (error) {
-      lastFillCause = `intento ${attempt}: ${(error as Error).message.split('\n')[0]}`;
+      lastTypeCause = `intento ${attempt}: ${(error as Error).message.split('\n')[0]}`;
     }
   }
   throw new Error(
     `Brick: campo seguro "${description}" (input[name="${inputName}"] en ` +
       `iframe secure-fields) no visible/llenable en ${BRICK_TIMEOUT}ms tras 3 intentos. ` +
-      `Última causa: ${lastFillCause}`,
+      `Última causa: ${lastTypeCause}`,
   );
 }
 
@@ -320,7 +328,13 @@ async function fillMainField(
   const input = page.locator(selector).first();
   try {
     await expect(input).toBeVisible({ timeout: BRICK_TIMEOUT });
-    await input.fill(value, { timeout: BRICK_TIMEOUT });
+    // Tipeo real también en el frame principal: el Brick escucha
+    // keydown/keypress/keyup; `.fill()` no los dispara.
+    await input.click({ timeout: BRICK_TIMEOUT });
+    await input.pressSequentially(value, {
+      delay: 30,
+      timeout: BRICK_TIMEOUT,
+    });
   } catch (error) {
     throw new Error(
       `Brick: campo "${description}" (${selector}) no visible/llenable en ` +
@@ -334,7 +348,64 @@ async function fillBrickCard(
   holderName: 'APRO' | 'OTHE',
   email: string,
 ): Promise<void> {
+  // Orden con dependencias del Brick: PRIMERO el número (dispara la
+  // detección de BIN por keystrokes → issuer + cuotas), LUEGO esperar a que
+  // el select de installments se pueble, elegir 1, y RECIÉN DESPUÉS el resto.
+  // Si se tipeaba todo de corrido con `.fill()`, el Brick nunca detectaba el
+  // BIN y reportaba `incomplete_fields` sin emitir ningún request.
   await fillSecureField(page, 'cardNumber', TEST_CARD.number, 'número de tarjeta');
+  // Cuotas: OBLIGATORIO que el 2º select tenga options con valores (BIN
+  // detectado). Si no aparecen, error explícito: no seguir a ciegas.
+  const selects = page.locator('select');
+  const countInstallmentValues = async (): Promise<number> => {
+    try {
+      if ((await selects.count()) < 2) return 0;
+      const values = await selects
+        .nth(1)
+        .locator('option')
+        .evaluateAll((options) =>
+          options
+            .map((option) => (option as unknown as { value: string }).value)
+            .filter((value) => value !== ''),
+        )
+        .catch(() => [] as string[]);
+      return values.length;
+    } catch {
+      return 0;
+    }
+  };
+  try {
+    await expect
+      .poll(countInstallmentValues, {
+        timeout: BRICK_TIMEOUT,
+        intervals: [1000],
+      })
+      .toBeGreaterThan(0);
+  } catch (error) {
+    throw new Error(
+      `Brick: el select de installments no se pobló tras tipear el número ` +
+        `de tarjeta en ${BRICK_TIMEOUT}ms (el Brick no detectó el BIN; sin ` +
+        `issuer/cuotas el submit saldría como incomplete_fields). ` +
+        `Causa: ${(error as Error).message.split('\n')[0]}`,
+    );
+  }
+  try {
+    const values = await selects
+      .nth(1)
+      .locator('option')
+      .evaluateAll((options) =>
+        options
+          .map((option) => (option as unknown as { value: string }).value)
+          .filter((value) => value !== ''),
+      );
+    const target = values.includes('1') ? '1' : values[0];
+    await selects.nth(1).selectOption(target, { timeout: BRICK_TIMEOUT });
+  } catch (error) {
+    throw new Error(
+      `Brick: no se pudo elegir 1 cuota en el select de installments. ` +
+        `Causa: ${(error as Error).message.split('\n')[0]}`,
+    );
+  }
   await fillSecureField(
     page,
     'expirationDate',
@@ -360,30 +431,6 @@ async function fillBrickCard(
   }
   await fillMainField(page, 'input[name="DOCUMENT"]', TEST_CARD.docNumber, 'documento');
   await fillMainField(page, 'input[name="EMAIL"]', email, 'email');
-  // Cuotas: solo si el Brick renderiza un segundo select con valores.
-  const selects = page.locator('select');
-  try {
-    if ((await selects.count()) >= 2) {
-      const installments = selects.nth(1);
-      const values = await installments
-        .locator('option')
-        .evaluateAll((options) =>
-          options
-            .map((option) => (option as unknown as { value: string }).value)
-            .filter((value) => value !== ''),
-        )
-        .catch(() => [] as string[]);
-      if (values.length > 0) {
-        const target = values.includes('1') ? '1' : values[0];
-        await installments.selectOption(target, { timeout: BRICK_TIMEOUT });
-      }
-    }
-  } catch (error) {
-    throw new Error(
-      `Brick: no se pudo elegir 1 cuota en el select de installments. ` +
-        `Causa: ${(error as Error).message.split('\n')[0]}`,
-    );
-  }
 }
 
 async function openBrickWallet(page: Page): Promise<void> {
