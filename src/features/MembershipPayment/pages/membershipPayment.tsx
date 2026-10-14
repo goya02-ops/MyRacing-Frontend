@@ -1,4 +1,5 @@
 import { initMercadoPago, Payment } from '@mercadopago/sdk-react';
+import { useCallback, useMemo } from 'react';
 import type { ComponentProps } from 'react';
 import {
   Card,
@@ -46,39 +47,67 @@ export default function MembershipPage() {
     processPaymentAsync,
   } = useMembershipPage();
 
-  const onSubmit: PaymentBrickOnSubmit = async ({
-    selectedPaymentMethod,
-    formData,
-  }) => {
-    if (!formData) {
-      console.log(
-        `Pago delegado al Webhook. Método: ${selectedPaymentMethod || 'N/A'}.`
-      );
+  const initialization = useMemo(
+    () => ({
+      preferenceId: preferenceId ?? undefined,
+      amount: membership?.price ?? 0,
+    }),
+    [preferenceId, membership?.price]
+  );
 
-      navigate('/payment-status');
+  const customization = useMemo(
+    () => ({
+      visual: {
+        style: {
+          theme: 'default' as const,
+        },
+      },
+      paymentMethods: {
+        ticket: 'all' as const,
+        creditCard: 'all' as const,
+        prepaidCard: 'all' as const,
+        debitCard: 'all' as const,
+        mercadoPago: 'all' as const,
+      },
+    }),
+    []
+  );
 
-      return;
-    }
+  const onSubmit: PaymentBrickOnSubmit = useCallback(
+    async ({ selectedPaymentMethod, formData }) => {
+      if (!formData) {
+        console.log(
+          `Pago delegado al Webhook. Método: ${selectedPaymentMethod || 'N/A'}.`
+        );
 
-    try {
-      const result = await processPaymentAsync(
-        formData as unknown as PaymentFormData
-      );
-      navigate(`/payment-status?payment_id=${encodeURIComponent(result.paymentId)}`);
-      return;
-    } catch (error) {
-      console.error('Error en el pago:', error);
-      throw error;
-    }
-  };
+        navigate('/payment-status');
 
-  const onError: PaymentBrickOnError = async (error) => {
+        return;
+      }
+
+      try {
+        const result = await processPaymentAsync(
+          formData as unknown as PaymentFormData
+        );
+        navigate(
+          `/payment-status?payment_id=${encodeURIComponent(result.paymentId)}`
+        );
+        return;
+      } catch (error) {
+        console.error('Error en el pago:', error);
+        throw error;
+      }
+    },
+    [processPaymentAsync, navigate]
+  );
+
+  const onError: PaymentBrickOnError = useCallback(async (error) => {
     console.error('Error en Brick MP:', error);
-  };
+  }, []);
 
-  const onReady = async () => {
+  const onReady = useCallback(async () => {
     // Brick cargado
-  };
+  }, []);
   const renderContent = () => {
     if (!MP_PUBLIC_KEY) {
       return (
@@ -181,24 +210,8 @@ export default function MembershipPage() {
             id="wallet_container"
           >
             <Payment
-              initialization={{
-                preferenceId: preferenceId,
-                amount: membership.price,
-              }}
-              customization={{
-                visual: {
-                  style: {
-                    theme: 'default',
-                  },
-                },
-                paymentMethods: {
-                  ticket: 'all',
-                  creditCard: 'all',
-                  prepaidCard: 'all',
-                  debitCard: 'all',
-                  mercadoPago: 'all',
-                },
-              }}
+              initialization={initialization}
+              customization={customization}
               onSubmit={onSubmit}
               onError={onError}
               onReady={onReady}
