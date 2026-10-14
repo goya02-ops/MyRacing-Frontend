@@ -247,8 +247,10 @@ async function fillSecureField(
   // los nodos se detachean durante la espera, lo que hace fallar
   // toBeVisible por strict-mode aunque el campo YA exista visible.
   // `count()` no dispara strict-mode ni sufre detaches. Scope a
-  // `src*="secure-fields"` para achicar el conjunto. El locator se
-  // re-resuelve justo antes del fill, sin guardar handles entre pasos.
+  // `src*="secure-fields"` para achicar el conjunto. El fill resuelve a UN
+  // solo elemento (`.first()` determinístico: hay UN `input[name]` visible
+  // por vez, los demás con clase `hide`) y reintenta hasta 3 veces con
+  // locator fresco: el Brick re-renderiza entre poll y fill (detach/strict).
   const countVisible = async (): Promise<number> =>
     page
       .frameLocator('iframe[src*="secure-fields"]')
@@ -258,11 +260,6 @@ async function fillSecureField(
     await expect
       .poll(countVisible, { timeout: BRICK_TIMEOUT, intervals: [1000] })
       .toBeGreaterThan(0);
-    await page
-      .frameLocator('iframe[src*="secure-fields"]')
-      .locator(`input[name="${inputName}"]:visible`)
-      .first()
-      .fill(value, { timeout: BRICK_TIMEOUT });
   } catch (error) {
     throw new Error(
       `Brick: campo seguro "${description}" (input[name="${inputName}"] en ` +
@@ -270,6 +267,24 @@ async function fillSecureField(
         `Causa: ${(error as Error).message.split('\n')[0]}`,
     );
   }
+  let lastFillCause = 'sin intentos de fill';
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      await page
+        .frameLocator('iframe[src*="secure-fields"]')
+        .locator(`input[name="${inputName}"]:visible`)
+        .first()
+        .fill(value, { timeout: BRICK_TIMEOUT });
+      return;
+    } catch (error) {
+      lastFillCause = `intento ${attempt}: ${(error as Error).message.split('\n')[0]}`;
+    }
+  }
+  throw new Error(
+    `Brick: campo seguro "${description}" (input[name="${inputName}"] en ` +
+      `iframe secure-fields) no visible/llenable en ${BRICK_TIMEOUT}ms tras 3 intentos. ` +
+      `Última causa: ${lastFillCause}`,
+  );
 }
 
 async function fillMainField(
