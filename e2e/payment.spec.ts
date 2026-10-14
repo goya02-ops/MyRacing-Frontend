@@ -623,52 +623,50 @@ test.afterAll(async () => {
 
 test(
   'FE-12 (a): pago aprobado con tarjeta test → /payment-status?payment_id= + estado aprobado y usuario premium',
-  { timeout: 300000 },
-  async ({
-    page,
-  }) => {
-  const session = await getSeedCommonUser(APROBADO_EMAIL, 'aprobado');
-  await loginAs(page, session);
-  await openBrickWallet(page);
+  async ({ page }) => {
+    test.setTimeout(300000);
+    const session = await getSeedCommonUser(APROBADO_EMAIL, 'aprobado');
+    await loginAs(page, session);
+    await openBrickWallet(page);
 
-  await fillBrickCard(page, 'APRO', APROBADO_EMAIL);
-  await submitBrick(page);
+    await fillBrickCard(page, 'APRO', APROBADO_EMAIL);
+    await submitBrick(page);
 
-  // El código navega a /payment-status?payment_id=<id> (paymentId del
-  // PaymentResult). Se asevera: query payment_id en URL + Status Brick
-  // montado con estado aprobado (solo renderiza con paymentId) + premium
-  // real vía API.
-  await expect(page).toHaveURL(/payment-status\?.*payment_id=/, {
-    timeout: 90000,
-  });
-  await expect(page.locator('#status_brick_container')).toBeVisible({
-    timeout: 90000,
-  });
-  await expect(
-    page.locator('#status_brick_container').getByText(/aprob|acredit/i).first(),
-  ).toBeVisible({ timeout: 90000 });
-  await expect(await getMyType(session.accessToken)).toBe('premium');
-});
+    // El código navega a /payment-status?payment_id=<id> (paymentId del
+    // PaymentResult). Se asevera: query payment_id en URL + Status Brick
+    // montado con estado aprobado (solo renderiza con paymentId) + premium
+    // real vía API.
+    await expect(page).toHaveURL(/payment-status\?.*payment_id=/, {
+      timeout: 90000,
+    });
+    await expect(page.locator('#status_brick_container')).toBeVisible({
+      timeout: 90000,
+    });
+    await expect(
+      page.locator('#status_brick_container').getByText(/aprob|acredit/i).first(),
+    ).toBeVisible({ timeout: 90000 });
+    await expect(await getMyType(session.accessToken)).toBe('premium');
+  },
+);
 
 test(
   'FE-12 (b): pago rechazado (titular OTHE) → error visible, sin navegar, sigue común',
-  { timeout: 300000 },
-  async ({
-    page,
-  }) => {
-  const session = await getSeedCommonUser(RECHAZADO_EMAIL, 'rechazado');
-  await loginAs(page, session);
-  await openBrickWallet(page);
+  async ({ page }) => {
+    test.setTimeout(300000);
+    const session = await getSeedCommonUser(RECHAZADO_EMAIL, 'rechazado');
+    await loginAs(page, session);
+    await openBrickWallet(page);
 
-  await fillBrickCard(page, 'OTHE', RECHAZADO_EMAIL);
-  await submitBrick(page);
+    await fillBrickCard(page, 'OTHE', RECHAZADO_EMAIL);
+    await submitBrick(page);
 
-  // El rechazo (400 del backend) debe mostrarse y NO navegar a success.
-  // El copy exacto del mensaje lo confirma el programador contra el DOM
-  // real de Bricks; este patrón cubre toast de la app o error del Brick.
-  await expect(
-    page.getByText(/rechaz|error|deneg|declin/i).first(),
-  ).toBeVisible({ timeout: 90000 });
-  await expect(page).toHaveURL(/membership-payment/);
-  await expect(await getMyType(session.accessToken)).toBe('common');
-});
+    // El rechazo (400 del backend) debe mostrarse y NO navegar a success.
+    // El copy exacto del mensaje lo confirma el programador contra el DOM
+    // real de Bricks; este patrón cubre toast de la app o error del Brick.
+    await expect(
+      page.getByText(/rechaz|error|deneg|declin/i).first(),
+    ).toBeVisible({ timeout: 90000 });
+    await expect(page).toHaveURL(/membership-payment/);
+    await expect(await getMyType(session.accessToken)).toBe('common');
+  },
+);
