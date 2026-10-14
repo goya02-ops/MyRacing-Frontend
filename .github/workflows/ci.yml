@@ -80,7 +80,7 @@ jobs:
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       JWT_SECRET: ci_secret_for_tests
       JWT_REFRESH_SECRET: ci_refresh_secret_for_tests
-      MERCADOPAGO_ACCESS_TOKEN: ci_mp_access_token
+      MERCADOPAGO_ACCESS_TOKEN: ${{ secrets.MERCADOPAGO_ACCESS_TOKEN }}
       URL_FRONTEND: http://localhost:5173
       URL_BACKEND: http://localhost:3000
     steps:
@@ -147,7 +147,7 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           JWT_SECRET: ci_secret_for_tests
           JWT_REFRESH_SECRET: ci_refresh_secret_for_tests
-          MERCADOPAGO_ACCESS_TOKEN: ci_mp_access_token
+          MERCADOPAGO_ACCESS_TOKEN: ${{ secrets.MERCADOPAGO_ACCESS_TOKEN }}
 
       - run: pnpm install --frozen-lockfile
 
@@ -157,6 +157,7 @@ jobs:
           sleep 5
         env:
           VITE_API_BASE_URL: http://127.0.0.1:3000/api
+          VITE_MP_PUBLIC_KEY: ${{ secrets.VITE_MP_PUBLIC_KEY }}
 
       # pnpm exec (no npx): usa el binario lockeado de devDependencies
       # (Sonar S6505/S8543: npx instalaría on-demand sin versión fijada).
