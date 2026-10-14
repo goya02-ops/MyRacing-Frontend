@@ -43,11 +43,19 @@ import {
 // - MP_PUBLIC_KEY por env: membershipPayment.tsx usa
 //   `VITE_MP_PUBLIC_KEY` como paymentStatus.tsx (FE-12, programador;
 //   documentada en `.env.example`). Si falta, el guard muestra Callout.
-// - Selectores de Bricks: el formulario de tarjeta corre en iframes del
-//   SDK dentro de #wallet_container. Los selectores de fillBrickField son
-//   PROVISORIOS (best-effort) hasta inspeccionar el DOM real con el flujo
-//   corriendo en local. Si no se encuentran, el helper falla con mensaje
-//   explícito para guiar al programador.
+// - Selectores VERIFICADOS del Brick cardPayment (locale es-AR, sonda local
+//   contra el SDK con la misma public key TEST, sin backend): los 3 campos
+//   seguros viven en iframes `https://secure-fields.mercadopago.com/`, UNO
+//   visible por iframe (los demás tienen clase `hide`). Se buscan global
+//   (`page.frameLocator('iframe')`, sin filtrar por `#wallet_container`:
+//   los iframes son del SDK) con `input[name="cardNumber"]:visible`,
+//   `input[name="expirationDate"]:visible` (formato corto MM/AA, maxlength 5)
+//   e `input[name="securityCode"]:visible`. Titular, documento y email viven
+//   en el frame principal: `input[name="HOLDER_NAME"]` (placeholder
+//   "María López"), un `select` de tipo de documento (DNI/Cédula/L.C./L.E./
+//   Otro → elegir DNI), `input[name="DOCUMENT"]`, `input[name="EMAIL"]`.
+//   Submit: botón del frame principal con texto /pagar/i. Si el select de
+//   cuotas/installments aparece con valores, se elige 1.
 // - Timeouts generosos (60-90s): Bricks carga scripts remotos + el backend
 //   consulta a MP real (segundos, no ms).
 // - NOTA DE EJECUCIÓN: este spec NO se corrió en local (sin backend
@@ -222,77 +230,102 @@ async function getMyType(token: string): Promise<string> {
   return body?.data?.type as string;
 }
 
-// Selectores PROVISORIOS del Brick Payment (iframes en #wallet_container).
-// El DOM exacto de Bricks se confirma corriendo el flujo en local; si un
-// campo no aparece, el error indica qué descubrir. Se prueban varios
-// candidatos por campo en cada iframe del contenedor.
-const BRICK_FIELD_SELECTORS: Record<string, string[]> = {
-  number: [
-    'input[placeholder*="mero"]',
-    'input[name="cardNumber"]',
-    'input[data-checkout="cardNumber"]',
-    'input[aria-label*="mero"]',
-    'input[type="tel"]',
-  ],
-  expiration: [
-    'input[placeholder*="MM/AA"]',
-    'input[placeholder*="Venc"]',
-    'input[name="cardExpirationDate"]',
-    'input[data-checkout="cardExpirationDate"]',
-  ],
-  cvv: [
-    'input[placeholder*="CVV"]',
-    'input[placeholder*="guridad"]',
-    'input[name="securityCode"]',
-    'input[data-checkout="securityCode"]',
-  ],
-  holder: [
-    'input[placeholder*="titular"]',
-    'input[placeholder*="Nombre"]',
-    'input[name="cardholderName"]',
-    'input[data-checkout="cardholderName"]',
-  ],
-  doc: [
-    'input[placeholder*="DNI"]',
-    'input[placeholder*="documento"]',
-    'input[name="identificationNumber"]',
-  ],
-};
+const BRICK_TIMEOUT = 30000;
 
-async function fillBrickField(
+async function fillSecureField(
   page: Page,
-  field: keyof typeof BRICK_FIELD_SELECTORS,
+  inputName: 'cardNumber' | 'expirationDate' | 'securityCode',
   value: string,
+  description: string,
 ): Promise<void> {
-  const errors: string[] = [];
-  for (let i = 0; i < 8; i++) {
-    const frame = page.frameLocator('#wallet_container iframe').nth(i);
-    for (const sel of BRICK_FIELD_SELECTORS[field]) {
-      try {
-        const input = frame.locator(sel).first();
-        await input.fill(value, { timeout: 3000 });
-        return;
-      } catch (error) {
-        errors.push(`iframe[${i}] ${sel}: ${(error as Error).message.split('\n')[0]}`);
-      }
-    }
+  const input = page
+    .frameLocator('iframe')
+    .locator(`input[name="${inputName}"]:visible`);
+  try {
+    await expect(input).toBeVisible({ timeout: BRICK_TIMEOUT });
+    await input.fill(value, { timeout: BRICK_TIMEOUT });
+  } catch (error) {
+    throw new Error(
+      `Brick: campo seguro "${description}" (input[name="${inputName}"] en ` +
+        `iframe secure-fields) no visible/llenable en ${BRICK_TIMEOUT}ms. ` +
+        `Causa: ${(error as Error).message.split('\n')[0]}`,
+    );
   }
-  throw new Error(
-    `Brick: campo "${field}" no encontrado con selectores provisorios. ` +
-      `Inspeccionar el DOM real de Bricks en local y actualizar BRICK_FIELD_SELECTORS. ` +
-      `Intentos: ${errors.slice(0, 4).join(' | ')}`,
-  );
+}
+
+async function fillMainField(
+  page: Page,
+  selector: string,
+  value: string,
+  description: string,
+): Promise<void> {
+  const input = page.locator(selector).first();
+  try {
+    await expect(input).toBeVisible({ timeout: BRICK_TIMEOUT });
+    await input.fill(value, { timeout: BRICK_TIMEOUT });
+  } catch (error) {
+    throw new Error(
+      `Brick: campo "${description}" (${selector}) no visible/llenable en ` +
+        `${BRICK_TIMEOUT}ms. Causa: ${(error as Error).message.split('\n')[0]}`,
+    );
+  }
 }
 
 async function fillBrickCard(
   page: Page,
   holderName: 'APRO' | 'OTHE',
+  email: string,
 ): Promise<void> {
-  await fillBrickField(page, 'number', TEST_CARD.number);
-  await fillBrickField(page, 'expiration', TEST_CARD.expiration);
-  await fillBrickField(page, 'cvv', TEST_CARD.cvv);
-  await fillBrickField(page, 'holder', holderName);
-  await fillBrickField(page, 'doc', TEST_CARD.docNumber);
+  await fillSecureField(page, 'cardNumber', TEST_CARD.number, 'número de tarjeta');
+  await fillSecureField(
+    page,
+    'expirationDate',
+    TEST_CARD.expiration,
+    'vencimiento MM/AA',
+  );
+  await fillSecureField(page, 'securityCode', TEST_CARD.cvv, 'código de seguridad');
+  await fillMainField(
+    page,
+    'input[name="HOLDER_NAME"]',
+    holderName,
+    'titular',
+  );
+  const docType = page.locator('select').first();
+  try {
+    await expect(docType).toBeVisible({ timeout: BRICK_TIMEOUT });
+    await docType.selectOption({ label: 'DNI' }, { timeout: BRICK_TIMEOUT });
+  } catch (error) {
+    throw new Error(
+      `Brick: select de tipo de documento no visible o sin opción DNI en ` +
+        `${BRICK_TIMEOUT}ms. Causa: ${(error as Error).message.split('\n')[0]}`,
+    );
+  }
+  await fillMainField(page, 'input[name="DOCUMENT"]', TEST_CARD.docNumber, 'documento');
+  await fillMainField(page, 'input[name="EMAIL"]', email, 'email');
+  // Cuotas: solo si el Brick renderiza un segundo select con valores.
+  const selects = page.locator('select');
+  try {
+    if ((await selects.count()) >= 2) {
+      const installments = selects.nth(1);
+      const values = await installments
+        .locator('option')
+        .evaluateAll((options) =>
+          options
+            .map((option) => (option as unknown as { value: string }).value)
+            .filter((value) => value !== ''),
+        )
+        .catch(() => [] as string[]);
+      if (values.length > 0) {
+        const target = values.includes('1') ? '1' : values[0];
+        await installments.selectOption(target, { timeout: BRICK_TIMEOUT });
+      }
+    }
+  } catch (error) {
+    throw new Error(
+      `Brick: no se pudo elegir 1 cuota en el select de installments. ` +
+        `Causa: ${(error as Error).message.split('\n')[0]}`,
+    );
+  }
 }
 
 async function openBrickWallet(page: Page): Promise<void> {
@@ -312,15 +345,15 @@ async function openBrickWallet(page: Page): Promise<void> {
 }
 
 async function submitBrick(page: Page): Promise<void> {
-  const inWallet = page
-    .locator('#wallet_container')
-    .getByRole('button', { name: /pagar/i });
+  const submit = page.getByRole('button', { name: /pagar/i }).first();
   try {
-    await inWallet.first().click({ timeout: 15000 });
-  } catch {
-    await page.getByRole('button', { name: /pagar/i }).first().click({
-      timeout: 15000,
-    });
+    await expect(submit).toBeVisible({ timeout: BRICK_TIMEOUT });
+    await submit.click({ timeout: 15000 });
+  } catch (error) {
+    throw new Error(
+      `Brick: botón submit (/pagar/i) no visible/clickeable en el frame ` +
+        `principal. Causa: ${(error as Error).message.split('\n')[0]}`,
+    );
   }
 }
 
@@ -348,7 +381,7 @@ test('FE-12 (a): pago aprobado con tarjeta test → /payment-status?payment_id= 
   await loginAs(page, session);
   await openBrickWallet(page);
 
-  await fillBrickCard(page, 'APRO');
+  await fillBrickCard(page, 'APRO', APROBADO_EMAIL);
   await submitBrick(page);
 
   // El código navega a /payment-status?payment_id=<id> (paymentId del
@@ -374,7 +407,7 @@ test('FE-12 (b): pago rechazado (titular OTHE) → error visible, sin navegar, s
   await loginAs(page, session);
   await openBrickWallet(page);
 
-  await fillBrickCard(page, 'OTHE');
+  await fillBrickCard(page, 'OTHE', RECHAZADO_EMAIL);
   await submitBrick(page);
 
   // El rechazo (400 del backend) debe mostrarse y NO navegar a success.
