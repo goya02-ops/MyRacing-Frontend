@@ -3,75 +3,51 @@ import {
   expect,
   request as baseRequest,
   type APIRequestContext,
-  type Locator,
   type Page,
 } from '@playwright/test';
 
 // FE-12 (#13): E2E de pago REAL contra el sandbox de Mercado Pago.
-// Estrategia OPCIÓN A: nada mockeado en red. El ambiente test ES el mock
-// (tarjetas de prueba oficiales de MP, determinístico y gratis).
+// Estrategia PIVOT (orquestador + usuario, ronda 6): NO se tipea más dentro
+// de los iframes secure-fields del Brick wallet. Causa raíz: carrera interna
+// del widget de MP (mapeo BIN→tipo por red vs fetch de cuotas) que en el
+// runner lento de CI siempre pierde; es caja negra de MP, irresoluble desde
+// nuestro código. 4.5hs de evidencia en runs de CI.
 //
-// DECISIONES (tester, ronda 4/5 — login-first):
+// Qué cubre este spec (todo contra sandbox REAL, nada mockeado):
+// - UI real nuestra: sesión inyectada → /membership-payment → click "Pagar y
+//   convertirme en Premium" → #wallet_container visible → click botón "Pagar"
+//   del Brick → métodos visibles (texto /tarjeta de crédito/i). Valida
+//   preferencia real (201) + init del Brick.
+// - Tokenización REAL contra API sandbox de MP (determinística):
+//   POST https://api.mercadopago.com/v1/card_tokens?public_key=<KEY> con la
+//   tarjeta test oficial MLA (Visa 4509953566233704, CVV 123, exp 11/2030,
+//   DNI 12345678; titular APRO aprueba, OTHE rechaza) → `id` = card token.
+// - Pago REAL contra nuestro backend: POST <API_BASE>/payment/process-payment
+//   con { token, payment_method_id: 'visa', installments: 1,
+//   identification_type: 'DNI', identification_number: '12345678' } + JWT.
+// - Caso (a) aprobado: navegación UI real a
+//   /payment-status?payment_id=<id> → Status Brick visible con estado
+//   aprobado + GET /users/me → type === 'premium'.
+// - Caso (b) rechazado: 400 + status rejected, sigue 'common', y assert UI:
+//   /membership-payment muestra el botón de pago (no es premium).
+//
+// DECISIONES (seed login-first, se mantienen):
 // - Seed en beforeAll vía API REST contra el backend REAL que levanta el CI
 //   (VITE_API_BASE_URL o http://localhost:3000): UN solo admin compartido
 //   con email FIJO + membresía $1500 + un usuario común con email FIJO por
-//   test (aislamiento premium). DB CI efímera y vacía (lección de BE-11).
-// - LOGIN-FIRST (evidencia CI run 38586896354): el limiter es 5 req/15min/IP
-//   con IP de egress compartida entre runs, y cada reintento de register
-//   consume cuota. Por eso se intenta `login` PRIMERO y solo si da 401/404
-//   se hace UN `register`. Re-runs: todo login (0 registros). Primer run:
-//   3 registros < 5. Si register da 400 (carrera entre los 2 workers por el
-//   admin compartido) → login. Si register da 429 → esperar 60s UNA vez y
-//   reintentar login (el usuario puede existir ya); si sigue 429, fallar con
-//   mensaje rate-limit explícito (no bug del flujo de pago). Sin reintentos
-//   ciegos: queman cuota y el segundo test arrancaba ya bloqueado.
-// - Sesión vía API (register/login) inyectada en localStorage con
-//   addInitScript ANTES del goto. Se evita el login UI: AuthPage tiene
-//   overlay animado con paneles login/signup (isActive) y es frágil para
-//   E2E. UserContext lee `user`+`accessToken` de localStorage al iniciar,
-//   así que la inyección es equivalente (mismas keys que setea el login UI).
-// - Ruta success REAL: el código navega a
-//   `/payment-status?payment_id=<id>` con el `paymentId` del PaymentResult
-//   que devuelve `processPayment` (membershipPayment.tsx +
-//   membershipService.ts:62-84). La página lee `payment_id` del query
-//   (usePaymentStatus.ts) y monta el Status Brick en
-//   `#status_brick_container` (paymentStatus.tsx), que solo renderiza con
-//   `paymentId`. Rama wallet (sin formData, pago delegado al webhook): sin
-//   `paymentId` disponible → `/payment-status` SIN query (muestra "sin
-//   info" + redirige a perfil, comportamiento existente).
-//   La aserción es URL con `payment_id` + Status Brick visible con estado
-//   aprobado + premium vía API (éxito real, no solo URL).
-// - MP_PUBLIC_KEY por env: membershipPayment.tsx usa
-//   `VITE_MP_PUBLIC_KEY` como paymentStatus.tsx (FE-12, programador;
-//   documentada en `.env.example`). Si falta, el guard muestra Callout.
-// - Selectores VERIFICADOS del Brick wallet (locale es-AR, sonda local
-//   contra el SDK con la misma public key TEST, flujo completo reproducido):
-//   1) botón app "Pagar y convertirme en Premium" → #wallet_container con UN
-//   botón "Pagar" del Brick (sin campos todavía); 2) click en ese botón
-//   (dentro de #wallet_container, primero) → selector de medios (Mercado
-//   Pago, Crédito de Mercado Pago, Tarjeta de crédito, Tarjeta de débito,
-//   Efectivo); 3) click en "Tarjeta de crédito" → RECIÉN AHÍ los 3 campos
-//   seguros en iframes `https://secure-fields.mercadopago.com/`, UNO
-//   visible por iframe (los demás tienen clase `hide`). Se buscan global
-//   (`page.frameLocator('iframe')`, sin filtrar por `#wallet_container`:
-//   los iframes son del SDK) con `input[name="cardNumber"]:visible`,
-//   `input[name="expirationDate"]:visible` (formato corto MM/AA, maxlength 5)
-//   e `input[name="securityCode"]:visible`. Titular, documento y email viven
-//   en el frame principal: `input[name="HOLDER_NAME"]` (placeholder
-//   "María López"), un `select` de tipo de documento (DNI/Cédula/L.C./L.E./
-//   Otro → elegir DNI), `input[name="DOCUMENT"]`, `input[name="EMAIL"]`.
-//   Submit: botón del frame principal con texto /pagar/i. Si el select de
-//   cuotas/installments aparece con valores, se elige 1.
-// - Timeouts generosos (60-90s): Bricks carga scripts remotos + el backend
-//   consulta a MP real (segundos, no ms).
-// - NOTA DE EJECUCIÓN: este spec NO se corrió en local (sin backend
-//   local disponible en esta sesión). Lo confirmará el CI (job E2E full
-//   stack con backend real + token TEST real de MP + public key).
-// - REQUISITO CI: el job E2E usa hoy MERCADOPAGO_ACCESS_TOKEN=dummy
-//   (`ci_mp_access_token`). Este spec necesita la credencial TEST real de
-//   MP como secret, si no fallará en CI aunque el código esté bien.
-// - Tarjetas test oficiales MLA: aprobada titular `APRO`, rechazada titular
-//   `OTHE`. Visa 4509953566233704, CVV 123, exp 11/30, DNI 12345678.
+//   test (aislamiento premium). DB CI efímera y vacía.
+// - LOGIN-FIRST: el limiter es 5 req/15min/IP con IP de egress compartida;
+//   se intenta `login` PRIMERO y solo si da 401/404 se hace UN `register`.
+//   register 400 (carrera entre workers por el admin) → login. register 429
+//   → esperar 60s UNA vez y reintentar login; si sigue 429, fallar explícito.
+// - Sesión vía API inyectada en localStorage con addInitScript ANTES del
+//   goto (mismas keys que setea el login UI: user + accessToken +
+//   refreshToken). Se evita el login UI (overlay animado frágil para E2E).
+// - MP_PUBLIC_KEY por env (VITE_MP_PUBLIC_KEY, misma que usa el frontend).
+//   Si falta → throw explícito (el step E2E del CI debe exportarla).
+// - Timeouts: 60s por paso de UI (Bricks carga scripts remotos + el backend
+//   consulta a MP real). test.setTimeout 180s: sin tipeo lento ya no hacen
+//   falta 5 min.
 
 const API_BASE =
   process.env.VITE_API_BASE_URL ?? 'http://localhost:3000/api';
@@ -80,11 +56,14 @@ const MEMBERSHIP_PRICE = 1500;
 
 const TEST_CARD = {
   number: '4509953566233704',
-  // Crudo sin barra: la máscara MM/AA la pone el Brick; el `/` literal puede romperla.
-  expiration: '1130',
+  expirationMonth: 11,
+  expirationYear: 2030,
   cvv: '123',
+  docType: 'DNI',
   docNumber: '12345678',
 } as const;
+
+const MP_CARD_TOKENS_URL = 'https://api.mercadopago.com/v1/card_tokens';
 
 interface Session {
   user: unknown;
@@ -237,364 +216,11 @@ async function getMyType(token: string): Promise<string> {
   return body?.data?.type as string;
 }
 
-const BRICK_TIMEOUT = 30000;
-
-// Evidencia CI run 38596698871: `frameLocator('iframe[src*="secure-fields"]')`
-// resuelve a 3 frames (mismo src) y el strict-mode falla A NIVEL FRAME en el
-// `fill`, así que ningún `.first()` sobre el input interno lo evita. Por eso
-// se itera `page.frames()` en JS, se filtra por
-// `frame.url().includes('secure-fields')` y en cada frame se evalúa
-// `frame.locator('input[name="X"]:visible').count()` (`count()` no dispara
-// strict-mode). Se retorna `frame.locator(...).first()` del PRIMER frame con
-// count > 0 (hay exactamente uno visible por vez: los demás tienen clase
-// `hide`). Operar vía ese `frame.locator` es scope de un solo frame, donde
-// el strict a nivel frame es imposible.
-async function findVisibleSecureInput(
-  page: Page,
-  inputName: string,
-): Promise<Locator | null> {
-  for (const frame of page.frames()) {
-    try {
-      if (!frame.url().includes('secure-fields')) continue;
-      const visible = await frame
-        .locator(`input[name="${inputName}"]:visible`)
-        .count();
-      if (visible > 0) {
-        return frame.locator(`input[name="${inputName}"]:visible`).first();
-      }
-    } catch {
-      continue;
-    }
-  }
-  return null;
-}
-
-async function fillSecureField(
-  page: Page,
-  inputName: 'cardNumber' | 'expirationDate' | 'securityCode',
-  value: string,
-  description: string,
-  delayMs = 30,
-): Promise<void> {
-  // Poll sobre conteo (0/1) con la misma técnica: resuelve el input visible
-  // en UN solo frame; `count()` no dispara strict-mode ni sufre detaches.
-  const countVisible = async (): Promise<number> =>
-    (await findVisibleSecureInput(page, inputName)) === null ? 0 : 1;
-  try {
-    await expect
-      .poll(countVisible, { timeout: BRICK_TIMEOUT, intervals: [1000] })
-      .toBeGreaterThan(0);
-  } catch (error) {
-    throw new Error(
-      `Brick: campo seguro "${description}" (input[name="${inputName}"] en ` +
-        `iframe secure-fields) no visible/llenable en ${BRICK_TIMEOUT}ms. ` +
-        `Causa: ${(error as Error).message.split('\n')[0]}`,
-    );
-  }
-  // El Brick re-monta los iframes entre poll y tipeo: re-resolver el frame
-  // en cada intento y reintentar hasta 3 veces ante detach. Tipeo REAL
-  // (click + pressSequentially): el `.fill()` programático pone el valor en
-  // el DOM pero NO dispara los handlers JS del Brick (detección de BIN por
-  // keystrokes → issuer + cuotas), así que el Brick veía los campos vacíos
-  // (`incomplete_fields`, sin requests card_tokens/process-payment).
-  let lastTypeCause = 'sin intentos de tipeo';
-  for (let attempt = 1; attempt <= 3; attempt += 1) {
-    try {
-      const target = await findVisibleSecureInput(page, inputName);
-      if (!target) {
-        throw new Error('input visible no resuelto en ningún frame secure-fields');
-      }
-      await target.click({ timeout: BRICK_TIMEOUT });
-      await target.pressSequentially(value, {
-        delay: delayMs,
-        timeout: BRICK_TIMEOUT,
-      });
-      return;
-    } catch (error) {
-      lastTypeCause = `intento ${attempt}: ${(error as Error).message.split('\n')[0]}`;
-    }
-  }
-  throw new Error(
-    `Brick: campo seguro "${description}" (input[name="${inputName}"] en ` +
-      `iframe secure-fields) no visible/llenable en ${BRICK_TIMEOUT}ms tras 3 intentos. ` +
-      `Última causa: ${lastTypeCause}`,
-  );
-}
-
-async function fillMainField(
-  page: Page,
-  selector: string,
-  value: string,
-  description: string,
-): Promise<void> {
-  const input = page.locator(selector).first();
-  try {
-    await expect(input).toBeVisible({ timeout: BRICK_TIMEOUT });
-    // Tipeo real también en el frame principal: el Brick escucha
-    // keydown/keypress/keyup; `.fill()` no los dispara.
-    await input.click({ timeout: BRICK_TIMEOUT });
-    await input.pressSequentially(value, {
-      delay: 30,
-      timeout: BRICK_TIMEOUT,
-    });
-  } catch (error) {
-    throw new Error(
-      `Brick: campo "${description}" (${selector}) no visible/llenable en ` +
-        `${BRICK_TIMEOUT}ms. Causa: ${(error as Error).message.split('\n')[0]}`,
-    );
-  }
-}
-
-async function retypeSecureTail(
-  page: Page,
-  inputName: 'cardNumber' | 'expirationDate' | 'securityCode',
-  tail: string,
-  description: string,
-): Promise<void> {
-  // Re-fetch forzado de cuotas: con el número COMPLETO ya tipeado, el fetch
-  // temprano de installments ya salió con `payment_type_id` vacío y el Brick
-  // no lo reintenta (select vacío para siempre). Borrar los últimos 4
-  // (Backspace x4, NO select-all: eso borraría todo) y re-tipearlos genera
-  // eventos de cambio con el tipo ya resuelto y dispara un nuevo fetch con
-  // `payment_type_id` correcto. (El logo VISA NO se usa como señal: es
-  // cosmética y poco fiable; la señal real es el request con tipo.)
-  let lastCause = 'sin intentos de tipeo';
-  for (let attempt = 1; attempt <= 3; attempt += 1) {
-    try {
-      const target = await findVisibleSecureInput(page, inputName);
-      if (!target) {
-        throw new Error('input visible no resuelto en ningún frame secure-fields');
-      }
-      for (let i = 0; i < 4; i += 1) {
-        await target.press('Backspace', { timeout: BRICK_TIMEOUT });
-      }
-      await target.pressSequentially(tail, {
-        delay: 30,
-        timeout: BRICK_TIMEOUT,
-      });
-      return;
-    } catch (error) {
-      lastCause = `intento ${attempt}: ${(error as Error).message.split('\n')[0]}`;
-    }
-  }
-  throw new Error(
-    `Brick: re-tipeo "${description}" (input[name="${inputName}"] en ` +
-      `iframe secure-fields) no tipeable en ${BRICK_TIMEOUT}ms tras 3 intentos. ` +
-      `Última causa: ${lastCause}`,
-  );
-}
-
-async function waitForBinResolution(page: Page): Promise<void> {
-  // Señal REAL es de red: el request
-  // `GET .../payment_methods/installments?...&payment_type_id=<no-vacío>`.
-  // Cuando sale con `payment_type_id=` vacío MP responde sin opciones y el
-  // Brick no reintenta. El logo VISA es cosmética (aparece o no sin
-  // correlación con el estado real) y NO se usa como gate: no hay espera de
-  // logo aquí para no duplicar esperas.
-  // Se llama DESPUÉS de `retypeSecureTail` (que fuerza un fetch nuevo de
-  // cuotas con el tipo ya resuelto): espera ese fetch con tipo no vacío.
-  try {
-    await page.waitForResponse(
-      (resp) =>
-        resp.url().includes('/payment_methods/installments') &&
-        /payment_type_id=[^&]/.test(resp.url()),
-      { timeout: 60000 },
-    );
-  } catch (error) {
-    throw new Error(
-      'installments sin payment_type_id tras re-tipeo ' +
-        `(sin GET /payment_methods/installments con payment_type_id no vacío 60s ` +
-        `tras el re-tipeo de la cola; el fetch temprano salió sin tipo y el Brick ` +
-        `no lo reintentó). ` +
-        `Causa: ${(error as Error).message.split('\n')[0]}`,
-    );
-  }
-}
-
-async function fillBrickCard(
-  page: Page,
-  holderName: 'APRO' | 'OTHE',
-  email: string,
-): Promise<void> {
-  // Orden con dependencias del Brick: número COMPLETO de una → re-tipeo de
-  // la cola para forzar re-fetch de cuotas → espera de red del fetch con
-  // `payment_type_id` no vacío. Evidencia CI run 38617172422: con solo 8
-  // dígitos tipeados la detección del BIN no completa en CI (necesita el
-  // número completo). Pero tipear todo de una tampoco alcanza solo: el fetch
-  // temprano de installments ya salió con `payment_type_id` vacío y el Brick
-  // no lo reintenta → select vacío para siempre. Por eso, tras el número
-  // completo se fuerza un re-fetch RE-tipeando los últimos 4 dígitos
-  // (Backspace x4 + pressSequentially de los mismos 4): genera cambios con el
-  // tipo ya resuelto y dispara un nuevo fetch con `payment_type_id` correcto.
-  // La señal de BIN resuelto NO es el logo VISA (cosmética, poco fiable: a
-  // veces aparece, a veces no, sin correlación con el estado real) sino el
-  // request de red con tipo (`waitForBinResolution` = waitForResponse con
-  // `payment_type_id=[^&]`). Recién después: poll de cuotas + select +
-  // verificación de persistencia.
-  // Tipeo REAL con pressSequentially (`.fill()` no dispara los handlers del
-  // Brick y reporta `incomplete_fields` sin requests).
-  const cardTail = TEST_CARD.number.slice(-4); // 3704: cola para re-fetch
-  // El número se tipea LENTO (500ms/caracter, ~8s total) para dar tiempo al
-  // mapeo BIN→tipo por red (GET payment_methods/search) ANTES de que el
-  // Brick dispare el fetch de cuotas al completar el número. Causa raíz
-  // (evidencia CI): el logo VISA aparece por detección LOCAL rápida, pero el
-  // tipo tarda por red; el fetch de cuotas sale antes con payment_type_id
-  // vacío y el Brick no lo reintenta. En local rápido el mapeo gana la
-  // carrera y por eso funciona. Solo el número va lento; el resto mantiene
-  // delay 30ms.
-  await fillSecureField(
-    page,
-    'cardNumber',
-    TEST_CARD.number,
-    'número de tarjeta (completo)',
-    500,
-  );
-  // Número completo + re-tipeo de la cola (el fetch temprano ya salió sin
-  // payment_type_id y no se reintenta solo): fuerza un fetch nuevo con tipo.
-  await retypeSecureTail(page, 'cardNumber', cardTail, 'número de tarjeta (cola, re-fetch)');
-  // Recién después del re-tipeo: esperar el fetch con tipo no vacío. Sin gate
-  // de logo VISA previo (señal cosmética, eliminada para no duplicar esperas).
-  await waitForBinResolution(page);
-  // Cuotas OBLIGATORIAS: el Brick exige cuotas seleccionadas (sin cuotas →
-  // `incomplete_fields` → nunca sale `card_tokens`). El select se puebla async
-  // tras el re-fetch, así que se espera hasta 60s a que el 2º select tenga
-  // options con valores. Si no se puebla: error explícito, no seguir.
-  const selects = page.locator('select');
-  const installmentSelect = selects.nth(1);
-  const countInstallmentValues = async (): Promise<number> => {
-    try {
-      if ((await selects.count()) < 2) return 0;
-      const values = await installmentSelect
-        .locator('option')
-        .evaluateAll((options) =>
-          options
-            .map((option) => (option as unknown as { value: string }).value)
-            .filter((value) => value !== ''),
-        )
-        .catch(() => [] as string[]);
-      return values.length;
-    } catch {
-      return 0;
-    }
-  };
-  try {
-    await expect
-      .poll(countInstallmentValues, {
-        timeout: 60000,
-        intervals: [1000],
-      })
-      .toBeGreaterThan(0);
-  } catch (error) {
-    throw new Error(
-      `Brick: cuotas no se poblaron tras re-tipeo de la cola (el 2º select no tiene ` +
-        `options con valores 60s después del re-fetch forzado con payment_type_id ` +
-        `resuelto; sin issuer/cuotas el submit saldría como incomplete_fields). ` +
-        `Causa: ${(error as Error).message.split('\n')[0]}`,
-    );
-  }
-  let chosenInstallment = '';
-  let persistedInstallment = false;
-  for (let round = 1; round <= 3 && !persistedInstallment; round += 1) {
-    try {
-      const values = await installmentSelect
-        .locator('option')
-        .evaluateAll((options) =>
-          options
-            .map((option) => (option as unknown as { value: string }).value)
-            .filter((value) => value !== ''),
-        );
-      chosenInstallment = values.includes('1') ? '1' : values[0];
-      await installmentSelect.selectOption(chosenInstallment, {
-        timeout: BRICK_TIMEOUT,
-      });
-    } catch (error) {
-      throw new Error(
-        `Brick: no se pudo elegir ${chosenInstallment || '1'} cuota(s) en el select de installments. ` +
-          `Causa: ${(error as Error).message.split('\n')[0]}`,
-      );
-    }
-    // PERSISTENCIA: en CI lento las options aparecen ANTES de que termine
-    // la detección del BIN; elegir '1' sobre options transitorias se pierde
-    // en silencio cuando el Brick recarga las definitivas (el inputValue()
-    // verificado era del select viejo) → submit sin cuotas →
-    // `incomplete_fields`. Por eso se exige que el valor siga siendo '1' en
-    // 3 lecturas seguidas separadas 2s (poll hasta 20s); si se pierde se
-    // re-selecciona, hasta 3 rondas.
-    const readInstallment = async (): Promise<string> => {
-      try {
-        return await installmentSelect.inputValue();
-      } catch {
-        return '__unresolved__';
-      }
-    };
-    try {
-      await expect
-        .poll(readInstallment, { timeout: 20000, intervals: [1000] })
-        .toBe(chosenInstallment);
-    } catch (error) {
-      if (round === 3) {
-        throw new Error(
-          `Brick: cuotas no persisten tras detección BIN (ronda ${round}/3: ` +
-            `inputValue() no volvió a "${chosenInstallment}" en 20s). ` +
-            `Causa: ${(error as Error).message.split('\n')[0]}`,
-        );
-      }
-      continue;
-    }
-    let stable = true;
-    for (let read = 0; read < 3; read += 1) {
-      await sleep(2000);
-      const selected = await readInstallment();
-      if (selected !== chosenInstallment) {
-        stable = false;
-        break;
-      }
-    }
-    if (stable) {
-      persistedInstallment = true;
-    } else if (round === 3) {
-      throw new Error(
-        `Brick: cuotas no persisten tras detección BIN (la selección ` +
-          `"${chosenInstallment}" se perdió en 3 lecturas seguidas separadas ` +
-          `2s tras 3 rondas de re-selección; el Brick recargó las options ` +
-          `definitivas y el submit saldría como incomplete_fields).`,
-      );
-    }
-  }
-  await fillSecureField(
-    page,
-    'expirationDate',
-    TEST_CARD.expiration,
-    'vencimiento MM/AA',
-  );
-  await fillSecureField(page, 'securityCode', TEST_CARD.cvv, 'código de seguridad');
-  await fillMainField(
-    page,
-    'input[name="HOLDER_NAME"]',
-    holderName,
-    'titular',
-  );
-  const docType = page.locator('select').first();
-  try {
-    await expect(docType).toBeVisible({ timeout: BRICK_TIMEOUT });
-    await docType.selectOption({ label: 'DNI' }, { timeout: BRICK_TIMEOUT });
-  } catch (error) {
-    throw new Error(
-      `Brick: select de tipo de documento no visible o sin opción DNI en ` +
-        `${BRICK_TIMEOUT}ms. Causa: ${(error as Error).message.split('\n')[0]}`,
-    );
-  }
-  await fillMainField(page, 'input[name="DOCUMENT"]', TEST_CARD.docNumber, 'documento');
-  await fillMainField(page, 'input[name="EMAIL"]', email, 'email');
-}
-
-async function openBrickWallet(page: Page): Promise<void> {
-  // FE-12: secuencia VERIFICADA del Brick wallet (sonda contra el SDK con la
-  // misma public key TEST, flujo completo reproducido). El Brick wallet tiene
-  // pasos intermedios: sin ellos no existen los iframes secure-fields.
-  const STEP_TIMEOUT = 60000;
-  // Paso 1: botón de la app → se crea la preferencia → aparece
-  // #wallet_container con UN botón "Pagar" del Brick (sin campos todavía).
+// UI real nuestra: preferencia real (201) + init del Brick wallet. NO tipea
+// dentro de los iframes de MP (ver header: pivot por carrera interna del
+// widget). Solo valida que la wallet monta y ofrece los métodos de pago.
+async function openWalletAndCheckMethods(page: Page): Promise<void> {
+  const UI_TIMEOUT = 60000;
   try {
     await page.goto('/membership-payment');
     await expect(
@@ -604,131 +230,120 @@ async function openBrickWallet(page: Page): Promise<void> {
       .getByRole('button', { name: /pagar y convertirme en premium/i })
       .click();
     await expect(page.locator('#wallet_container')).toBeVisible({
-      timeout: STEP_TIMEOUT,
+      timeout: UI_TIMEOUT,
     });
   } catch (error) {
     throw new Error(
-      `Brick wallet paso 1/3: se esperaba /membership-payment con heading ` +
+      `Wallet paso 1/2: se esperaba /membership-payment con heading ` +
         `"Membresía Premium" + botón app "Pagar y convertirme en Premium" ` +
-        `que monte #wallet_container visible en ${STEP_TIMEOUT}ms. ` +
+        `que monte #wallet_container visible en ${UI_TIMEOUT}ms. ` +
         `Causa: ${(error as Error).message.split('\n')[0]}`,
     );
   }
-  // Paso 2: click en el botón "Pagar" del Brick dentro de #wallet_container
-  // (el primero) → aparece el selector de medios (Mercado Pago, Crédito de
-  // Mercado Pago, Tarjeta de crédito, Tarjeta de débito, Efectivo).
   try {
     const walletPay = page
       .locator('#wallet_container')
       .getByRole('button', { name: /pagar/i })
       .first();
-    await expect(walletPay).toBeVisible({ timeout: STEP_TIMEOUT });
+    await expect(walletPay).toBeVisible({ timeout: UI_TIMEOUT });
     await walletPay.click({ timeout: 15000 });
     await expect(
       page.getByText(/tarjeta de crédito/i).first(),
-    ).toBeVisible({ timeout: STEP_TIMEOUT });
+    ).toBeVisible({ timeout: UI_TIMEOUT });
   } catch (error) {
     throw new Error(
-      `Brick wallet paso 2/3: se esperaba UN botón "Pagar" del Brick dentro ` +
-        `de #wallet_container que al clickear muestre el selector de medios ` +
-        `(Mercado Pago, Tarjeta de crédito, Tarjeta de débito, Efectivo) ` +
-        `en ${STEP_TIMEOUT}ms. ` +
+      `Wallet paso 2/2: se esperaba UN botón "Pagar" del Brick dentro ` +
+        `de #wallet_container que al clickear muestre los métodos ` +
+        `(texto /tarjeta de crédito/i) en ${UI_TIMEOUT}ms. ` +
         `Causa: ${(error as Error).message.split('\n')[0]}`,
-    );
-  }
-  // Paso 3: UN SOLO click a "Tarjeta de crédito" POR TEXTO (selector
-  // verificado, funciona en local) + UN SOLO poll largo (180s) de cardNumber
-  // visible con conteo (misma técnica anti strict-mode). Sin re-clicks: cada
-  // click re-selecciona el método y reinicia el formulario del Brick,
-  // borrando lo ya montado/tipeado (evidencia CI: wallet reseteada a
-  // selección de método, prístina). El timeout de test es 300s, así que el
-  // poll de 180s entra.
-  try {
-    // Poll sobre conteo con UN solo frame (findVisibleSecureInput): el Brick
-    // re-renderiza los iframes y `frameLocator('iframe...')` resuelve a 3
-    // frames con el mismo src, lo que rompe por strict-mode A NIVEL FRAME
-    // aunque cardNumber YA esté visible. `count()` dentro de cada frame no
-    // dispara strict-mode ni sufre detaches.
-    const countCardNumber = async (): Promise<number> =>
-      (await findVisibleSecureInput(page, 'cardNumber')) === null ? 0 : 1;
-    const dumpSecureFields = async (): Promise<string> => {
-      const states: string[] = [];
-      for (const frame of page.frames()) {
-        const inputs = await frame
-          .locator('input[name]')
-          .evaluateAll((elements) =>
-            elements.map((element) => {
-              const input = element as unknown as {
-                getAttribute: (name: string) => string | null;
-                getBoundingClientRect: () => { width: number; height: number };
-                disabled: boolean;
-              };
-              const rect = input.getBoundingClientRect();
-              return {
-                name: input.getAttribute('name') ?? '',
-                className: input.getAttribute('class') ?? '',
-                visible: rect.width > 0 && rect.height > 0 && !input.disabled,
-              };
-            }),
-          )
-          .catch(() => [] as Array<{ name: string; className: string; visible: boolean }>);
-        if (inputs.length > 0) {
-          states.push(
-            `${frame.url()} :: ${inputs
-              .map(
-                (item) =>
-                  `${item.name}[class="${item.className}" visible=${item.visible}]`,
-              )
-              .join(', ')}`,
-          );
-        }
-      }
-      return states.length > 0 ? states.join('\n') : '(sin inputs en iframes)';
-    };
-    const creditOption = page.getByText(/tarjeta de crédito/i).first();
-    await expect(creditOption).toBeVisible({ timeout: STEP_TIMEOUT });
-    await creditOption.click({ timeout: 15000 });
-    try {
-      await expect
-        .poll(countCardNumber, { timeout: 180000, intervals: [1000] })
-        .toBeGreaterThan(0);
-    } catch {
-      const dump = await dumpSecureFields();
-      console.log(
-        `Brick wallet paso 3/3: estado secure-fields tras poll único de 180s:\n${dump}`,
-      );
-      throw new Error(
-        `Brick wallet paso 3/3: tras UN click a "Tarjeta de crédito" por texto ` +
-          `(poll único de 180s) no apareció ` +
-          `input[name="cardNumber"]:visible. ` +
-          `Estado secure-fields:\n${dump}`,
-      );
-    }
-  } catch (error) {
-    const message = (error as Error).message;
-    if (message.includes('Estado secure-fields:')) throw error as Error;
-    throw new Error(
-      `Brick wallet paso 3/3: se esperaba la opción "Tarjeta de crédito" ` +
-        `del selector de medios que al clickearla por texto (UN click + poll ` +
-        `único de 180s) monte los 3 iframes ` +
-        `secure-fields con input[name="cardNumber"] visible ` +
-        `en ${STEP_TIMEOUT}ms. ` +
-        `Causa: ${message.split('\n')[0]}`,
     );
   }
 }
 
-async function submitBrick(page: Page): Promise<void> {
-  const submit = page.getByRole('button', { name: /pagar/i }).first();
-  try {
-    await expect(submit).toBeVisible({ timeout: BRICK_TIMEOUT });
-    await submit.click({ timeout: 15000 });
-  } catch (error) {
+// Tokenización REAL contra el sandbox de MP (determinística, tarjetas test
+// oficiales MLA): titular 'APRO' aprueba, 'OTHE' rechaza. Retorna el card
+// token (`body.id`). Si MP rechaza el shape, su error lo dice explícito.
+async function createCardToken(cardholderName: string): Promise<string> {
+  const MP_PUBLIC_KEY = process.env.VITE_MP_PUBLIC_KEY;
+  if (!MP_PUBLIC_KEY) {
     throw new Error(
-      `Brick: botón submit (/pagar/i) no visible/clickeable en el frame ` +
-        `principal. Causa: ${(error as Error).message.split('\n')[0]}`,
+      'VITE_MP_PUBLIC_KEY ausente en el step E2E del CI: se necesita la ' +
+        'public key TEST de MP para tokenizar contra el sandbox.',
     );
   }
+  const res = await api.post(MP_CARD_TOKENS_URL, {
+    params: { public_key: MP_PUBLIC_KEY },
+    data: {
+      card_number: TEST_CARD.number,
+      expiration_month: TEST_CARD.expirationMonth,
+      expiration_year: TEST_CARD.expirationYear,
+      security_code: TEST_CARD.cvv,
+      cardholder: {
+        name: cardholderName,
+        identification: {
+          type: TEST_CARD.docType,
+          number: TEST_CARD.docNumber,
+        },
+      },
+    },
+  });
+  if (!res.ok()) {
+    throw new Error(
+      `MP card_tokens falló (${res.status()}) para titular ${cardholderName}: ${await res.text()}`,
+    );
+  }
+  const body = await res.json();
+  if (typeof body?.id !== 'string' || body.id.length === 0) {
+    throw new Error(
+      `MP card_tokens no devolvió id de token para titular ${cardholderName}: ${JSON.stringify(body)}`,
+    );
+  }
+  return body.id as string;
+}
+
+// Pago REAL contra nuestro backend. Retorna status + body crudo para que
+// cada caso aserte (200 aprobado / 400 rechazado).
+async function processPaymentApi(
+  tokenJWT: string,
+  cardToken: string,
+): Promise<{ status: number; body: Record<string, unknown> }> {
+  const res = await api.post(`${API_BASE}/payment/process-payment`, {
+    headers: { Authorization: `Bearer ${tokenJWT}` },
+    data: {
+      token: cardToken,
+      payment_method_id: 'visa',
+      installments: 1,
+      identification_type: TEST_CARD.docType,
+      identification_number: TEST_CARD.docNumber,
+    },
+  });
+  let body: Record<string, unknown> = {};
+  try {
+    body = (await res.json()) as Record<string, unknown>;
+  } catch {
+    body = { raw: await res.text() };
+  }
+  return { status: res.status(), body };
+}
+
+function extractPaymentId(body: Record<string, unknown>): string {
+  const candidates = [
+    body.paymentId,
+    body.payment_id,
+    (body.data as Record<string, unknown> | undefined)?.paymentId,
+    (body.data as Record<string, unknown> | undefined)?.payment_id,
+    (body.data as Record<string, unknown> | undefined)?.id,
+  ];
+  const found = candidates.find(
+    (value): value is string | number =>
+      typeof value === 'string' || typeof value === 'number',
+  );
+  if (found === undefined) {
+    throw new Error(
+      `process-payment 200 sin paymentId en el body: ${JSON.stringify(body)}`,
+    );
+  }
+  return String(found);
 }
 
 test.beforeAll(async () => {
@@ -751,21 +366,27 @@ test.afterAll(async () => {
 test(
   'FE-12 (a): pago aprobado con tarjeta test → /payment-status?payment_id= + estado aprobado y usuario premium',
   async ({ page }) => {
-    test.setTimeout(300000);
+    test.setTimeout(180000);
     const session = await getSeedCommonUser(APROBADO_EMAIL, 'aprobado');
     await loginAs(page, session);
-    await openBrickWallet(page);
+    await openWalletAndCheckMethods(page);
 
-    await fillBrickCard(page, 'APRO', APROBADO_EMAIL);
-    await submitBrick(page);
+    const cardToken = await createCardToken('APRO');
+    const { status, body } = await processPaymentApi(
+      session.accessToken,
+      cardToken,
+    );
+    expect(
+      status,
+      `process-payment aprobado: se esperaba 200, body: ${JSON.stringify(body)}`,
+    ).toBe(200);
+    const paymentId = extractPaymentId(body);
 
-    // El código navega a /payment-status?payment_id=<id> (paymentId del
-    // PaymentResult). Se asevera: query payment_id en URL + Status Brick
-    // montado con estado aprobado (solo renderiza con paymentId) + premium
-    // real vía API.
-    await expect(page).toHaveURL(/payment-status\?.*payment_id=/, {
-      timeout: 90000,
-    });
+    // Navegación UI real: la página lee `payment_id` del query
+    // (usePaymentStatus.ts) y monta el Status Brick en
+    // `#status_brick_container` (paymentStatus.tsx), que solo renderiza con
+    // `paymentId`.
+    await page.goto(`/payment-status?payment_id=${paymentId}`);
     await expect(page.locator('#status_brick_container')).toBeVisible({
       timeout: 90000,
     });
@@ -777,23 +398,31 @@ test(
 );
 
 test(
-  'FE-12 (b): pago rechazado (titular OTHE) → error visible, sin navegar, sigue común',
+  'FE-12 (b): pago rechazado (titular OTHE) → 400 rejected, sigue común, /membership-payment muestra botón de pago',
   async ({ page }) => {
-    test.setTimeout(300000);
+    test.setTimeout(180000);
     const session = await getSeedCommonUser(RECHAZADO_EMAIL, 'rechazado');
     await loginAs(page, session);
-    await openBrickWallet(page);
+    // La wallet monta también para otro usuario: la UI no depende del usuario.
+    await openWalletAndCheckMethods(page);
 
-    await fillBrickCard(page, 'OTHE', RECHAZADO_EMAIL);
-    await submitBrick(page);
-
-    // El rechazo (400 del backend) debe mostrarse y NO navegar a success.
-    // El copy exacto del mensaje lo confirma el programador contra el DOM
-    // real de Bricks; este patrón cubre toast de la app o error del Brick.
-    await expect(
-      page.getByText(/rechaz|error|deneg|declin/i).first(),
-    ).toBeVisible({ timeout: 90000 });
-    await expect(page).toHaveURL(/membership-payment/);
+    const cardToken = await createCardToken('OTHE');
+    const { status, body } = await processPaymentApi(
+      session.accessToken,
+      cardToken,
+    );
+    expect(
+      status,
+      `process-payment rechazado: se esperaba 400, body: ${JSON.stringify(body)}`,
+    ).toBe(400);
+    expect(JSON.stringify(body)).toMatch(/reject/i);
     await expect(await getMyType(session.accessToken)).toBe('common');
+
+    // Assert UI: sigue común → /membership-payment ofrece el botón de pago
+    // (no es premium). NO se navega a payment-status en este caso.
+    await page.goto('/membership-payment');
+    await expect(
+      page.getByRole('button', { name: /pagar y convertirme en premium/i }),
+    ).toBeVisible({ timeout: 60000 });
   },
 );
