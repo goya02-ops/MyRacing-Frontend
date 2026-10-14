@@ -350,12 +350,13 @@ async function retypeSecureTail(
   tail: string,
   description: string,
 ): Promise<void> {
-  // Re-fetch forzado de cuotas: con el número COMPLETO ya tipeado y el logo
-  // VISA visible, el fetch temprano de installments ya salió con
-  // `payment_type_id` vacío y el Brick no lo reintenta (select vacío para
-  // siempre). Borrar los últimos 4 (Backspace x4, NO select-all: eso
-  // borraría todo) y re-tipearlos genera eventos de cambio con el tipo ya
-  // resuelto y dispara un nuevo fetch con `payment_type_id` correcto.
+  // Re-fetch forzado de cuotas: con el número COMPLETO ya tipeado, el fetch
+  // temprano de installments ya salió con `payment_type_id` vacío y el Brick
+  // no lo reintenta (select vacío para siempre). Borrar los últimos 4
+  // (Backspace x4, NO select-all: eso borraría todo) y re-tipearlos genera
+  // eventos de cambio con el tipo ya resuelto y dispara un nuevo fetch con
+  // `payment_type_id` correcto. (El logo VISA NO se usa como señal: es
+  // cosmética y poco fiable; la señal real es el request con tipo.)
   let lastCause = 'sin intentos de tipeo';
   for (let attempt = 1; attempt <= 3; attempt += 1) {
     try {
@@ -383,53 +384,27 @@ async function retypeSecureTail(
 }
 
 async function waitForBinResolution(page: Page): Promise<void> {
-  // DESPUÉS del número completo (no entre tandas): se llama con los 16
-  // dígitos ya tipeados. Causa raíz CI (run 38617172422: con solo 8 dígitos
-  // tipeados el logo VISA no aparece en 60s; en CI la detección del BIN
-  // necesita el número completo, el screenshot con logo lo mostraba con los
-  // 16 dígitos). Tipear todo de una tampoco alcanza solo: el fetch temprano
-  // de installments ya salió con `payment_type_id` vacío y el Brick no lo
-  // reintenta (select vacío para siempre). Por eso la secuencia es número
-  // completo → espera de logo aquí → re-tipeo de la cola (re-fetch con tipo
-  // resuelto, en fillBrickCard).
-  // ÚNICA espera aquí: logo VISA visible (poll 60s de img/svg con alt o
-  // aria-label /visa/i en página o iframes). Sin fallback a cuotas: el poll de
-  // options de cuotas vive DESPUÉS (en fillBrickCard) y duplicarlo aquí
-  // escondería el mismo síntoma.
-  const countVisaLogo = async (): Promise<number> => {
-    let total = 0;
-    try {
-      total += await page
-        .locator(
-          'img[alt*="visa" i]:visible, img[aria-label*="visa" i]:visible, svg[aria-label*="visa" i]:visible',
-        )
-        .count();
-    } catch {
-      // Seguir con los frames.
-    }
-    for (const frame of page.frames()) {
-      try {
-        total += await frame
-          .locator(
-            'img[alt*="visa" i]:visible, img[aria-label*="visa" i]:visible, svg[aria-label*="visa" i]:visible',
-          )
-          .count();
-        if (total > 0) return total;
-      } catch {
-        continue;
-      }
-    }
-    return total;
-  };
+  // Señal REAL es de red: el request
+  // `GET .../payment_methods/installments?...&payment_type_id=<no-vacío>`.
+  // Cuando sale con `payment_type_id=` vacío MP responde sin opciones y el
+  // Brick no reintenta. El logo VISA es cosmética (aparece o no sin
+  // correlación con el estado real) y NO se usa como gate: no hay espera de
+  // logo aquí para no duplicar esperas.
+  // Se llama DESPUÉS de `retypeSecureTail` (que fuerza un fetch nuevo de
+  // cuotas con el tipo ya resuelto): espera ese fetch con tipo no vacío.
   try {
-    await expect
-      .poll(countVisaLogo, { timeout: 60000, intervals: [1000] })
-      .toBeGreaterThan(0);
-    return;
+    await page.waitForResponse(
+      (resp) =>
+        resp.url().includes('/payment_methods/installments') &&
+        /payment_type_id=[^&]/.test(resp.url()),
+      { timeout: 60000 },
+    );
   } catch (error) {
     throw new Error(
-      'BIN no resolvió tras número completo (sin logo VISA visible 60s ' +
-        `tras tipear los 16 dígitos; el re-fetch de cuotas saldría sin payment_type_id). ` +
+      'installments sin payment_type_id tras re-tipeo ' +
+        `(sin GET /payment_methods/installments con payment_type_id no vacío 60s ` +
+        `tras el re-tipeo de la cola; el fetch temprano salió sin tipo y el Brick ` +
+        `no lo reintentó). ` +
         `Causa: ${(error as Error).message.split('\n')[0]}`,
     );
   }
@@ -440,28 +415,31 @@ async function fillBrickCard(
   holderName: 'APRO' | 'OTHE',
   email: string,
 ): Promise<void> {
-  // Orden con dependencias del Brick: número COMPLETO de una → espera de
-  // logo VISA (BIN resuelto, payment_type_id conocido) → re-tipeo de la cola
-  // para forzar re-fetch de cuotas. Evidencia CI run 38617172422: con solo 8
-  // dígitos tipeados el logo VISA no aparece en 60s (en CI la detección del
-  // BIN necesita el número completo). Pero tipear todo de una tampoco alcanza
-  // solo: el fetch temprano de installments ya salió con `payment_type_id`
-  // vacío y el Brick no lo reintenta → select vacío para siempre. Por eso,
-  // tras el número completo y el logo VISA, se fuerza un re-fetch RE-tipeando
-  // los últimos 4 dígitos (Backspace x4 + pressSequentially de los mismos 4):
-  // genera cambios con el tipo ya resuelto y dispara un nuevo fetch con
-  // `payment_type_id` correcto. Recién después: poll de cuotas + select +
+  // Orden con dependencias del Brick: número COMPLETO de una → re-tipeo de
+  // la cola para forzar re-fetch de cuotas → espera de red del fetch con
+  // `payment_type_id` no vacío. Evidencia CI run 38617172422: con solo 8
+  // dígitos tipeados la detección del BIN no completa en CI (necesita el
+  // número completo). Pero tipear todo de una tampoco alcanza solo: el fetch
+  // temprano de installments ya salió con `payment_type_id` vacío y el Brick
+  // no lo reintenta → select vacío para siempre. Por eso, tras el número
+  // completo se fuerza un re-fetch RE-tipeando los últimos 4 dígitos
+  // (Backspace x4 + pressSequentially de los mismos 4): genera cambios con el
+  // tipo ya resuelto y dispara un nuevo fetch con `payment_type_id` correcto.
+  // La señal de BIN resuelto NO es el logo VISA (cosmética, poco fiable: a
+  // veces aparece, a veces no, sin correlación con el estado real) sino el
+  // request de red con tipo (`waitForBinResolution` = waitForResponse con
+  // `payment_type_id=[^&]`). Recién después: poll de cuotas + select +
   // verificación de persistencia.
   // Tipeo REAL con pressSequentially (`.fill()` no dispara los handlers del
   // Brick y reporta `incomplete_fields` sin requests).
   const cardTail = TEST_CARD.number.slice(-4); // 3704: cola para re-fetch
   await fillSecureField(page, 'cardNumber', TEST_CARD.number, 'número de tarjeta (completo)');
-  // Número completo tipeado: ÚNICA espera de logo (sin gate separado previo a
-  // cuotas; el poll de options de cuotas viene después).
-  await waitForBinResolution(page);
-  // Número completo + VISA visible: forzar re-fetch de cuotas re-tipeando la
-  // cola (el fetch temprano ya salió sin payment_type_id y no se reintenta solo).
+  // Número completo + re-tipeo de la cola (el fetch temprano ya salió sin
+  // payment_type_id y no se reintenta solo): fuerza un fetch nuevo con tipo.
   await retypeSecureTail(page, 'cardNumber', cardTail, 'número de tarjeta (cola, re-fetch)');
+  // Recién después del re-tipeo: esperar el fetch con tipo no vacío. Sin gate
+  // de logo VISA previo (señal cosmética, eliminada para no duplicar esperas).
+  await waitForBinResolution(page);
   // Cuotas OBLIGATORIAS: el Brick exige cuotas seleccionadas (sin cuotas →
   // `incomplete_fields` → nunca sale `card_tokens`). El select se puebla async
   // tras el re-fetch, así que se espera hasta 60s a que el 2º select tenga
