@@ -15,7 +15,7 @@ import {
 } from '@remixicon/react';
 import { useNavigate } from 'react-router-dom';
 
-const MP_PUBLIC_KEY = 'TEST-3a5b26c4-1de7-4241-ac99-db18c349a54e';
+const MP_PUBLIC_KEY = import.meta.env.VITE_MP_PUBLIC_KEY;
 if (MP_PUBLIC_KEY) {
   initMercadoPago(MP_PUBLIC_KEY, {
     locale: 'es-AR',
