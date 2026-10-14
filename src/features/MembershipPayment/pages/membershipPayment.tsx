@@ -1,4 +1,5 @@
 import { initMercadoPago, Payment } from '@mercadopago/sdk-react';
+import type { ComponentProps } from 'react';
 import {
   Card,
   Button,
@@ -14,6 +15,12 @@ import {
   RiCopperCoinFill,
 } from '@remixicon/react';
 import { useNavigate } from 'react-router-dom';
+import type { PaymentFormData } from '../../../services/membershipService.ts';
+
+type PaymentBrickOnSubmit = ComponentProps<typeof Payment>['onSubmit'];
+type PaymentBrickOnError = NonNullable<
+  ComponentProps<typeof Payment>['onError']
+>;
 
 const MP_PUBLIC_KEY = import.meta.env.VITE_MP_PUBLIC_KEY;
 if (MP_PUBLIC_KEY) {
@@ -39,22 +46,25 @@ export default function MembershipPage() {
     processPaymentAsync,
   } = useMembershipPage();
 
-  const onSubmit = async ({ selectedPaymentMethod, formData }: any) => {
+  const onSubmit: PaymentBrickOnSubmit = async ({
+    selectedPaymentMethod,
+    formData,
+  }) => {
     if (!formData) {
       console.log(
-        `Pago delegado al Webhook. Método: ${
-          selectedPaymentMethod?.name || 'N/A'
-        }.`
+        `Pago delegado al Webhook. Método: ${selectedPaymentMethod || 'N/A'}.`
       );
 
-      navigate('/payment-success');
+      navigate('/payment-status');
 
       return;
     }
 
     try {
-      await processPaymentAsync(formData);
-      navigate('/payment-success');
+      const result = await processPaymentAsync(
+        formData as unknown as PaymentFormData
+      );
+      navigate(`/payment-status?payment_id=${encodeURIComponent(result.paymentId)}`);
       return;
     } catch (error) {
       console.error('Error en el pago:', error);
@@ -62,7 +72,7 @@ export default function MembershipPage() {
     }
   };
 
-  const onError = async (error: any) => {
+  const onError: PaymentBrickOnError = async (error) => {
     console.error('Error en Brick MP:', error);
   };
 

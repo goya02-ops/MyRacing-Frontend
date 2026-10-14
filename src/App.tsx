@@ -102,17 +102,6 @@ function AppContent() {
                 }
               />
 
-              {/* FE-12: el Brick navega a /payment-success (sin payment_id);
-                  reutiliza PaymentStatus existente, sin pantallas nuevas. */}
-              <Route
-                path="/payment-success"
-                element={
-                  <ProtectedRoute>
-                    <PaymentStatus />
-                  </ProtectedRoute>
-                }
-              />
-
               <Route
                 path="/admin-dashboard"
                 element={

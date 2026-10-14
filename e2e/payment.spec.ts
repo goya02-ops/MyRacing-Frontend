@@ -19,11 +19,17 @@ import {
 //   overlay animado con paneles login/signup (isActive) y es frágil para
 //   E2E. UserContext lee `user`+`accessToken` de localStorage al iniciar,
 //   así que la inyección es equivalente (mismas keys que setea el login UI).
-// - Ruta success REAL: el código navega a `/payment-success`
-//   (membershipPayment.tsx:50,57) y el router (App.tsx) define el alias
-//   `/payment-success` → `PaymentStatus` existente (FE-12, programador).
-//   La aserción es sobre la URL + estado premium vía API (éxito real,
-//   no solo URL).
+// - Ruta success REAL: el código navega a
+//   `/payment-status?payment_id=<id>` con el `paymentId` del PaymentResult
+//   que devuelve `processPayment` (membershipPayment.tsx +
+//   membershipService.ts:62-84). La página lee `payment_id` del query
+//   (usePaymentStatus.ts) y monta el Status Brick en
+//   `#status_brick_container` (paymentStatus.tsx), que solo renderiza con
+//   `paymentId`. Rama wallet (sin formData, pago delegado al webhook): sin
+//   `paymentId` disponible → `/payment-status` SIN query (muestra "sin
+//   info" + redirige a perfil, comportamiento existente).
+//   La aserción es URL con `payment_id` + Status Brick visible con estado
+//   aprobado + premium vía API (éxito real, no solo URL).
 // - MP_PUBLIC_KEY por env: membershipPayment.tsx usa
 //   `VITE_MP_PUBLIC_KEY` como paymentStatus.tsx (FE-12, programador;
 //   documentada en `.env.example`). Si falta, el guard muestra Callout.
@@ -34,6 +40,9 @@ import {
 //   explícito para guiar al programador.
 // - Timeouts generosos (60-90s): Bricks carga scripts remotos + el backend
 //   consulta a MP real (segundos, no ms).
+// - NOTA DE EJECUCIÓN: este spec NO se corrió en local (sin backend
+//   local disponible en esta sesión). Lo confirmará el CI (job E2E full
+//   stack con backend real + token TEST real de MP + public key).
 // - REQUISITO CI: el job E2E usa hoy MERCADOPAGO_ACCESS_TOKEN=dummy
 //   (`ci_mp_access_token`). Este spec necesita la credencial TEST real de
 //   MP como secret, si no fallará en CI aunque el código esté bien.
@@ -272,7 +281,7 @@ test.afterAll(async () => {
   await api?.dispose();
 });
 
-test('FE-12 (a): pago aprobado con tarjeta test → /payment-success y usuario premium', async ({
+test('FE-12 (a): pago aprobado con tarjeta test → /payment-status?payment_id= + estado aprobado y usuario premium', async ({
   page,
 }) => {
   const session = await createFreshCommonUser('aprobado');
@@ -282,9 +291,19 @@ test('FE-12 (a): pago aprobado con tarjeta test → /payment-success y usuario p
   await fillBrickCard(page, 'APRO');
   await submitBrick(page);
 
-  // El código navega a /payment-success (alias → PaymentStatus en App.tsx).
-  // Se asevera URL + estado real vía API (éxito real, no solo URL).
-  await expect(page).toHaveURL(/payment-success/, { timeout: 90000 });
+  // El código navega a /payment-status?payment_id=<id> (paymentId del
+  // PaymentResult). Se asevera: query payment_id en URL + Status Brick
+  // montado con estado aprobado (solo renderiza con paymentId) + premium
+  // real vía API.
+  await expect(page).toHaveURL(/payment-status\?.*payment_id=/, {
+    timeout: 90000,
+  });
+  await expect(page.locator('#status_brick_container')).toBeVisible({
+    timeout: 90000,
+  });
+  await expect(
+    page.locator('#status_brick_container').getByText(/aprob|acredit/i).first(),
+  ).toBeVisible({ timeout: 90000 });
   await expect(await getMyType(session.accessToken)).toBe('premium');
 });
 
