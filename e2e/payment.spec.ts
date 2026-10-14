@@ -344,26 +344,51 @@ async function fillMainField(
   }
 }
 
-async function waitForBinResolution(page: Page): Promise<void> {
-  // Causa raíz CI (create-preference 201 OK pero Brick reporta TODO faltante
-  // al submitear): en runner lento el test tocaba cuotas/resto ANTES de que
-  // el Brick terminara la detección del BIN; al resolver, el Brick
-  // reconstruye el form y borra lo tipeado/seleccionado. En local rápido el
-  // BIN ya había resuelto y por eso funcionaba. Por eso se espera aquí,
-  // justo tras tipear el número y ANTES de tocar cuotas.
-  // Señal de red (no requisito): el BIN dispara payment_methods con el BIN;
-  // si la URL exacta difiere, se ignora y mandan las señales DOM/red de abajo.
-  try {
-    await page.waitForResponse(
-      /payment_methods\/(search|installments).*bin|bin.*payment_methods/i,
-      { timeout: 60000 },
-    );
-  } catch {
-    // Señal, no requisito: seguir a la señal primaria (logo).
+async function appendSecureChunk(
+  page: Page,
+  inputName: 'cardNumber' | 'expirationDate' | 'securityCode',
+  chunk: string,
+  description: string,
+): Promise<void> {
+  // Segunda tanda del número: SOLO append (sin click previo, sin clear). El
+  // click recolocaría el caret y podría partir el valor; aquí el foco ya está
+  // en el input tras la primera tanda + espera de BIN. Re-resuelve el frame
+  // (el Brick puede re-montar iframes al resolver el BIN) y reintenta 3 veces.
+  let lastCause = 'sin intentos de tipeo';
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      const target = await findVisibleSecureInput(page, inputName);
+      if (!target) {
+        throw new Error('input visible no resuelto en ningún frame secure-fields');
+      }
+      await target.pressSequentially(chunk, {
+        delay: 30,
+        timeout: BRICK_TIMEOUT,
+      });
+      return;
+    } catch (error) {
+      lastCause = `intento ${attempt}: ${(error as Error).message.split('\n')[0]}`;
+    }
   }
-  // Señal PRIMARIA y obligatoria: logo de la marca en el campo (poll hasta
-  // 60s de un img/svg con alt o aria-label /visa/i dentro del Brick o de un
-  // iframe visible). Se usa count() por frame (no strict-mode).
+  throw new Error(
+    `Brick: segunda tanda "${description}" (input[name="${inputName}"] en ` +
+      `iframe secure-fields) no tipeable en ${BRICK_TIMEOUT}ms tras 3 intentos. ` +
+      `Última causa: ${lastCause}`,
+  );
+}
+
+async function waitForBinResolution(page: Page): Promise<void> {
+  // Punto MEDIO del tipeo del número (no gate previo a cuotas): se llama ENTRE
+  // las dos tandas (BIN ya tipeado, resto pendiente). Causa raíz CI (trace:
+  // `payment_methods/installments` con `payment_type_id=` vacío porque el
+  // Brick disparó cuotas antes de que el BIN resolviera el tipo en runner
+  // lento → MP responde sin options → select en "Elegir opción" para siempre).
+  // Al tipear el BIN primero y esperar aquí su resolución, el request de cuotas
+  // que dispara el número completo ya lleva el tipo resuelto.
+  // ÚNICA espera aquí: logo VISA visible (poll 60s de img/svg con alt o
+  // aria-label /visa/i en página o iframes). Sin fallback a cuotas: el poll de
+  // options de cuotas vive DESPUÉS (en fillBrickCard) y duplicarlo aquí
+  // escondería el mismo síntoma.
   const countVisaLogo = async (): Promise<number> => {
     let total = 0;
     try {
@@ -393,47 +418,14 @@ async function waitForBinResolution(page: Page): Promise<void> {
     await expect
       .poll(countVisaLogo, { timeout: 60000, intervals: [1000] })
       .toBeGreaterThan(0);
-    // Señal usada: logo VISA visible (primaria).
     return;
-  } catch {
-    // Sin logo: alternativa aceptada = select de cuotas con options con
-    // valores Y un segundo payment_methods que responda 200.
+  } catch (error) {
+    throw new Error(
+      'BIN no resolvió entre tandas del número (sin logo VISA visible 60s ' +
+        `tras tipear el BIN; el request de cuotas saldría sin payment_type_id). ` +
+        `Causa: ${(error as Error).message.split('\n')[0]}`,
+    );
   }
-  const hasInstallmentValues = async (): Promise<boolean> => {
-    try {
-      const selects = page.locator('select');
-      if ((await selects.count()) < 2) return false;
-      const values = await selects
-        .nth(1)
-        .locator('option')
-        .evaluateAll((options) =>
-          options
-            .map((option) => (option as unknown as { value: string }).value)
-            .filter((value) => value !== ''),
-        )
-        .catch(() => [] as string[]);
-      return values.length > 0;
-    } catch {
-      return false;
-    }
-  };
-  let methodsOk = false;
-  try {
-    const response = await page.waitForResponse(/payment_methods/i, {
-      timeout: 60000,
-    });
-    methodsOk = response.ok();
-  } catch {
-    methodsOk = false;
-  }
-  if (methodsOk && (await hasInstallmentValues())) {
-    // Señal usada: ALTERNATIVA (sin logo; cuotas con valores + payment_methods 200).
-    return;
-  }
-  throw new Error(
-    'BIN no resolvió tras tipear número (sin logo VISA ni métodos), ' +
-      'el Brick reconstruiría el form',
-  );
 }
 
 async function fillBrickCard(
@@ -441,15 +433,24 @@ async function fillBrickCard(
   holderName: 'APRO' | 'OTHE',
   email: string,
 ): Promise<void> {
-  // Orden con dependencias del Brick: PRIMERO el número (dispara la
-  // detección de BIN por keystrokes → issuer + cuotas), LUEGO esperar a que
-  // el select de installments se pueble, elegir 1, y RECIÉN DESPUÉS el resto.
-  // Si se tipeaba todo de corrido con `.fill()`, el Brick nunca detectaba el
-  // BIN y reportaba `incomplete_fields` sin emitir ningún request.
-  await fillSecureField(page, 'cardNumber', TEST_CARD.number, 'número de tarjeta');
-  // Esperar a que el BIN resuelva ANTES de tocar cuotas/resto: si se
-  // interactúa antes, el Brick reconstruye el form al resolver y borra todo.
+  // Orden con dependencias del Brick: el número se tipea en DOS tandas. La
+  // 1ª tanda (BIN, 8 dígitos) dispara la detección por keystrokes; se espera
+  // el logo VISA (BIN resuelto, payment_type_id conocido) y RECIÉN la 2ª tanda
+  // (8 restantes). Si se tipeaba el número completo de corrido, en runner lento
+  // el request `payment_methods/installments` salía con `payment_type_id=`
+  // vacío (BIN aún sin resolver) → MP responde sin options → el select queda
+  // en "Elegir opción" para siempre → submit incompleto. En local rápido el
+  // BIN ya había resuelto y por eso funcionaba. Recién tras el número completo:
+  // poll de cuotas + select + verificación de persistencia, y después el resto.
+  // Tipeo REAL con pressSequentially (`.fill()` no dispara los handlers del
+  // Brick y reporta `incomplete_fields` sin requests).
+  const binFirstHalf = TEST_CARD.number.slice(0, 8); // 45099535: BIN de la Visa test
+  const cardRemainder = TEST_CARD.number.slice(8); // 66233704: resto
+  await fillSecureField(page, 'cardNumber', binFirstHalf, 'número de tarjeta (BIN, 1/2)');
+  // Punto medio del tipeo: ÚNICA espera de logo (sin gate separado previo a
+  // cuotas; el poll de options de cuotas viene después).
   await waitForBinResolution(page);
+  await appendSecureChunk(page, 'cardNumber', cardRemainder, 'número de tarjeta (resto, 2/2)');
   // Cuotas OBLIGATORIAS: el Brick exige cuotas seleccionadas (sin cuotas →
   // `incomplete_fields` → nunca sale `card_tokens`). El select se puebla async
   // tras detectar el BIN, así que se espera hasta 30s a que el 2º select tenga
