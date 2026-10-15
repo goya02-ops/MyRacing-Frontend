@@ -31,6 +31,11 @@ npx skills add <skill> -g -y
 
 ## UI & Styling
 
+### Impeccable
+- **Skill**: local en `.agents/skills/impeccable` (vendoreada de `pbakaus/impeccable`)
+- **Use**: diseñar, criticar, pulir y auditar UI (`shape`, `critique`, `polish`, `audit`, ...)
+- **Nota**: corre con su launcher (`scripts/impeccable`, descarga el engine una vez). Telemetría: opt-out global con `"telemetry": false` en `.impeccable/config.json` al correr `init`.
+
 ### Tailwind Design System
 - **Skill**: `wshobson/agents@tailwind-design-system`
 - **Installs**: 25.9K
