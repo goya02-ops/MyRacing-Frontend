@@ -9,6 +9,10 @@
         "headers": {
           "Authorization": "Bearer {env:MERCADOPAGO_ACCESS_TOKEN}"
         }
+      },
+      "mui": {
+        "type": "local",
+        "command": ["pnpm", "exec", "mcp"]
       }
     }
   }
