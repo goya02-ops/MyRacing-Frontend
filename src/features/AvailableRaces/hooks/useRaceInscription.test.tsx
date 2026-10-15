@@ -8,7 +8,7 @@ import { registerUserToRace } from '../../../services/raceService';
 import { toast } from '../../../components/tremor/toast/hook/useToast';
 import { User, Race, RaceUser } from '../../../types/entities';
 
-// Se aísla la red y el sistema de notificación para fijar el contrato FE-16.
+// Se aísla la red y el sistema de notificación para fijar el contrato de toast.
 vi.mock('../../../services/raceService', () => ({
   registerUserToRace: vi.fn(),
 }));
@@ -40,7 +40,7 @@ function createWrapper() {
   };
 }
 
-describe('useRaceInscription (contrato FE-16: toast en lugar de alert)', () => {
+describe('useRaceInscription (contrato: toast en lugar de alert)', () => {
   beforeEach(() => {
     mockRegister.mockReset();
     mockToast.mockReset();

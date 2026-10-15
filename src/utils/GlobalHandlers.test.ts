@@ -7,7 +7,7 @@ import { toast } from '../components/tremor/toast/hook/useToast';
 import { Category } from '../types/entities';
 
 // Se mockean las dependencias de efectos externos para aislar el contrato
-// de notificación al usuario (FE-16: toast en lugar de alert).
+// de notificación al usuario (toast en lugar de alert).
 vi.mock('../services/apiService', () => ({
   saveEntity: vi.fn(),
 }));
@@ -23,7 +23,7 @@ function buildSetter(): Dispatch<SetStateAction<Category[]>> {
   return vi.fn() as unknown as Dispatch<SetStateAction<Category[]>>;
 }
 
-describe('handleSaveEntity (contrato FE-16: toast en lugar de alert)', () => {
+describe('handleSaveEntity (contrato: toast en lugar de alert)', () => {
   beforeEach(() => {
     mockSaveEntity.mockReset();
     mockToast.mockReset();
