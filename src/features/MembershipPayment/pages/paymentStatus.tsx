@@ -1,4 +1,5 @@
 import { useMemo, useCallback } from 'react';
+import type { ComponentProps } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { StatusScreen, initMercadoPago } from '@mercadopago/sdk-react';
 import { Card, Button } from '../../../components/tremor/TremorComponents.tsx';
@@ -9,6 +10,10 @@ const MP_PUBLIC_KEY = import.meta.env.VITE_MP_PUBLIC_KEY;
 if (MP_PUBLIC_KEY) {
   initMercadoPago(MP_PUBLIC_KEY, { locale: 'es-AR' });
 }
+
+type StatusBrickOnError = NonNullable<
+  ComponentProps<typeof StatusScreen>['onError']
+>;
 
 export default function PaymentStatusPage() {
   const navigate = useNavigate();
@@ -22,7 +27,7 @@ export default function PaymentStatusPage() {
     return { paymentId: paymentId! };
   }, [paymentId]);
 
-  const onError = useCallback((error: any) => {
+  const onError: StatusBrickOnError = useCallback((error) => {
     console.error('Error en Status Brick:', error);
   }, []);
 

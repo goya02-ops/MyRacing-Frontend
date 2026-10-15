@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-// FE-19 (issue #20, SonarCloud BLOCKER): el ci.yml no debe contener passwords
+// SonarCloud BLOCKER: el ci.yml no debe contener passwords
 // MySQL hardcodeadas. GitHub rechaza `${{ secrets.* }}` dentro de
 // `jobs.e2e.services` ("Unrecognized named-value: 'secrets'"), por lo que el
 // contrato es: SIN bloque `services:` en el job E2E y MySQL levantado en un
@@ -12,13 +12,13 @@ import { join } from 'node:path';
 // Nota: se resuelve por `process.cwd()` (raíz del repo) en vez de
 // `new URL(..., import.meta.url)` porque el entorno happy-dom no expone
 // `import.meta.url` con esquema `file:` y `readFileSync` lo exige
-// (mismo patrón que `ci-gate.test.ts` de FE-3).
+// (mismo patrón que `ci-gate.test.ts`).
 const ciYml = readFileSync(
   join(process.cwd(), '.github/workflows/ci.yml'),
   'utf-8',
 );
 
-describe('CI secrets (FE-19)', () => {
+describe('CI secrets', () => {
   it('el job E2E no usa bloque `services:` (MySQL va en un step con docker run)', () => {
     expect(ciYml).not.toMatch(/services:\s*\n\s*mysql:/);
   });

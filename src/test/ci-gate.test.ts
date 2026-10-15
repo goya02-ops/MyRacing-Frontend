@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-// Caracterización del gate de CI (FE-3, issue #4): el CI debe correr tests
+// Caracterización del gate de CI: el CI debe correr tests
 // reales (`pnpm test` y `pnpm test:e2e`, sin `--if-present`) y los scripts
 // `test` / `test:e2e` deben ejecutar vitest / playwright reales (no `echo`).
 // Se aserta sobre los fuentes porque son config de CI/build, no testeables
-// importando el módulo (espejo del `ci-gate` del backend, ver BE-3).
+// importando el módulo (espejo del `ci-gate` del backend).
 // Nota: se resuelve por `process.cwd()` (raíz del repo) en vez de
 // `new URL(..., import.meta.url)` porque el entorno happy-dom no expone
 // `import.meta.url` con esquema `file:` y `readFileSync` lo exige.
@@ -18,7 +18,7 @@ const packageJson = JSON.parse(
   readFileSync(join(process.cwd(), 'package.json'), 'utf-8'),
 ) as { scripts?: Record<string, string> };
 
-describe('CI gate (FE-3)', () => {
+describe('CI gate', () => {
   it('ci.yml corre `pnpm test` sin `--if-present`', () => {
     expect(ciYml).toMatch(/run:\s*pnpm test\s*$/m);
     expect(ciYml).not.toContain('--if-present');
