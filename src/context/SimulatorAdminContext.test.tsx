@@ -5,9 +5,10 @@ import {
   SimulatorAdminProvider,
   useSimulatorAdminContext,
 } from './SimulatorAdminContext.tsx';
+import { Simulator } from '../types/entities';
 
 const value = {
-  simulators: [],
+  simulators: [] as Simulator[],
   editingSimulator: null,
   isCreatingSimulator: false,
   activeManager: { type: null, simulator: null },
@@ -15,7 +16,7 @@ const value = {
   handleCancelSimulator: vi.fn(),
   handleToggleManager: vi.fn(),
   handleCloseManager: vi.fn(),
-} as const;
+};
 
 describe('SimulatorAdminContext (BE #64)', () => {
   it('lanza si se usa fuera del provider', () => {
