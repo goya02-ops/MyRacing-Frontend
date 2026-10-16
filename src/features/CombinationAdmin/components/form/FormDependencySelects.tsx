@@ -12,7 +12,7 @@ import {
   SelectContent,
 } from '../../../../components/tremor/TremorComponents';
 import { useCombinationAdminContext } from '../../../../context/CombinationAdminContext';
-import { toId } from '../../../../utils/combination/normalize';
+import { toId } from '../../../../utils/entityId';
 
 interface Props {
   form: Combination;

@@ -1,17 +1,15 @@
 import { Combination } from '../../types/entities';
+import { toId } from '../entityId';
 
 export function isDuplicateCombination(
   list: Combination[],
   comb: Combination
 ): boolean {
-  const getId = (v: unknown) =>
-    typeof v === 'object' && v !== null ? (v as any).id : v;
-
   return list.some((item) => {
-    const itemCatId = getId(item.categoryVersion);
-    const itemCircId = getId(item.circuitVersion);
-    const combCatId = getId(comb.categoryVersion);
-    const combCircId = getId(comb.circuitVersion);
+    const itemCatId = toId(item.categoryVersion);
+    const itemCircId = toId(item.circuitVersion);
+    const combCatId = toId(comb.categoryVersion);
+    const combCircId = toId(comb.circuitVersion);
 
     return (
       itemCatId === combCatId &&
