@@ -4,7 +4,7 @@ import { fetchMyProfile } from './userService';
 import { fetchWithAuth } from './apiClient';
 
 vi.mock('./apiClient', () => ({ fetchWithAuth: vi.fn() }));
-vi.mock('./raceUserService.ts', () => ({ fetchRaceUsersByUserId: vi.fn() }));
+vi.mock('./raceUserService.ts', () => ({ fetchMyRaceUsers: vi.fn() }));
 
 const mockFetchWithAuth = vi.mocked(fetchWithAuth);
 

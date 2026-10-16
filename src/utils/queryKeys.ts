@@ -1,12 +1,19 @@
+import type { Constructor } from '../types/entityMeta';
+
 /**
  * Constantes centralizadas para las queryKeys de React Query.
  * Usar estas constantes en lugar de strings hardcodeados para evitar errores
  * y mantener consistencia en toda la aplicación.
  */
-export const QUERY_KEYS = {
-  // Entidades genéricas (usa cls.name como parte de la key)
-  ENTITY: '[cls.name]',
 
+/**
+ * Namespace de las listas de entidades genéricas.
+ * No usar `cls.name` a pelo: en el bundle de producción los nombres de clase
+ * se minifican y las keys de entidades distintas colisionarían en la caché.
+ */
+export const ENTITY_KEY = 'entity';
+
+export const QUERY_KEYS = {
   // Perfil de usuario
   PROFILE: 'userProfile',
 
@@ -23,6 +30,15 @@ export const QUERY_KEYS = {
   // Admin - Simulador
   SIMULATOR_VERSIONS: 'simulatorVersions',
 } as const;
+
+/**
+ * Genera la queryKey de la lista de una entidad genérica.
+ * Único punto de entrada para las keys de entidades: la usan
+ * useEntityQuery, useEntityMutation y useAdminCRUD para que el cacheo
+ * y la invalidación hablen siempre el mismo idioma.
+ */
+export const createEntityKey = <T>(cls: Constructor<T>) =>
+  [ENTITY_KEY, cls.name] as const;
 
 /**
  * Genera una queryKey para pagos con ID dinámico

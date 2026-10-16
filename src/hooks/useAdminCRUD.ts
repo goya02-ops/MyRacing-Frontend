@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchEntities, saveEntity } from '../services/apiService';
+import { createEntityKey } from '../utils/queryKeys';
 import type { Constructor } from '../types/entityMeta';
 import { toast } from '../components/tremor/toast/hook/useToast';
 
@@ -22,7 +23,7 @@ export function useAdminCRUD<T extends { id?: number }>(
 ): AdminCRUDLogic<T> {
   const queryClient = useQueryClient();
 
-  const queryKey = [cls.name];
+  const queryKey = createEntityKey(cls);
 
   const { data: list = [], isLoading: loading } = useQuery<T[], Error>({
     queryKey: queryKey,
@@ -55,7 +56,7 @@ export function useAdminCRUD<T extends { id?: number }>(
         });
       }
     },
-    [cls.name, saveMutation, queryClient, queryKey]
+    [cls, saveMutation],
   );
 
   const handleNew = useCallback(() => {

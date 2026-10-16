@@ -8,7 +8,7 @@ import {
 } from '../../../types/entities.ts';
 import { useState, useCallback, useMemo } from 'react';
 import { QUERY_KEYS } from '../../../utils/queryKeys';
-import { toId } from '../../../utils/combination/normalize.ts';
+import { toId } from '../../../utils/entityId.ts';
 
 interface UseCombinationFormProps {
   initial: Combination;

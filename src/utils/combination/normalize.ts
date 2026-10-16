@@ -1,7 +1,5 @@
 import { Combination } from '../../types/entities';
-
-export const toId = (v: unknown): number | undefined =>
-  typeof v === 'object' && v ? (v as { id?: number }).id : (v as number | undefined);
+import { toId } from '../entityId';
 
 export function normalizeCombination(comb: Combination): Combination {
   return {

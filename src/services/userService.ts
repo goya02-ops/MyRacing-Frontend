@@ -1,5 +1,5 @@
 import { fetchWithAuth } from './apiClient';
-import { fetchRaceUsersByUserId } from './raceUserService.ts';
+import { fetchMyRaceUsers } from './raceUserService.ts';
 import { User, Race } from '../types/entities';
 import { API_ROUTES } from './apiRoutes';
 import { throwApiError } from './apiError.ts';
@@ -33,9 +33,8 @@ export async function fetchMyProfile(): Promise<ProfileData> {
   }
 
   const userData = (await userResponse.json()).data;
-  const userId = userData.id;
 
-  const racesData = await fetchRaceUsersByUserId(userId);
+  const racesData = await fetchMyRaceUsers();
 
   return {
     user: userData as User,
