@@ -23,9 +23,11 @@ export function CombinationCard({ combination, nextRace }: Props) {
   const { user } = useUser();
 
   const canInscribe = !!user && !!nextRace;
-  const { loading, success, handleInscription } = canInscribe
-    ? useRaceInscription(user, nextRace)
-    : { loading: false, success: false, handleInscription: () => {} };
+  // Incondicional (Rules of Hooks): el hook tolera user/race nulos.
+  const { loading, success, handleInscription } = useRaceInscription(
+    user,
+    nextRace,
+  );
 
   return (
     <Card

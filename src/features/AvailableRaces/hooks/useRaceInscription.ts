@@ -4,14 +4,21 @@ import { User, Race } from '../../../types/entities';
 import { createRacesForCombinationKey } from '../../../utils/queryKeys';
 import { toast } from '../../../components/tremor/toast/hook/useToast';
 
-export function useRaceInscription(user: User, race: Race) {
+// Acepta user/race nulos para poder invocarse siempre (Rules of Hooks); el
+// mutate queda inerte mientras falten los ids.
+export function useRaceInscription(user: User | null, race: Race | null) {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: () => registerUserToRace(user.id!, race.id!),
+    mutationFn: () => {
+      if (!user?.id || !race?.id) {
+        throw new Error('Inscripción no disponible');
+      }
+      return registerUserToRace(user.id, race.id);
+    },
 
     onSuccess: () => {
-      if (race.combination?.id) {
+      if (race?.combination?.id) {
         queryClient.invalidateQueries({
           queryKey: createRacesForCombinationKey(race.combination.id),
         });
