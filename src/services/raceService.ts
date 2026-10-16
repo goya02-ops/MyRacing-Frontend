@@ -2,6 +2,7 @@ import { Combination, Race, RaceUser } from '../types/entities.ts';
 import { entityMetaByClass } from '../types/entityMeta.ts';
 import { fetchWithAuth } from './apiClient.ts';
 import { API_ROUTES } from './apiRoutes';
+import { throwApiError } from './apiError.ts';
 
 export async function fetchCurrentCombinations(): Promise<Combination[]> {
   const metadata = entityMetaByClass.get(Combination);
@@ -44,7 +45,7 @@ export async function registerUserToRace(
   });
 
   if (!res.ok) {
-    throw new Error('Error al inscribirse');
+    return await throwApiError(res, 'No se pudo inscribir.');
   }
 
   const json = await res.json();

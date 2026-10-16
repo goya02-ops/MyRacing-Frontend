@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useUserProfile, type SaveResult } from '../hooks/useUserProfile.ts';
 import { UserStatsCard } from '../components/UserStatsCard.tsx';
 import { UserDataForm } from '../components/UserData.tsx';
@@ -22,6 +23,19 @@ export default function UserProfile() {
 
   const { totalRaces, victories, podiums } = stats;
 
+  const profileUnavailable = !loading && (!user || !formData);
+
+  // El aviso se emite como efecto, no durante el render: así un re-render no
+  // dispara el toast repetidas veces (spam).
+  useEffect(() => {
+    if (!profileUnavailable) return;
+    toast({
+      title: 'Error de Carga',
+      description: 'No se pudo cargar el perfil de usuario.',
+      variant: 'error',
+    });
+  }, [profileUnavailable]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen text-gray-400">
@@ -31,11 +45,6 @@ export default function UserProfile() {
   }
 
   if (!user || !formData) {
-    toast({
-      title: 'Error de Carga',
-      description: 'No se pudo cargar el perfil de usuario.',
-      variant: 'error',
-    });
     return (
       <div className="flex items-center justify-center min-h-screen text-red-400">
         <p className="text-lg">No se pudo cargar el perfil de usuario.</p>
