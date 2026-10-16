@@ -68,7 +68,13 @@ export async function processPayment(
     body: JSON.stringify(formData),
   });
   if (!res.ok) {
-    const errorData = await res.json();
+    let errorData: { message?: string; paymentId?: string; status?: string } =
+      {};
+    try {
+      errorData = (await res.json()) as typeof errorData;
+    } catch {
+      // El body de error no es JSON parseable: se conserva el mensaje por defecto.
+    }
 
     const customError = new Error(
       errorData.message || "Error al procesar el pago.",
