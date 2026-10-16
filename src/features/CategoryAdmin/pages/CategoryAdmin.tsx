@@ -14,7 +14,7 @@ import {
 import { useScrollToElement } from '../../../hooks/useScrollToElement';
 import { CategoryRow } from '../components/CategoryRow';
 
-const CategoryForm = lazy(() => import('../components/CategoryForm'));
+const EntityForm = lazy(() => import('../../../components/forms/EntityForm'));
 
 export default function CategoryAdmin() {
   const {
@@ -64,8 +64,9 @@ export default function CategoryAdmin() {
                   <div className="text-center p-4">Cargando formulario...</div>
                 }
               >
-                <CategoryForm
+                <EntityForm
                   key={editing?.id ?? 'new'}
+                  kind="category"
                   initial={editing}
                   onCancel={handleCancel}
                   onSave={handleSave}
