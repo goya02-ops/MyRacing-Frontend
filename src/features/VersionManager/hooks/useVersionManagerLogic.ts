@@ -3,17 +3,8 @@ import { useEntityQuery } from '../../../hooks/useEntityQuery.ts';
 import { useEntityMutation } from '../../../hooks/useEntityMutation.ts';
 import { getRelationId } from '../../../utils/GlobalHandlers';
 import { toast } from '../../../components/tremor/toast/hook/useToast';
-import {
-  Simulator,
-  CategoryVersion,
-  CircuitVersion,
-} from '../../../types/entities';
-
-type ActiveManager = {
-  type: 'category' | 'circuit' | null;
-  simulator: Simulator | null;
-};
-
+import { CategoryVersion, CircuitVersion } from '../../../types/entities';
+import type { ActiveManager } from '../../../context/SimulatorAdminContext.tsx';
 
 export function useVersionManagerLogic(activeManager: ActiveManager) {
 

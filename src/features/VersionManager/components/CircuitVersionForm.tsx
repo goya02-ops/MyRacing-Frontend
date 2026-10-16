@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CircuitVersion, Circuit, Simulator } from '../../../types/entities';
+import { CircuitVersion, Circuit } from '../../../types/entities';
 import {
   Button,
   Divider,
@@ -15,7 +15,6 @@ import {
 interface Props {
   initial: CircuitVersion;
   circuits: Circuit[];
-  simulators: Simulator[];
   onSave: (circuitVersion: CircuitVersion) => void;
   onCancel: () => void;
   isSaving?: boolean; 

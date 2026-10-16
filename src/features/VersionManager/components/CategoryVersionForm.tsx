@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CategoryVersion, Category, Simulator } from '../../../types/entities';
+import { CategoryVersion, Category } from '../../../types/entities';
 import {
   Button,
   Divider,
@@ -15,7 +15,6 @@ import {
 interface CategoryVersionFormProps {
   initial: CategoryVersion;
   categories: Category[];
-  simulators: Simulator[];
   onSave: (categoryVersion: CategoryVersion) => void;
   onCancel: () => void;
   isSaving?: boolean; 

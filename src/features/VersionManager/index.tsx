@@ -1,27 +1,14 @@
-import { Simulator } from '../../types/entities';
 import { Button, Divider } from '../../components/tremor/TremorComponents';
 import { VersionHeader } from './components/VersionHeader';
 import { VersionFormRenderer } from './components/VersionFormRenderer';
 import { VersionList } from './components/VersionList';
-import { useVersionManagerLogic } from './hooks/useVersionManagerLogic'; 
+import { useVersionManagerLogic } from './hooks/useVersionManagerLogic';
 import { useVersionDependencies } from '../SimulatorAdmin/hooks/useVersionDependencies';
+import { useSimulatorAdminContext } from '../../context/SimulatorAdminContext.tsx';
 import Spinner from '../../components/Spinner';
 
-type ActiveManager = {
-  type: 'category' | 'circuit' | null;
-  simulator: Simulator | null;
-};
-
-interface VersionManagerProps {
-  activeManager: ActiveManager;
-  onClose: () => void;
-}
-
-export default function VersionManager({
-  activeManager,
-  onClose,
-}: VersionManagerProps) {
-
+export default function VersionManager() {
+  const { activeManager, handleCloseManager } = useSimulatorAdminContext();
 
   const { categories, circuits, loadingDependencies } =
     useVersionDependencies(activeManager);
@@ -44,16 +31,19 @@ export default function VersionManager({
         </div>
       ) : (
         <VersionFormRenderer
-          {...hookProps}
-          activeManager={activeManager}
+          editingVersion={hookProps.editingVersion}
+          isCreatingVersion={hookProps.isCreatingVersion}
+          isCategory={hookProps.isCategory}
           categories={categories}
           circuits={circuits}
-          isSaving={hookProps.isSaving} 
+          onSaveCategoryVersion={hookProps.onSaveCategoryVersion}
+          onSaveCircuitVersion={hookProps.onSaveCircuitVersion}
+          handleCancelVersion={hookProps.handleCancelVersion}
+          isSaving={hookProps.isSaving}
         />
       )}
 
-
-      {hookProps.loading ? ( // <-- ¡NUEVO!
+      {hookProps.loading ? (
         <div className="flex justify-center p-4">
           <Spinner>Cargando versiones...</Spinner>
         </div>
@@ -74,7 +64,7 @@ export default function VersionManager({
 
       <Divider className="my-4" />
       <div className="flex justify-end">
-        <Button variant="secondary" onClick={onClose}>
+        <Button variant="secondary" onClick={handleCloseManager}>
           Cerrar
         </Button>
       </div>

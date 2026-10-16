@@ -1,18 +1,24 @@
 import { createContext, use, type ReactNode } from 'react';
-// Ya no necesitamos 'Category' y 'Circuit' aquí
-// import { Category, Circuit } from '../types/entities.ts';
+import { Simulator } from '../types/entities.ts';
 
-// 1. Actualizamos el tipo de la función (sin 'relatedData')
-type HandleSaveEntityFunc = <T extends { id?: number }>(
-  entityClass: new () => T,
-  entity: T,
-  setter: React.Dispatch<React.SetStateAction<T[]>>,
-  onSuccess: () => void,
-  duplicateCheck?: (entity: T) => boolean
-) => Promise<void>;
+export type ActiveManagerType = 'category' | 'circuit';
 
+export interface ActiveManager {
+  type: ActiveManagerType | null;
+  simulator: Simulator | null;
+}
+
+// Estado y handlers de SimulatorAdmin que la cadena (lista -> fila -> manager)
+// necesita, expuestos por contexto para no taladrar props sin uso intermedio.
 interface SimulatorAdminContextType {
-  handleSaveEntity: HandleSaveEntityFunc;
+  simulators: Simulator[];
+  editingSimulator: Simulator | null;
+  isCreatingSimulator: boolean;
+  activeManager: ActiveManager;
+  handleEditSimulator: (simulator: Simulator) => void;
+  handleCancelSimulator: () => void;
+  handleToggleManager: (simulator: Simulator, type: ActiveManagerType) => void;
+  handleCloseManager: () => void;
 }
 
 const SimulatorAdminContext = createContext<

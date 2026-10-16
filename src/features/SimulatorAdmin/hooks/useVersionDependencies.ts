@@ -1,11 +1,7 @@
 import { useState, useEffect } from 'react';
 import { fetchEntities } from '../../../services/apiService';
-import { Category, Circuit, Simulator } from '../../../types/entities';
-
-type ActiveManager = {
-  type: 'category' | 'circuit' | null;
-  simulator: Simulator | null;
-};
+import { Category, Circuit } from '../../../types/entities';
+import type { ActiveManager } from '../../../context/SimulatorAdminContext.tsx';
 
 export function useVersionDependencies(activeManager: ActiveManager) {
   const [categories, setCategories] = useState<Category[]>([]);
