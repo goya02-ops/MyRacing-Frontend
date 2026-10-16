@@ -14,6 +14,48 @@ describe('authService', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    localStorage.clear();
+  });
+
+  describe('logout', () => {
+    it('POSTea el grant a /auth/logout con el refresh guardado y limpia los tokens', async () => {
+      localStorage.setItem('accessToken', 'access-1');
+      localStorage.setItem('refreshToken', 'refresh-1');
+      localStorage.setItem('user', JSON.stringify({ userName: 'piloto' }));
+      mockFetch.mockResolvedValue({ ok: true } as unknown as Response);
+
+      const { logout } = await import('./authService');
+      await logout();
+
+      expect(mockFetch).toHaveBeenCalledWith(`${API_BASE_URL}/auth/logout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken: 'refresh-1' }),
+      });
+      expect(localStorage.getItem('accessToken')).toBeNull();
+      expect(localStorage.getItem('refreshToken')).toBeNull();
+      expect(localStorage.getItem('user')).toBeNull();
+    });
+
+    it('sin refresh guardado limpia la sesión sin POSTear', async () => {
+      localStorage.setItem('accessToken', 'access-1');
+
+      const { logout } = await import('./authService');
+      await logout();
+
+      expect(mockFetch).not.toHaveBeenCalled();
+      expect(localStorage.getItem('accessToken')).toBeNull();
+    });
+
+    it('best-effort: si el POST falla, igual limpia y no propaga el error', async () => {
+      localStorage.setItem('refreshToken', 'refresh-1');
+      mockFetch.mockRejectedValue(new Error('network down'));
+
+      const { logout } = await import('./authService');
+      await expect(logout()).resolves.toBeUndefined();
+
+      expect(localStorage.getItem('refreshToken')).toBeNull();
+    });
   });
 
   describe('forgotPassword', () => {

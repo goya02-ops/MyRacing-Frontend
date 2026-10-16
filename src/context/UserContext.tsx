@@ -8,11 +8,12 @@ import {
 } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { User } from '../types/entities';
+import { logout as revokeSession } from '../services/authService';
 
 interface UserContextType {
   user: User | null;
   setUser: (u: User | null) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -38,11 +39,15 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
-  const logout = () => {
-    queryClient.clear();
-    setUser(null);
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
+  // BE #73: revoca el grant en el backend (best-effort) antes de limpiar la
+  // sesión local. Todos los caminos de logout pasan por aquí.
+  const logout = async () => {
+    try {
+      await revokeSession();
+    } finally {
+      queryClient.clear();
+      setUser(null);
+    }
   };
 
   const value = useMemo(() => ({ user, setUser, logout }), [user]);

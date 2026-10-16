@@ -1,22 +1,20 @@
 import { useState } from 'react';
 import { useUser } from '../../../context/UserContext';
-import { logout as apiLogout } from '../../../services/authService';
 import { useMinimumLoading } from '../../../hooks/useMinimumLoading';
 import { Button } from '../../../components/tremor/TremorComponents.tsx';
 
 export function AuthButtons() {
-  const { user, logout: contextLogout } = useUser();
+  const { user, logout } = useUser();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const showLoading = useMinimumLoading(isLoggingOut);
 
+  // El logout del contexto ya revoca el grant (BE #73); acá solo se muestra el
+  // estado de carga mientras corre.
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
-      await apiLogout();
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error);
+      await logout();
     } finally {
-      contextLogout();
       setIsLoggingOut(false);
     }
   };

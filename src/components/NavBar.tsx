@@ -88,7 +88,13 @@ export function Navbar() {
                   Iniciar Sesión
                 </Button>
               ) : (
-                <Button onClick={logout}>Cerrar Sesión</Button>
+                <Button
+                  onClick={() => {
+                    void logout();
+                  }}
+                >
+                  Cerrar Sesión
+                </Button>
               )}
             </div>
 
@@ -185,7 +191,9 @@ export function Navbar() {
                         <Button
                           className="w-full"
                           variant="secondary"
-                          onClick={logout}
+                          onClick={() => {
+                            void logout();
+                          }}
                         >
                           Cerrar Sesión
                         </Button>
