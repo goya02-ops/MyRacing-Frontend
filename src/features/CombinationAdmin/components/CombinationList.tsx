@@ -1,5 +1,4 @@
 import React, { lazy, Suspense } from 'react';
-import { Combination } from '../../../types/entities';
 import {
   getCategoryName,
   getCircuitName,
@@ -12,28 +11,19 @@ import {
   TableCell,
 } from '../../../components/tremor/TremorComponents';
 import Spinner from '../../../components/Spinner';
+import { useCombinationAdminContext } from '../../../context/CombinationAdminContext';
 
 const CombinationForm = lazy(() => import('../components/CombinationForm'));
 
-// 1. Props limpias: no recibe 'simulators'
-interface CombinationListProps {
-  list: Combination[];
-  filteredList: Combination[];
-  editing: Combination | null;
-  isCreating: boolean;
-  handleEditCombination: (combination: Combination) => void;
-  handleCancel: () => void;
-  handleSave: (combination: Combination) => void;
-}
+export const CombinationList: React.FC = () => {
+  const {
+    filteredList,
+    editing,
+    isCreating,
+    handleCancel,
+    handleEditCombination,
+  } = useCombinationAdminContext();
 
-export const CombinationList: React.FC<CombinationListProps> = ({
-  filteredList,
-  editing,
-  isCreating,
-  handleEditCombination,
-  handleCancel,
-  handleSave,
-}) => {
   return (
     <>
       {filteredList.map((comb) => (
@@ -103,11 +93,7 @@ export const CombinationList: React.FC<CombinationListProps> = ({
                       </div>
                     }
                   >
-                    <CombinationForm
-                      initial={editing as Combination}
-                      onSave={handleSave}
-                      onCancel={handleCancel}
-                    />
+                    <CombinationForm />
                   </Suspense>
                 </div>
               </TableCell>
