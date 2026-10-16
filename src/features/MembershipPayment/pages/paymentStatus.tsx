@@ -2,9 +2,15 @@ import { useMemo, useCallback } from 'react';
 import type { ComponentProps } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { StatusScreen, initMercadoPago } from '@mercadopago/sdk-react';
-import { Card, Button } from '../../../components/tremor/TremorComponents.tsx';
+import {
+  Card,
+  Button,
+  Callout,
+} from '../../../components/tremor/TremorComponents.tsx';
 import Spinner from '../../../components/Spinner.tsx';
+import { RiAlertFill } from '@remixicon/react';
 import { usePaymentStatus } from '../hooks/usePaymentStatus.ts';
+import { toast } from '../../../components/tremor/toast/hook/useToast';
 
 const MP_PUBLIC_KEY = import.meta.env.VITE_MP_PUBLIC_KEY;
 if (MP_PUBLIC_KEY) {
@@ -17,7 +23,7 @@ type StatusBrickOnError = NonNullable<
 
 export default function PaymentStatusPage() {
   const navigate = useNavigate();
-  const { paymentId, isChecking } = usePaymentStatus();
+  const { paymentId, isChecking, isError, error } = usePaymentStatus();
 
   const handleReturn = () => {
     navigate('/my-profile');
@@ -28,7 +34,11 @@ export default function PaymentStatusPage() {
   }, [paymentId]);
 
   const onError: StatusBrickOnError = useCallback((error) => {
-    console.error('Error en Status Brick:', error);
+    toast({
+      variant: 'error',
+      title: 'Error al mostrar el estado del pago',
+      description: error instanceof Error ? error.message : String(error),
+    });
   }, []);
 
   const onReady = useCallback(() => {
@@ -59,7 +69,19 @@ export default function PaymentStatusPage() {
           </div>
         )}
 
-        {!isChecking && paymentId && (
+        {!isChecking && isError && (
+          <div className="p-8">
+            <Callout
+              title="Error al verificar el pago"
+              icon={RiAlertFill}
+              variant="error"
+            >
+              {error ?? 'No se pudo verificar el estado del pago.'}
+            </Callout>
+          </div>
+        )}
+
+        {!isChecking && !isError && paymentId && (
           <div id="status_brick_container" className="p-4">
             <StatusScreen
               initialization={initialization}

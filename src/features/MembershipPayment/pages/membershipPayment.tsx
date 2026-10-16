@@ -17,6 +17,7 @@ import {
 } from '@remixicon/react';
 import { useNavigate } from 'react-router-dom';
 import type { PaymentFormData } from '../../../services/membershipService.ts';
+import { toast } from '../../../components/tremor/toast/hook/useToast';
 
 type PaymentBrickOnSubmit = ComponentProps<typeof Payment>['onSubmit'];
 type PaymentBrickOnError = NonNullable<
@@ -85,24 +86,25 @@ export default function MembershipPage() {
         return;
       }
 
-      try {
-        const result = await processPaymentAsync(
-          formData as unknown as PaymentFormData
-        );
-        navigate(
-          `/payment-status?payment_id=${encodeURIComponent(result.paymentId)}`
-        );
-        return;
-      } catch (error) {
-        console.error('Error en el pago:', error);
-        throw error;
-      }
+      // El fallo avisa con toast desde la mutación (useMembershipPage) y
+      // el rechazo se propaga al Brick.
+      const result = await processPaymentAsync(
+        formData as unknown as PaymentFormData
+      );
+      navigate(
+        `/payment-status?payment_id=${encodeURIComponent(result.paymentId)}`
+      );
+      return;
     },
     [processPaymentAsync, navigate]
   );
 
   const onError: PaymentBrickOnError = useCallback(async (error) => {
-    console.error('Error en Brick MP:', error);
+    toast({
+      variant: 'error',
+      title: 'Error en el medio de pago',
+      description: error instanceof Error ? error.message : String(error),
+    });
   }, []);
 
   const onReady = useCallback(async () => {
