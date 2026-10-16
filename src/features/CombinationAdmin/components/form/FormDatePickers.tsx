@@ -1,15 +1,16 @@
+import type { ChangeEvent } from 'react';
+import { Combination } from '../../../../types/entities';
 import {
   Input,
   Label,
 } from '../../../../components/tremor/TremorComponents';
 
 interface Props {
-  dateFrom: string;
-  dateTo: string;
-  onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  form: Pick<Combination, 'dateFrom' | 'dateTo'>;
+  onInputChange: (e: ChangeEvent<HTMLInputElement>) => void;
 }
 
-export function FormDatePickers({ dateFrom, dateTo, onInputChange }: Props) {
+export function FormDatePickers({ form, onInputChange }: Props) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
@@ -18,7 +19,7 @@ export function FormDatePickers({ dateFrom, dateTo, onInputChange }: Props) {
           id="dateFrom"
           type="datetime-local"
           name="dateFrom"
-          value={dateFrom}
+          value={form.dateFrom}
           onChange={onInputChange}
           required
         />
@@ -30,7 +31,7 @@ export function FormDatePickers({ dateFrom, dateTo, onInputChange }: Props) {
           id="dateTo"
           type="datetime-local"
           name="dateTo"
-          value={dateTo}
+          value={form.dateTo}
           onChange={onInputChange}
           required
         />

@@ -1,11 +1,23 @@
 import { createContext, use, type ReactNode } from 'react';
-import { Simulator, Category, Circuit } from '../types/entities';
+import {
+  Simulator,
+  Category,
+  Circuit,
+  Combination,
+} from '../types/entities';
 
-interface CombinationAdminContextType {
+export interface CombinationAdminContextType {
   simulators: Simulator[];
   categories: Category[];
   circuits: Circuit[];
   loadingDependencies: boolean;
+  list: Combination[];
+  filteredList: Combination[];
+  editing: Combination | null;
+  isCreating: boolean;
+  handleSave: (combination: Combination) => void;
+  handleCancel: () => void;
+  handleEditCombination: (combination: Combination) => void;
 }
 
 const CombinationAdminContext = createContext<

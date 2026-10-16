@@ -8,6 +8,7 @@ import {
 } from '../../../types/entities.ts';
 import { useState, useCallback, useMemo } from 'react';
 import { QUERY_KEYS } from '../../../utils/queryKeys';
+import { toId } from '../../../utils/combination/normalize.ts';
 
 interface UseCombinationFormProps {
   initial: Combination;
@@ -22,7 +23,6 @@ interface UseCombinationFormReturn {
   handleSimulatorChange: (value: string) => void;
   handleSelectChange: (name: string, value: string) => void;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  getIdValue: (field: 'categoryVersion' | 'circuitVersion') => number | '';
 }
 
 const fetchSimulatorDetails = async (selectedSimulator: number) => {
@@ -49,10 +49,16 @@ export function useCombinationForm({
     return undefined;
   }, [initial]);
   
-  const [form, setForm] = useState<Combination>({
+  const [form, setForm] = useState<Combination>(() => ({
     ...initial,
+    categoryVersion: toId(
+      initial.categoryVersion
+    ) as Combination['categoryVersion'],
+    circuitVersion: toId(
+      initial.circuitVersion
+    ) as Combination['circuitVersion'],
     raceIntervalMinutes: initial.raceIntervalMinutes || 30,
-  });
+  }));
 
   const [selectedSimulator, setSelectedSimulator] = useState<number | undefined>(initialSimulatorId);
   
@@ -102,11 +108,6 @@ export function useCombinationForm({
     [setForm]
   );
   
-  const getIdValue = (field: 'categoryVersion' | 'circuitVersion') => {
-    const val = form[field];
-    return typeof val === 'object' && val ? val.id || '' : val || '';
-  };
-
   return {
     form,
     selectedSimulator,
@@ -116,6 +117,5 @@ export function useCombinationForm({
     handleSimulatorChange,
     handleSelectChange,
     handleInputChange,
-    getIdValue,
   };
 }

@@ -1,7 +1,7 @@
 import {
-  Simulator,
   CategoryVersion,
   CircuitVersion,
+  Combination,
 } from '../../../../types/entities';
 import {
   Label,
@@ -11,33 +11,33 @@ import {
   SelectValue,
   SelectContent,
 } from '../../../../components/tremor/TremorComponents';
+import { useCombinationAdminContext } from '../../../../context/CombinationAdminContext';
+import { toId } from '../../../../utils/combination/normalize';
 
 interface Props {
-  simulators: Simulator[];
+  form: Combination;
   selectedSimulator: number | undefined;
-  loadingSimulators: boolean;
-  loadingVersions: boolean;
   categoryVersions: CategoryVersion[];
   circuitVersions: CircuitVersion[];
-  formValues: {
-    categoryVersion: string;
-    circuitVersion: string;
-  };
+  loadingVersions: boolean;
   onSimulatorChange: (value: string) => void;
   onSelectChange: (name: string, value: string) => void;
 }
 
+const versionId = (value: Combination['categoryVersion']) =>
+  String(toId(value) ?? '');
+
 export function FormDependencySelects({
-  simulators,
+  form,
   selectedSimulator,
-  loadingSimulators,
-  loadingVersions,
   categoryVersions,
   circuitVersions,
-  formValues,
+  loadingVersions,
   onSimulatorChange,
   onSelectChange,
 }: Props) {
+  const { simulators, loadingDependencies } = useCombinationAdminContext();
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <div>
@@ -46,14 +46,14 @@ export function FormDependencySelects({
           name="simulator"
           value={selectedSimulator?.toString() || ''}
           onValueChange={onSimulatorChange}
-          disabled={loadingSimulators}
+          disabled={loadingDependencies}
           required
         >
           <SelectTrigger id="simulator">
             <SelectValue placeholder="Seleccione un simulador" />
           </SelectTrigger>
           <SelectContent>
-            {simulators.map((sim: Simulator) => (
+            {simulators.map((sim) => (
               <SelectItem key={sim.id} value={sim.id!.toString()}>
                 {sim.name}
               </SelectItem>
@@ -66,7 +66,7 @@ export function FormDependencySelects({
         <Label htmlFor="categoryVersion">2. Categoría</Label>
         <Select
           name="categoryVersion"
-          value={formValues.categoryVersion}
+          value={versionId(form.categoryVersion)}
           onValueChange={(v) => onSelectChange('categoryVersion', v)}
           disabled={!selectedSimulator || loadingVersions}
           required
@@ -102,7 +102,7 @@ export function FormDependencySelects({
         <Label htmlFor="circuitVersion">3. Circuito</Label>
         <Select
           name="circuitVersion"
-          value={formValues.circuitVersion}
+          value={versionId(form.circuitVersion)}
           onValueChange={(v) => onSelectChange('circuitVersion', v)}
           disabled={!selectedSimulator || loadingVersions}
           required

@@ -1,9 +1,11 @@
-import { lazy, Suspense } from 'react';
-import { Combination } from '../../../types/entities.ts';
+import { lazy, Suspense, useMemo } from 'react';
 
 import { useCombinationDependencies } from '../hooks/useCombinationDependencies.ts';
 import { useCombinationAdminPage } from '../hooks/useCombinationAdminPage.ts';
-import { CombinationAdminProvider } from '../../../context/CombinationAdminContext.tsx';
+import {
+  CombinationAdminProvider,
+  type CombinationAdminContextType,
+} from '../../../context/CombinationAdminContext.tsx';
 
 import {
   Card,
@@ -43,6 +45,35 @@ export default function CombinationAdmin() {
     handleCancel,
   } = useCombinationAdminPage();
 
+  const contextValue = useMemo<CombinationAdminContextType>(
+    () => ({
+      simulators,
+      categories,
+      circuits,
+      loadingDependencies,
+      list,
+      filteredList,
+      editing,
+      isCreating,
+      handleSave,
+      handleCancel,
+      handleEditCombination,
+    }),
+    [
+      simulators,
+      categories,
+      circuits,
+      loadingDependencies,
+      list,
+      filteredList,
+      editing,
+      isCreating,
+      handleSave,
+      handleCancel,
+      handleEditCombination,
+    ]
+  );
+
   if (loadingCombinations || loadingDependencies) {
     return (
       <div className="flex justify-center items-center py-20">
@@ -52,9 +83,7 @@ export default function CombinationAdmin() {
   }
 
   return (
-    <CombinationAdminProvider
-      value={{ simulators, categories, circuits, loadingDependencies }}
-    >
+    <CombinationAdminProvider value={contextValue}>
       <div className="space-y-6">
         <Card className="text-gray-200">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 sm:gap-0">
@@ -99,11 +128,7 @@ export default function CombinationAdmin() {
                       </div>
                     }
                   >
-                    <CombinationForm
-                      initial={editing as Combination}
-                      onSave={handleSave}
-                      onCancel={handleCancel}
-                    />
+                    <CombinationForm />
                   </Suspense>
                 </div>
                 <Divider className="my-6" />
@@ -149,15 +174,7 @@ export default function CombinationAdmin() {
                       </TableRow>
                     }
                   >
-                    <CombinationList
-                      list={list}
-                      filteredList={filteredList}
-                      editing={editing}
-                      isCreating={isCreating}
-                      handleEditCombination={handleEditCombination}
-                      handleCancel={handleCancel}
-                      handleSave={handleSave}
-                    />
+                    <CombinationList />
                   </Suspense>
                 </TableBody>
               </Table>

@@ -1,3 +1,4 @@
+import { Combination } from '../../../../types/entities';
 import {
   Label,
   Select,
@@ -8,18 +9,18 @@ import {
 } from '../../../../components/tremor/TremorComponents';
 
 interface Props {
-  userType: string;
+  form: Pick<Combination, 'userType'>;
   onSelectChange: (name: string, value: string) => void;
 }
 
-export function FormUserTypeSelect({ userType, onSelectChange }: Props) {
+export function FormUserTypeSelect({ form, onSelectChange }: Props) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
         <Label htmlFor="userType">Tipo de Usuario</Label>
         <Select
           name="userType"
-          value={userType}
+          value={form.userType}
           onValueChange={(v) => onSelectChange('userType', v)}
           required
         >

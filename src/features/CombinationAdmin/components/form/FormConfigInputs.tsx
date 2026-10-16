@@ -1,18 +1,16 @@
+import type { ChangeEvent } from 'react';
+import { Combination } from '../../../../types/entities';
 import { Input, Label } from '../../../../components/tremor/TremorComponents';
 
 interface Props {
-  lapsNumber: number;
-  stops: number;
-  interval: number;
-  onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  form: Pick<
+    Combination,
+    'lapsNumber' | 'obligatoryStopsQuantity' | 'raceIntervalMinutes'
+  >;
+  onInputChange: (e: ChangeEvent<HTMLInputElement>) => void;
 }
 
-export function FormConfigInputs({
-  lapsNumber,
-  stops,
-  interval,
-  onInputChange,
-}: Props) {
+export function FormConfigInputs({ form, onInputChange }: Props) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <div>
@@ -21,7 +19,7 @@ export function FormConfigInputs({
           id="lapsNumber"
           type="number"
           name="lapsNumber"
-          value={lapsNumber}
+          value={form.lapsNumber}
           onChange={onInputChange}
           min="1"
           required
@@ -34,7 +32,7 @@ export function FormConfigInputs({
           id="obligatoryStopsQuantity"
           type="number"
           name="obligatoryStopsQuantity"
-          value={stops}
+          value={form.obligatoryStopsQuantity}
           onChange={onInputChange}
           min="0"
           required
@@ -47,7 +45,7 @@ export function FormConfigInputs({
           id="raceIntervalMinutes"
           type="number"
           name="raceIntervalMinutes"
-          value={interval}
+          value={form.raceIntervalMinutes}
           onChange={onInputChange}
           min="1"
           placeholder="Ej: 30"

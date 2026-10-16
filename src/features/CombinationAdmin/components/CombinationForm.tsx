@@ -8,18 +8,10 @@ import { FormDatePickers } from './form/FormDatePickers.tsx';
 import { FormConfigInputs } from './form/FormConfigInputs';
 import { FormUserTypeSelect } from './form/FormUserTypeSelect';
 
-interface CombinationFormProps {
-  initial: Combination;
-  onSave: (combination: Combination) => void;
-  onCancel: () => void;
-}
+export default function CombinationForm() {
+  const { editing, handleSave, handleCancel } = useCombinationAdminContext();
 
-export default function CombinationForm({
-  initial,
-  onSave,
-  onCancel,
-}: CombinationFormProps) {
-  const { simulators, loadingDependencies } = useCombinationAdminContext();
+  const initial = editing as Combination;
 
   const {
     form,
@@ -30,58 +22,40 @@ export default function CombinationForm({
     handleSimulatorChange,
     handleSelectChange,
     handleInputChange,
-    getIdValue,
   } = useCombinationForm({ initial });
 
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onSave(form);
+        handleSave(form);
       }}
       className="space-y-6"
     >
       <FormDependencySelects
-        simulators={simulators}
+        form={form}
         selectedSimulator={selectedSimulator}
-        loadingSimulators={loadingDependencies}
-        loadingVersions={loading}
         categoryVersions={categoryVersions}
         circuitVersions={circuitVersions}
-        formValues={{
-          categoryVersion: getIdValue('categoryVersion').toString(),
-          circuitVersion: getIdValue('circuitVersion').toString(),
-        }}
+        loadingVersions={loading}
         onSimulatorChange={handleSimulatorChange}
         onSelectChange={handleSelectChange}
       />
 
       <Divider />
 
-      <FormDatePickers
-        dateFrom={form.dateFrom}
-        dateTo={form.dateTo}
-        onInputChange={handleInputChange}
-      />
+      <FormDatePickers form={form} onInputChange={handleInputChange} />
 
       <Divider />
 
-      <FormConfigInputs
-        lapsNumber={form.lapsNumber}
-        stops={form.obligatoryStopsQuantity}
-        interval={form.raceIntervalMinutes}
-        onInputChange={handleInputChange}
-      />
+      <FormConfigInputs form={form} onInputChange={handleInputChange} />
 
       <Divider />
 
-      <FormUserTypeSelect
-        userType={form.userType}
-        onSelectChange={handleSelectChange}
-      />
+      <FormUserTypeSelect form={form} onSelectChange={handleSelectChange} />
 
       <div className="flex justify-end gap-3 pt-4">
-        <Button type="button" variant="secondary" onClick={onCancel}>
+        <Button type="button" variant="secondary" onClick={handleCancel}>
           Cancelar
         </Button>
         <Button type="submit" variant="primary">
