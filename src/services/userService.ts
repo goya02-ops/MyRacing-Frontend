@@ -2,6 +2,7 @@ import { fetchWithAuth } from './apiClient';
 import { fetchRaceUsersByUserId } from './raceUserService.ts';
 import { User, Race } from '../types/entities';
 import { API_ROUTES } from './apiRoutes';
+import { throwApiError } from './apiError.ts';
 
 // Representa la relación entre un usuario y una carrera en la API
 // Incluye posiciones de largada y llegada, y referencias a Race y User
@@ -26,14 +27,11 @@ interface ProfileData {
 
 export async function fetchMyProfile(): Promise<ProfileData> {
   const userResponse = await fetchWithAuth(API_ROUTES.USERS.ME);
-  
+
   if (!userResponse.ok) {
-    const status = userResponse.status;
-    const errorText = await userResponse.text();
-    console.error('Error fetching profile:', status, errorText);
-    throw new Error(`Error al obtener los datos del usuario. Status: ${status}`);
+    return await throwApiError(userResponse, 'No se pudieron obtener los datos del perfil.');
   }
-  
+
   const userData = (await userResponse.json()).data;
   const userId = userData.id;
 

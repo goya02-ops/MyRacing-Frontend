@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useRaceInscription } from './useRaceInscription';
 import { registerUserToRace } from '../../../services/raceService';
 import { toast } from '../../../components/tremor/toast/hook/useToast';
+import { ApiError } from '../../../services/apiError.ts';
 import { User, Race, RaceUser } from '../../../types/entities';
 
 // Se aísla la red y el sistema de notificación para fijar el contrato de toast.
@@ -67,6 +68,48 @@ describe('useRaceInscription (contrato: toast en lugar de alert)', () => {
         variant: 'error',
         title: 'Error al inscribirse',
         description: 'No se pudo inscribir, intente nuevamente.',
+      });
+    });
+  });
+
+  it('mapea la causa por status: 409 -> ya inscripto', async () => {
+    mockRegister.mockRejectedValue(
+      new ApiError(409, 'User already registered for this race'),
+    );
+
+    const { result } = renderHook(() => useRaceInscription(user, race), {
+      wrapper: createWrapper(),
+    });
+
+    act(() => {
+      result.current.handleInscription();
+    });
+
+    await waitFor(() => {
+      expect(mockToast).toHaveBeenCalledWith({
+        variant: 'error',
+        title: 'Error al inscribirse',
+        description: 'Ya estás inscripto en esta carrera.',
+      });
+    });
+  });
+
+  it('mapea la causa por status: 401 -> sesión expirada', async () => {
+    mockRegister.mockRejectedValue(new ApiError(401, 'Usuario no autenticado'));
+
+    const { result } = renderHook(() => useRaceInscription(user, race), {
+      wrapper: createWrapper(),
+    });
+
+    act(() => {
+      result.current.handleInscription();
+    });
+
+    await waitFor(() => {
+      expect(mockToast).toHaveBeenCalledWith({
+        variant: 'error',
+        title: 'Error al inscribirse',
+        description: 'Tu sesión expiró. Iniciá sesión nuevamente.',
       });
     });
   });

@@ -2,18 +2,11 @@ import type { Constructor } from '../types/entityMeta.ts';
 import { entityMetaByClass } from '../types/entityMeta.ts';
 import { fetchWithAuth } from './apiClient.ts';
 import { normalizeRelations } from '../utils/normalizeEntity.ts';
+import { errorMessageFrom } from './apiError.ts';
 
 async function throwIfNotOk(res: Response, fallback: string): Promise<void> {
   if (res.ok) return;
-
-  let message = fallback;
-  try {
-    const body = (await res.json()) as { message?: string };
-    if (body?.message) message = body.message;
-  } catch {
-    // El body de error no es JSON parseable: se conserva el mensaje por defecto.
-  }
-  throw new Error(message);
+  throw new Error(await errorMessageFrom(res, fallback));
 }
 
 export async function fetchEntities<T>(cls: Constructor<T>): Promise<T[]> {
