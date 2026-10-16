@@ -6,47 +6,32 @@ import {
   Badge,
   Button,
 } from '../../../components/tremor/TremorComponents';
+import { useSimulatorAdminContext } from '../../../context/SimulatorAdminContext.tsx';
 
 const VersionManager = lazy(() => import('../../../features/VersionManager'));
 
-type ActiveManager = {
-  type: 'category' | 'circuit' | null;
-  simulator: Simulator | null;
-};
-
 interface SimulatorRowProps {
   simulator: Simulator;
-  editingSimulator: Simulator | null;
-  isCreatingSimulator: boolean;
-  activeManager: ActiveManager;
-  onEdit: (sim: Simulator) => void;
-  onCancel: () => void;
-  onToggleManager: React.Dispatch<React.SetStateAction<ActiveManager>>;
 }
 
-export function SimulatorRow({
-  simulator: s,
-  editingSimulator,
-  isCreatingSimulator,
-  activeManager,
-  onEdit,
-  onCancel,
-  onToggleManager,
-}: SimulatorRowProps) {
+export function SimulatorRow({ simulator: s }: SimulatorRowProps) {
+  const {
+    editingSimulator,
+    isCreatingSimulator,
+    activeManager,
+    handleEditSimulator,
+    handleCancelSimulator,
+    handleToggleManager,
+  } = useSimulatorAdminContext();
+
   const isEditingThis = editingSimulator?.id === s.id && !isCreatingSimulator;
   const isManagerOpen =
     activeManager.simulator?.id === s.id && !editingSimulator;
 
-  const handleToggle = (type: 'category' | 'circuit') => {
-    if (editingSimulator) onCancel();
-
-    onToggleManager((prev) => {
-      if (prev.simulator?.id === s.id && prev.type === type) {
-        return { type: null, simulator: null };
-      }
-      return { type, simulator: s };
-    });
-  };
+  const isActiveCategory =
+    activeManager.simulator?.id === s.id && activeManager.type === 'category';
+  const isActiveCircuit =
+    activeManager.simulator?.id === s.id && activeManager.type === 'circuit';
 
   return (
     <>
@@ -61,41 +46,25 @@ export function SimulatorRow({
           <div className="flex justify-end gap-2 flex-wrap">
             <Button
               variant={isEditingThis ? 'primary' : 'ghost'}
-              onClick={() => (isEditingThis ? onCancel() : onEdit(s))}
+              onClick={() =>
+                isEditingThis ? handleCancelSimulator() : handleEditSimulator(s)
+              }
             >
               {isEditingThis ? 'Cancelar' : 'Editar'}
             </Button>
 
             <Button
-              variant={
-                activeManager.simulator?.id === s.id &&
-                activeManager.type === 'category'
-                  ? 'primary'
-                  : 'ghost'
-              }
-              onClick={() => handleToggle('category')}
+              variant={isActiveCategory ? 'primary' : 'ghost'}
+              onClick={() => handleToggleManager(s, 'category')}
             >
-              {activeManager.simulator?.id === s.id &&
-              activeManager.type === 'category'
-                ? 'Ocultar'
-                : 'Ver'}{' '}
-              Cat.
+              {isActiveCategory ? 'Ocultar' : 'Ver'} Cat.
             </Button>
 
             <Button
-              variant={
-                activeManager.simulator?.id === s.id &&
-                activeManager.type === 'circuit'
-                  ? 'primary'
-                  : 'ghost'
-              }
-              onClick={() => handleToggle('circuit')}
+              variant={isActiveCircuit ? 'primary' : 'ghost'}
+              onClick={() => handleToggleManager(s, 'circuit')}
             >
-              {activeManager.simulator?.id === s.id &&
-              activeManager.type === 'circuit'
-                ? 'Ocultar'
-                : 'Ver'}{' '}
-              Circ.
+              {isActiveCircuit ? 'Ocultar' : 'Ver'} Circ.
             </Button>
           </div>
         </TableCell>
@@ -109,10 +78,7 @@ export function SimulatorRow({
                 <div className="p-4 text-center">Cargando Manager...</div>
               }
             >
-              <VersionManager
-                activeManager={activeManager}
-                onClose={() => onToggleManager({ type: null, simulator: null })}
-              />
+              <VersionManager />
             </Suspense>
           </TableCell>
         </TableRow>

@@ -7,33 +7,12 @@ import {
   TableHead,
   TableHeaderCell,
 } from '../../../components/tremor/TremorComponents';
-import { Simulator } from '../../../types/entities';
+import { useSimulatorAdminContext } from '../../../context/SimulatorAdminContext.tsx';
 import { SimulatorRow } from './SimulatorRow.tsx';
 
-type ActiveManager = {
-  type: 'category' | 'circuit' | null;
-  simulator: Simulator | null;
-};
+export function SimulatorList() {
+  const { simulators } = useSimulatorAdminContext();
 
-interface SimulatorListProps {
-  simulators: Simulator[];
-  editingSimulator: Simulator | null;
-  isCreatingSimulator: boolean;
-  activeManager: ActiveManager;
-  onEdit: (sim: Simulator) => void;
-  onCancel: () => void;
-  onToggleManager: React.Dispatch<React.SetStateAction<ActiveManager>>;
-}
-
-export function SimulatorList({
-  simulators,
-  editingSimulator,
-  isCreatingSimulator,
-  activeManager,
-  onEdit,
-  onCancel,
-  onToggleManager,
-}: SimulatorListProps) {
   return (
     <div className="overflow-x-auto">
       <Table>
@@ -54,15 +33,7 @@ export function SimulatorList({
                 </TableRow>
               }
             >
-              <SimulatorRow
-                simulator={s}
-                editingSimulator={editingSimulator}
-                isCreatingSimulator={isCreatingSimulator}
-                activeManager={activeManager}
-                onEdit={onEdit}
-                onCancel={onCancel}
-                onToggleManager={onToggleManager}
-              />
+              <SimulatorRow simulator={s} />
             </Suspense>
           ))}
         </TableBody>
