@@ -22,7 +22,7 @@ import { CircuitRow } from '../components/CircuitRow.tsx';
 import Spinner from '../../../components/Spinner.tsx';
 import { toast } from '../../../components/tremor/toast/hook/useToast';
 
-const CircuitForm = lazy(() => import('../components/CircuitForm'));
+const EntityForm = lazy(() => import('../../../components/forms/EntityForm'));
 
 export default function CircuitAdmin() {
   const { list, isLoading } = useEntityQuery(Circuit);
@@ -108,8 +108,9 @@ export default function CircuitAdmin() {
                   <div className="text-center p-4">Cargando formulario...</div>
                 }
               >
-                <CircuitForm
+                <EntityForm
                   key={editing?.id ?? 'new'}
+                  kind="circuit"
                   initial={editing!}
                   onSave={handleSave}
                   onCancel={handleCancel}

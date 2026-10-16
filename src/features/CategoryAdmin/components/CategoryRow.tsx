@@ -6,8 +6,7 @@ import {
   Button,
 } from '../../../components/tremor/TremorComponents';
 
-// Importación Lazy del formulario para mejorar rendimiento
-const CategoryForm = lazy(() => import('./CategoryForm'));
+const EntityForm = lazy(() => import('../../../components/forms/EntityForm'));
 
 interface CategoryRowProps {
   category: Category;
@@ -63,8 +62,9 @@ export function CategoryRow({
                   <div className="text-center p-4">Cargando formulario...</div>
                 }
               >
-                <CategoryForm
+                <EntityForm
                   key={editing?.id ?? 'new'}
+                  kind="category"
                   initial={editing as Category}
                   onSave={handleSave}
                   onCancel={handleCancel}

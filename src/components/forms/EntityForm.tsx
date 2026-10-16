@@ -1,22 +1,46 @@
-import { useState } from 'react';
-import { Category } from '../../../types/entities.ts';
+import { useState, type ChangeEvent } from 'react';
 import {
   Button,
   Divider,
   Input,
   Label,
-} from '../../../components/tremor/TremorComponents';
+} from '../tremor/TremorComponents';
+
+export type EntityFormKind = 'category' | 'circuit';
+
+export interface EntityFormValues {
+  id?: number;
+  denomination: string;
+  abbreviation: string;
+  description: string;
+}
+
+const KIND_PLACEHOLDERS: Record<
+  EntityFormKind,
+  { denomination: string; abbreviation: string }
+> = {
+  category: {
+    denomination: 'Ej: Turismo Carretera',
+    abbreviation: 'Ej: TC',
+  },
+  circuit: {
+    denomination: 'Ej: Autódromo Juan y Oscar Gálvez',
+    abbreviation: 'Ej: BA GP',
+  },
+};
 
 interface Props {
-  initial: Category;
-  onSave: (category: Category) => void;
+  kind: EntityFormKind;
+  initial: EntityFormValues;
+  onSave: (entity: EntityFormValues) => void;
   onCancel: () => void;
 }
 
-export default function CategoryForm({ initial, onSave, onCancel }: Props) {
-  const [form, setForm] = useState<Category>(initial);
+export default function EntityForm({ kind, initial, onSave, onCancel }: Props) {
+  const [form, setForm] = useState<EntityFormValues>(initial);
+  const placeholders = KIND_PLACEHOLDERS[kind];
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
@@ -37,7 +61,7 @@ export default function CategoryForm({ initial, onSave, onCancel }: Props) {
             name="denomination"
             value={form.denomination}
             onChange={handleChange}
-            placeholder="Ej: Turismo Carretera"
+            placeholder={placeholders.denomination}
             required
           />
         </div>
@@ -48,7 +72,7 @@ export default function CategoryForm({ initial, onSave, onCancel }: Props) {
             name="abbreviation"
             value={form.abbreviation}
             onChange={handleChange}
-            placeholder="Ej: TC"
+            placeholder={placeholders.abbreviation}
             required
             maxLength={10}
           />
