@@ -15,11 +15,9 @@ type Props = {
 export function RaceListItem({ race, user }: Props) {
   const now = new Date();
   const isPast = new Date(race.raceDateTime) < now;
-  const canInscribe = !!user && !isPast;
 
-  const { loading, success, handleInscription } = canInscribe
-    ? useRaceInscription(user, race)
-    : { loading: false, success: false, handleInscription: () => {} };
+  // Incondicional (Rules of Hooks): el hook tolera user/race nulos.
+  const { loading, success, handleInscription } = useRaceInscription(user, race);
 
   return (
     <Card asChild key={race.id} className="border border-gray-800 bg-gray-900">
@@ -59,7 +57,7 @@ export function RaceListItem({ race, user }: Props) {
             <Button disabled>Iniciar sesión para inscribirse</Button>
           ) : (
             <Button
-              onClick={() => handleInscription}
+              onClick={() => handleInscription()}
               disabled={loading || success}
             >
               {loading
