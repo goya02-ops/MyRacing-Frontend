@@ -28,7 +28,7 @@ Se lee vía `import.meta.env` (`services/apiClient.ts:1-2`).
 ## Quirks propios
 
 - Vitest en `vite.config.ts` (happy-dom, setup `src/test/setup.ts`). Tests que lean
-  el repo: `process.cwd()` + `join`, nunca `import.meta.url` (`test/ci-gate.test.ts`).
+  el repo: `process.cwd()` + `join`, nunca `import.meta.url` (`src/test/ci-gate.test.ts`).
 - E2E full-stack con `reuseExistingServer` (`playwright.config.ts`); detalle de pagos
   en el AGENTS.md raíz. Browsers: `pnpm exec playwright install --with-deps chromium`
   (nunca `npx`). Local: backend en `:3000`, override con `PLAYWRIGHT_BASE_URL`.
