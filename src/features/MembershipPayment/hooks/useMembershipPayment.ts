@@ -45,6 +45,13 @@ export function useMembershipPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.MEMBERSHIP] });
     },
+    onError: (err) => {
+      toast({
+        variant: 'error',
+        title: 'Error en el pago',
+        description: err instanceof Error ? err.message : String(err),
+      });
+    },
   });
 
   const isPremium = user?.type === 'premium';
