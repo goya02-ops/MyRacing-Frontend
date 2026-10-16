@@ -1,7 +1,9 @@
+import { useMemo } from 'react';
 import { Card } from '../../../components/tremor/TremorComponents';
 import { useUserRacesPage } from '../hooks/useUserRacesPage';
 import UserListPanel from '../components/UserListPanel';
 import { RaceResultsPanel } from '../components/RaceResultPanel.tsx';
+import { UserRacesFilterProvider } from '../../../context/UserRacesFilterContext.tsx';
 import Spinner from '../../../components/Spinner.tsx';
 
 export default function UserRacesAdmin() {
@@ -22,6 +24,16 @@ export default function UserRacesAdmin() {
     filteredRaceUsers,
   } = useUserRacesPage();
 
+  const filterValue = useMemo(
+    () => ({
+      minFinishPosition,
+      setMinFinishPosition,
+      raceDateFrom,
+      setRaceDateFrom,
+    }),
+    [minFinishPosition, setMinFinishPosition, raceDateFrom, setRaceDateFrom]
+  );
+
   if (loadingUsers) {
     return <Spinner>Cargando usuarios...</Spinner>;
   }
@@ -39,16 +51,14 @@ export default function UserRacesAdmin() {
           setUserSearchTerm={setUserSearchTerm}
         />
 
-        <RaceResultsPanel
-          selectedUser={selectedUser}
-          loadingRaces={loadingRaces}
-          raceUsers={raceUsers}
-          filteredRaceUsers={filteredRaceUsers}
-          minFinishPosition={minFinishPosition}
-          setMinFinishPosition={setMinFinishPosition}
-          raceDateFrom={raceDateFrom}
-          setRaceDateFrom={setRaceDateFrom}
-        />
+        <UserRacesFilterProvider value={filterValue}>
+          <RaceResultsPanel
+            selectedUser={selectedUser}
+            loadingRaces={loadingRaces}
+            raceUsers={raceUsers}
+            filteredRaceUsers={filteredRaceUsers}
+          />
+        </UserRacesFilterProvider>
       </div>
     </Card>
   );

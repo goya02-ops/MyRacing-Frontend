@@ -1,15 +1,14 @@
-import React from 'react';
+import { useUserRacesFilter } from '../../../context/UserRacesFilterContext.tsx';
 
-interface RaceFilterPanelProps {
-    minFinishPosition: number | '';
-    setMinFinishPosition: (pos: number | '') => void;
-    raceDateFrom: string;
-    setRaceDateFrom: (date: string) => void;
-}
+export default function RaceFilterPanel() {
+  const {
+    minFinishPosition,
+    setMinFinishPosition,
+    raceDateFrom,
+    setRaceDateFrom,
+  } = useUserRacesFilter();
 
-const RaceFilterPanel: React.FC<RaceFilterPanelProps> = ({
-    minFinishPosition, setMinFinishPosition, raceDateFrom, setRaceDateFrom
-}) => (
+  return (
     <div className="flex flex-col sm:flex-row gap-4 mb-6 p-4 bg-gray-900/50 rounded-lg border border-gray-800">
         
         <div className="flex-1">
@@ -54,6 +53,5 @@ const RaceFilterPanel: React.FC<RaceFilterPanelProps> = ({
             </div>
         </div>
     </div>
-);
-
-export default RaceFilterPanel;
+  );
+}

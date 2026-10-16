@@ -8,10 +8,6 @@ interface RaceResultsPanelProps {
   loadingRaces: boolean;
   raceUsers: RaceUser[];
   filteredRaceUsers: RaceUser[];
-  minFinishPosition: number | '';
-  setMinFinishPosition: (value: number | '') => void;
-  raceDateFrom: string;
-  setRaceDateFrom: (value: string) => void;
 }
 
 export function RaceResultsPanel({
@@ -19,10 +15,6 @@ export function RaceResultsPanel({
   loadingRaces,
   raceUsers,
   filteredRaceUsers,
-  minFinishPosition,
-  setMinFinishPosition,
-  raceDateFrom,
-  setRaceDateFrom,
 }: RaceResultsPanelProps) {
   if (!selectedUser) {
     return (
@@ -54,12 +46,7 @@ export function RaceResultsPanel({
       </div>
       <Divider className="my-4" />
 
-      <RaceFilterPanel
-        minFinishPosition={minFinishPosition}
-        setMinFinishPosition={setMinFinishPosition}
-        raceDateFrom={raceDateFrom}
-        setRaceDateFrom={setRaceDateFrom}
-      />
+      <RaceFilterPanel />
 
       {loadingRaces && (
         <div className="text-center text-gray-400 py-10">
