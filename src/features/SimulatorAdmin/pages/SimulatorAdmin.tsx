@@ -3,7 +3,7 @@ import { useScrollToElement } from '../../../hooks/useScrollToElement';
 import { Simulator } from '../../../types/entities';
 import { Card } from '../../../components/tremor/TremorComponents';
 
-import { useSimulatorAdmin } from '../hooks/useSimulatorAdmin.ts';
+import { useEntityCRUD } from '../../../hooks/useEntityCRUD.ts';
 import { AdminHeader } from '../components/AdminHeader';
 import { SimulatorFormRenderer } from '../components/SimulatorFormRenderer';
 import { SimulatorList } from '../components/SimulatorList';
@@ -22,16 +22,16 @@ export default function SimulatorAdmin() {
   });
 
   const {
-    simulators,
-    editingSimulator,
-    isCreatingSimulator,
-    loadingSimulators,
+    list: simulators,
+    loading: loadingSimulators,
+    editing: editingSimulator,
+    isCreating: isCreatingSimulator,
     isSaving,
-    handleNewSimulator,
-    handleEditSimulator,
-    handleCancelSimulator,
-    handleSaveSimulator,
-  } = useSimulatorAdmin();
+    handleNew: handleNewSimulator,
+    handleEdit: handleEditSimulator,
+    handleCancel: handleCancelSimulator,
+    handleSave: handleSaveSimulator,
+  } = useEntityCRUD(Simulator);
 
   const formContainerRef = useScrollToElement<HTMLDivElement>(editingSimulator);
 

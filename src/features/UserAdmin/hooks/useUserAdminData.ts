@@ -1,54 +1,23 @@
-import { useMemo, useCallback } from 'react';
-import { useEntityQuery } from '../../../hooks/useEntityQuery.ts'; 
-import { useEntityMutation } from '../../../hooks/useEntityMutation.ts'; 
+import { useMemo } from 'react';
+import { useEntityQuery } from '../../../hooks/useEntityQuery.ts';
 import { User } from '../../../types/entities';
-import { toast } from '../../../components/tremor/toast/hook/useToast';
 
-interface UserAdminLogic {
+interface UserAdminData {
   list: User[];
   loading: boolean;
-  isSaving: boolean;
-  handleSave: (user: User) => Promise<void>;
-  handleCancel: () => void;
-  handleNew: () => void;
-  handleEdit: (user: User) => void;
 }
 
-export function useUserAdminData(): UserAdminLogic {
-  const { list: allUsers, isLoading } = useEntityQuery(User as any);
-  
-  const { saveEntity: mutateSave, isSaving } = useEntityMutation(User as any);
+/**
+ * El listado de usuarios es solo lectura por ahora (la edición todavía no
+ * existe), así que alcanza con la primitiva de datos.
+ */
+export function useUserAdminData(): UserAdminData {
+  const { list: allUsers, isLoading: loading } = useEntityQuery(User);
 
-  const filteredList = useMemo(() => {
-    return (allUsers as User[]).filter((u) => u.type !== 'admin');
-  }, [allUsers]);
+  const list = useMemo(
+    () => allUsers.filter((user) => user.type !== 'admin'),
+    [allUsers],
+  );
 
-  const handleSave = useCallback(async (user: User) => {
-    try {
-      await mutateSave(user);
-    } catch (error) {
-      console.error('Save error:', error);
-      toast({
-        variant: 'error',
-        title: 'Error al guardar',
-        description: 'No se pudo guardar el usuario.',
-      });
-    }
-  }, [mutateSave]);
-  
-  const handleCancel = useCallback(() => {}, []);
-  const handleNew = useCallback(() => { /* Lógica para abrir formulario */ }, []);
-  const handleEdit = useCallback((_user: User) => { 
-    console.log('Implementación futura para editar:', _user);
-    }, []);
-
-  return {
-    list: filteredList,
-    loading: isLoading,
-    isSaving,
-    handleSave,
-    handleCancel,
-    handleNew,
-    handleEdit,
-  };
+  return { list, loading };
 }

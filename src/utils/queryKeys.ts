@@ -34,7 +34,7 @@ export const QUERY_KEYS = {
 /**
  * Genera la queryKey de la lista de una entidad genérica.
  * Único punto de entrada para las keys de entidades: la usan
- * useEntityQuery, useEntityMutation y useAdminCRUD para que el cacheo
+ * useEntityQuery, useEntityMutation y useEntityCRUD para que el cacheo
  * y la invalidación hablen siempre el mismo idioma.
  */
 export const createEntityKey = <T>(cls: Constructor<T>) =>

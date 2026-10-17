@@ -34,7 +34,7 @@ async function seedAuth(page: Page, user: MockUser) {
 
 // Mock CRUD stateful: refleja POST/PUT en la lista que devuelve el GET, para
 // que el refetch posterior a la mutación (invalidación de query) muestre el
-// cambio. Usa una queryKey `[cls.name]` (ver useEntityMutation).
+// cambio.
 async function mockCrud(
   page: Page,
   resource: string,
@@ -262,8 +262,8 @@ test.describe('FE-13: CRUD mínimo', () => {
     await page.getByLabel('Abreviación').fill('DUP');
     await page.getByRole('button', { name: 'Guardar' }).click();
 
-    await expect(
-      page.getByText('No se pudo guardar la categoría.', { exact: true }),
-    ).toBeVisible();
+    // El toast propaga el mensaje del backend (convención de FE #63) en vez
+    // de un string hardcodeado por feature: useEntityCRUD es único para todas.
+    await expect(page.getByText('boom', { exact: true })).toBeVisible();
   });
 });
