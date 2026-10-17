@@ -1,68 +1,64 @@
-import { useState, useCallback } from 'react';
-import { useEntityQuery } from '../../../hooks/useEntityQuery.ts';
-import { useEntityMutation } from '../../../hooks/useEntityMutation.ts';
+import { useState, useCallback, useMemo } from 'react';
 import { Membership } from '../../../types/entities.ts';
-import { toast } from '../../../components/tremor/toast/hook/useToast';
+import { useEntityCRUD } from '../../../hooks/useEntityCRUD.ts';
 
-interface MembershipWithId extends Membership {
-  id?: number;
+interface MembershipAdminLogic {
+  memberships: Membership[];
+  editing: Membership | null;
+  loading: boolean;
+  showHistory: boolean;
+  currentMembership: Membership | undefined;
+  setShowHistory: React.Dispatch<React.SetStateAction<boolean>>;
+  handleSave: (membership: Membership) => Promise<void>;
+  handleCancel: () => void;
+  handleToggleHistory: () => void;
+  handleToggleForm: () => void;
 }
 
-export function useMembershipAdmin() {
-  const { list: rawList, isLoading: loadingMemberships } = useEntityQuery(Membership as any);
-  
-  const { saveEntity: mutateSave } = useEntityMutation(Membership as any);
+export function useMembershipAdmin(): MembershipAdminLogic {
+  const crud = useEntityCRUD(Membership);
 
-  const [editing, setEditing] = useState<MembershipWithId | null>(null);
   const [showHistory, setShowHistory] = useState(false);
 
-  const list = rawList as MembershipWithId[];
-  const sortedList = list.sort((a, b) =>
-      new Date(a.dateFrom) > new Date(b.dateFrom) ? 1 : -1
+  // Copia antes de ordenar: `list.sort()` ordenaría el array cacheado por
+  // React Query en el lugar, mutando la caché.
+  const memberships = useMemo(
+    () =>
+      [...crud.list].sort(
+        (a, b) => new Date(a.dateFrom).getTime() - new Date(b.dateFrom).getTime(),
+      ),
+    [crud.list],
   );
 
-  const currentMembership = sortedList.at(-1);
-
-  const handleSave = useCallback(async (membership: Membership) => {
-    try {
-      await mutateSave(membership); 
-      setEditing(null);
-    } catch (error) {
-      console.error('Mutation error:', error);
-      toast({
-        variant: 'error',
-        title: 'Error al guardar',
-        description: 'No se pudo guardar el valor de membresía.',
-      });
-    }
-  }, [mutateSave]);
-
-  const handleCancel = useCallback(() => {
-    setEditing(null);
-  }, []);
+  const currentMembership = useMemo(
+    () => memberships.at(-1),
+    [memberships],
+  );
 
   const handleToggleHistory = useCallback(() => {
-    setEditing(null); 
+    crud.handleCancel();
     setShowHistory((prev) => !prev);
-  }, []);
+  }, [crud.handleCancel]);
 
   const handleToggleForm = useCallback(() => {
-    setEditing((prev) => (prev ? null : (new Membership() as MembershipWithId)));
+    if (crud.editing) {
+      crud.handleCancel();
+    } else {
+      crud.handleNew();
+    }
     setShowHistory(false);
-  }, []);
+  }, [crud.editing, crud.handleNew, crud.handleCancel]);
 
   return {
-    memberships: sortedList,
-    editing,
-    loading: loadingMemberships,
+    memberships,
+    editing: crud.editing,
+    loading: crud.loading,
     showHistory,
     currentMembership,
-    
-    handleSave,
-    handleCancel,
+    setShowHistory,
+    handleSave: crud.handleSave,
+    handleCancel: crud.handleCancel,
     handleToggleHistory,
     handleToggleForm,
-    setEditing, 
-    setShowHistory,
   };
 }

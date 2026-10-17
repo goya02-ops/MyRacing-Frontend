@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
-import { useCategoryAdmin } from '../hooks/useCategoryAdmin';
+import { Category } from '../../../types/entities';
+import { useEntityCRUD } from '../../../hooks/useEntityCRUD';
 import {
   Card,
   Button,
@@ -24,9 +25,9 @@ export default function CategoryAdmin() {
     loading,
     handleSave,
     handleCancel,
-    handleNewCategory,
-    handleEditCategory,
-  } = useCategoryAdmin();
+    handleNew: handleNewCategory,
+    handleEdit: handleEditCategory,
+  } = useEntityCRUD(Category);
 
   const formContainerRef = useScrollToElement<HTMLDivElement>(editing);
 

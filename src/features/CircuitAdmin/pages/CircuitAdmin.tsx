@@ -1,10 +1,8 @@
 // src/features/CircuitAdmin/pages/CircuitAdmin.tsx
 
-import { lazy, Suspense, useState, useCallback } from 'react';
-import { Circuit } from '../../../types/entities'; // Importamos la entidad
-// Hooks conceptuales de TanStack Query (se implementarán a continuación)
-import { useEntityQuery } from '../../../hooks/useEntityQuery.ts';
-import { useEntityMutation } from '../../../hooks/useEntityMutation.ts';
+import { lazy, Suspense } from 'react';
+import { Circuit } from '../../../types/entities';
+import { useEntityCRUD } from '../../../hooks/useEntityCRUD.ts';
 
 import {
   Card,
@@ -20,53 +18,24 @@ import {
 import { useScrollToElement } from '../../../hooks/useScrollToElement.ts';
 import { CircuitRow } from '../components/CircuitRow.tsx';
 import Spinner from '../../../components/Spinner.tsx';
-import { toast } from '../../../components/tremor/toast/hook/useToast';
 
 const EntityForm = lazy(() => import('../../../components/forms/EntityForm'));
 
 export default function CircuitAdmin() {
-  const { list, isLoading } = useEntityQuery(Circuit);
-
-  const { saveEntity } = useEntityMutation(Circuit);
-
-  const [editing, setEditing] = useState<Circuit | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
+  const {
+    list,
+    loading,
+    editing,
+    isCreating,
+    handleNew: handleNewCircuit,
+    handleEdit: handleEditCircuit,
+    handleCancel,
+    handleSave,
+  } = useEntityCRUD(Circuit);
 
   const formContainerRef = useScrollToElement<HTMLDivElement>(editing);
 
-  const handleCancel = useCallback(() => {
-    setEditing(null);
-    setIsCreating(false);
-  }, []);
-
-  const handleSave = useCallback(
-    async (circuit: Circuit) => {
-      try {
-        await saveEntity(circuit);
-        handleCancel();
-      } catch (error) {
-        console.error('Error al guardar circuito:', error);
-        toast({
-          variant: 'error',
-          title: 'Error al guardar',
-          description: error instanceof Error ? error.message : String(error),
-        });
-      }
-    },
-    [saveEntity, handleCancel]
-  );
-
-  const handleNewCircuit = useCallback(() => {
-    setEditing(new Circuit());
-    setIsCreating(true);
-  }, []);
-
-  const handleEditCircuit = useCallback((circuit: Circuit) => {
-    setEditing({ ...circuit });
-    setIsCreating(false);
-  }, []);
-
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="flex justify-center items-center py-20">
         <Spinner>Cargando circuitos...</Spinner>
