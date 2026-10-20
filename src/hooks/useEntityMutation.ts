@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { saveEntity } from '../services/apiService';
+import { saveEntity, deleteEntity } from '../services/apiService';
 import type { Constructor } from '../types/entityMeta';
 
 export function useEntityMutation<T extends { id?: number }>(
@@ -8,12 +8,24 @@ export function useEntityMutation<T extends { id?: number }>(
   const queryClient = useQueryClient();
   const queryKey = [cls.name];
 
-  const { mutateAsync, isPending: isSaving } = useMutation({
+  const { mutateAsync: saveMutate, isPending: isSaving } = useMutation({
     mutationFn: (entity: T) => saveEntity(cls, entity),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKey });
     },
   });
 
-  return { saveEntity: mutateAsync, isSaving };
-}
+  const { mutateAsync: deleteMutate, isPending: isDeleting } = useMutation({
+    mutationFn: (id: number) => deleteEntity(cls, id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKey });
+    },
+  });
+
+  return {
+    saveEntity: saveMutate,
+    isSaving,
+    deleteEntity: deleteMutate,
+    isDeleting,
+  };
+}
